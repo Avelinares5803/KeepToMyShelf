@@ -1,0 +1,25 @@
+appId: io.github.avelinares5803.keeptomyshelf
+productName: KeepToMyShelf
+directories:
+  output: release/${version}
+files:
+  - out/**
+  - package.json
+# Native binaries cannot be loaded from inside the asar archive.
+asarUnpack:
+  - '**/*.node'
+  - node_modules/sharp/**
+  - node_modules/@img/**
+# better-sqlite3 and sharp ship N-API prebuilt binaries that work in Electron as-is.
+npmRebuild: false
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: ${productName}-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+publish: null

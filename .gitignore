@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+release/
+coverage/
+
+# Logs and local tooling
+*.log
+.eslintcache
+.vite/
+
+# Environment and secrets (never commit)
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -9,7 +9,7 @@ export default defineConfig(
   js.configs.recommended,
   tseslint.configs.recommended,
   {
-    files: ['src/main/**', 'src/preload/**', '*.config.{mts,mjs}'],
+    files: ['src/main/**', 'src/preload/**', 'tests/**', '*.config.{mts,mjs}'],
     languageOptions: { globals: globals.node },
   },
   {

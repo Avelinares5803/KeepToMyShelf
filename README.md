@@ -26,6 +26,7 @@ npm run dev        # abre la app en modo desarrollo con recarga automática
 | `npm run dev`         | Ejecuta la app en modo desarrollo                      |
 | `npm run build`       | Compila main, preload y renderer en `out/`             |
 | `npm test`            | Ejecuta las pruebas (Vitest)                           |
+| `npm run test:e2e`    | Compila la app y ejecuta las pruebas E2E (Playwright)  |
 | `npm run lint`        | Analiza el código con ESLint                           |
 | `npm run typecheck`   | Comprueba los tipos de TypeScript                      |
 | `npm run format`      | Formatea el código con Prettier                        |

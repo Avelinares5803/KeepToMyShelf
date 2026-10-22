@@ -36,6 +36,12 @@ function startApp(): void {
   createMainWindow();
 }
 
+// Automated tests point the app at a temporary data folder so real user data is never touched.
+const userDataOverride = process.env['KTMS_USER_DATA_DIR'];
+if (userDataOverride) {
+  app.setPath('userData', userDataOverride);
+}
+
 // Only one instance may run at a time: two processes writing the same database could corrupt it.
 if (!app.requestSingleInstanceLock()) {
   app.quit();

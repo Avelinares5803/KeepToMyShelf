@@ -8,6 +8,7 @@
   "include": [
     "electron.vite.config.mts",
     "vitest.config.mts",
+    "playwright.config.ts",
     "src/main/**/*",
     "src/preload/**/*",
     "src/shared/**/*",

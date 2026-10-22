@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import type { Profile } from '../../../shared/ipc';
 import { Dialog } from '../../components/Dialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
-import { ProfileAvatar } from './ProfileAvatar';
 
 interface DeleteProfileDialogProps {
   profile: Profile;
@@ -36,10 +35,7 @@ export function DeleteProfileDialog({ profile, onDeleted, onClose }: DeleteProfi
     <Dialog open title={t('profiles.deleteDialog.title')} onClose={onClose}>
       <div className="form">
         <p>{t('profiles.deleteDialog.question')}</p>
-        <div className="profile-to-delete">
-          <ProfileAvatar name={profile.name} variant="danger" />
-          <strong className="profile-to-delete__name">{profile.name}</strong>
-        </div>
+        <strong className="profile-to-delete">{profile.name}</strong>
         <p className="muted">{t('profiles.deleteDialog.warning')}</p>
         {error !== null && (
           <p className="field__error" role="alert">

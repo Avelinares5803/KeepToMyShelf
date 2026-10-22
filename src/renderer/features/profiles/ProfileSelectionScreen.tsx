@@ -5,7 +5,6 @@ import { Dialog } from '../../components/Dialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { CreateProfileForm } from './CreateProfileForm';
 import { DeleteProfileDialog } from './DeleteProfileDialog';
-import { ProfileAvatar } from './ProfileAvatar';
 import { RenameProfileDialog } from './RenameProfileDialog';
 
 type OpenDialog =
@@ -93,7 +92,6 @@ export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) 
               aria-label={t('profiles.open', { name: profile.name })}
               onClick={() => onOpen(profile.id)}
             >
-              <ProfileAvatar name={profile.name} />
               <span className="profile-card__name">{profile.name}</span>
             </button>
             <div className="profile-card__actions">
@@ -122,7 +120,6 @@ export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) 
             className="profile-card__open profile-card__open--new"
             onClick={() => setDialog({ kind: 'create' })}
           >
-            <ProfileAvatar name="" variant="new" />
             <span className="profile-card__name">{t('profiles.new')}</span>
           </button>
         </li>

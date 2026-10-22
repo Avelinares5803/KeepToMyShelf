@@ -249,61 +249,43 @@ h1 {
 
 .profile-card__open {
   display: grid;
-  justify-items: center;
-  gap: 0.6rem;
+  place-items: center;
   width: 100%;
-  padding: 0.5rem;
-  border: none;
+  min-height: 5.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  background: none;
+  background: var(--color-surface);
   color: inherit;
   font: inherit;
+  font-size: 1.1rem;
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
 }
 
-.profile-avatar {
-  display: grid;
-  place-items: center;
-  width: 6.5rem;
-  height: 6.5rem;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: var(--color-accent-text);
-  font-size: 2.5rem;
-  font-weight: 600;
-  transition: transform 120ms ease;
+.profile-card__open:hover,
+.profile-card__open:focus-visible {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
 }
 
-.profile-card__open:hover .profile-avatar,
-.profile-card__open:focus-visible .profile-avatar {
-  transform: scale(1.05);
-}
-
-.profile-avatar--new {
-  border: 2px dashed var(--color-border);
+.profile-card__open--new {
+  border-style: dashed;
   background: transparent;
   color: var(--color-muted);
-}
-
-.profile-avatar--danger {
-  width: 3.5rem;
-  height: 3.5rem;
-  font-size: 1.5rem;
-  background: var(--color-danger);
+  font-weight: 400;
 }
 
 .profile-to-delete {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  display: block;
   padding: 0.75rem 1rem;
   border: 1px solid var(--color-danger);
   border-radius: var(--radius);
-}
-
-.profile-to-delete__name {
-  font-size: 1.35rem;
   color: var(--color-danger);
+  font-size: 1.35rem;
   overflow-wrap: anywhere;
 }
 

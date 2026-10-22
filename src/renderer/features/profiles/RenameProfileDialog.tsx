@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Profile, ProfileChange } from '../../../shared/ipc';
 import { Dialog } from '../../components/Dialog';
@@ -17,7 +17,7 @@ export function RenameProfileDialog({ profile, onRenamed, onClose }: RenameProfi
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function submit(event: FormEvent) {
+  async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError(null);

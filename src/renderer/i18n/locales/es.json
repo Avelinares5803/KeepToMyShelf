@@ -29,9 +29,9 @@
     },
     "deleteDialog": {
       "title": "Eliminar perfil",
-      "warning": "Se borrarán para siempre la biblioteca, las valoraciones y las colecciones de «{{name}}». Esta acción no se puede deshacer.",
-      "confirmLabel": "Escribe «{{name}}» para confirmar",
-      "confirm": "Eliminar definitivamente"
+      "question": "¿Seguro que quieres eliminar este perfil?",
+      "warning": "Se borrarán para siempre su biblioteca, sus valoraciones y sus colecciones. Esta acción no se puede deshacer.",
+      "confirm": "Eliminar perfil"
     }
   },
   "home": {

@@ -55,16 +55,27 @@ test('profiles can be created, opened, renamed and deleted, and persist across r
     await renameDialog.getByRole('button', { name: 'Guardar' }).click();
     await expect(page.getByRole('button', { name: 'Abrir el perfil de Bea' })).toBeVisible();
 
-    // Delete: only possible after typing the exact name.
-    await page.getByRole('button', { name: 'Eliminar el perfil de Bea' }).click();
+    // Delete: the dialog names the profile and starts on "Cancel", so Enter never deletes.
+    const openBea = page.getByRole('button', { name: 'Abrir el perfil de Bea' });
+    const deleteBea = page.getByRole('button', { name: 'Eliminar el perfil de Bea' });
+    await deleteBea.click();
     const deleteDialog = page.getByRole('dialog');
-    const confirmButton = deleteDialog.getByRole('button', { name: 'Eliminar definitivamente' });
-    await expect(confirmButton).toBeDisabled();
-    await deleteDialog.getByRole('textbox').fill('Be');
-    await expect(confirmButton).toBeDisabled();
-    await deleteDialog.getByRole('textbox').fill('Bea');
-    await confirmButton.click();
-    await expect(page.getByRole('button', { name: 'Abrir el perfil de Bea' })).toHaveCount(0);
+    await expect(deleteDialog.getByText('Bea', { exact: true })).toBeVisible();
+    await expect(deleteDialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(deleteDialog).toBeHidden();
+    await expect(openBea).toBeVisible();
+
+    // Escape cancels too.
+    await deleteBea.click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(openBea).toBeVisible();
+
+    // Only the explicit button deletes the profile.
+    await deleteBea.click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Eliminar perfil' }).click();
+    await expect(openBea).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Abrir el perfil de Adrián' })).toBeVisible();
 
     // Switch the global language, restart: profiles and language are kept.

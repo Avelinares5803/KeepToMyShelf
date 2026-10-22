@@ -261,7 +261,7 @@ h1 {
   cursor: pointer;
 }
 
-.profile-card__avatar {
+.profile-avatar {
   display: grid;
   place-items: center;
   width: 6.5rem;
@@ -274,15 +274,37 @@ h1 {
   transition: transform 120ms ease;
 }
 
-.profile-card__open:hover .profile-card__avatar,
-.profile-card__open:focus-visible .profile-card__avatar {
+.profile-card__open:hover .profile-avatar,
+.profile-card__open:focus-visible .profile-avatar {
   transform: scale(1.05);
 }
 
-.profile-card__open--new .profile-card__avatar {
+.profile-avatar--new {
   border: 2px dashed var(--color-border);
   background: transparent;
   color: var(--color-muted);
+}
+
+.profile-avatar--danger {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 1.5rem;
+  background: var(--color-danger);
+}
+
+.profile-to-delete {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius);
+}
+
+.profile-to-delete__name {
+  font-size: 1.35rem;
+  color: var(--color-danger);
+  overflow-wrap: anywhere;
 }
 
 .profile-card__name {

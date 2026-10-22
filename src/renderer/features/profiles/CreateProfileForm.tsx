@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProfileChange } from '../../../shared/ipc';
 import { LANGUAGES, type Language } from '../../../shared/settings';
@@ -20,7 +20,7 @@ export function CreateProfileForm({ onCreated, onCancel }: CreateProfileFormProp
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function submit(event: FormEvent) {
+  async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError(null);

@@ -1,8 +1,9 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Profile } from '../../../shared/ipc';
 import { Dialog } from '../../components/Dialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
+import { ProfileAvatar } from './ProfileAvatar';
 
 interface DeleteProfileDialogProps {
   profile: Profile;
@@ -10,60 +11,55 @@ interface DeleteProfileDialogProps {
   onClose: () => void;
 }
 
-/** Deleting a profile erases all its data, so the user must type its exact name. */
+/**
+ * Deleting a profile erases all its data. The profile is shown prominently and focus starts
+ * on "Cancel", so pressing Enter without reading never deletes anything.
+ */
 export function DeleteProfileDialog({ profile, onDeleted, onClose }: DeleteProfileDialogProps) {
   const { t } = useTranslation();
-  const inputId = useId();
-  const [confirmation, setConfirmation] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const confirmed = confirmation.trim() === profile.name;
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!confirmed) return;
+  async function confirmDelete() {
     setBusy(true);
     setError(null);
     try {
       unwrap(await window.api.profiles.delete({ profileId: profile.id }));
       onDeleted();
     } catch (caught) {
-      setError(errorMessage(t, caught));
+      setError(caught);
       setBusy(false);
     }
   }
 
   return (
     <Dialog open title={t('profiles.deleteDialog.title')} onClose={onClose}>
-      <form className="form" onSubmit={(event) => void submit(event)}>
-        <p>{t('profiles.deleteDialog.warning', { name: profile.name })}</p>
-        <div className="field">
-          <label htmlFor={inputId}>
-            {t('profiles.deleteDialog.confirmLabel', { name: profile.name })}
-          </label>
-          <input
-            id={inputId}
-            type="text"
-            value={confirmation}
-            autoFocus
-            autoComplete="off"
-            onChange={(event) => setConfirmation(event.target.value)}
-          />
+      <div className="form">
+        <p>{t('profiles.deleteDialog.question')}</p>
+        <div className="profile-to-delete">
+          <ProfileAvatar name={profile.name} variant="danger" />
+          <strong className="profile-to-delete__name">{profile.name}</strong>
         </div>
-        {error && (
+        <p className="muted">{t('profiles.deleteDialog.warning')}</p>
+        {error !== null && (
           <p className="field__error" role="alert">
-            {error}
+            {errorMessage(t, error)}
           </p>
         )}
         <div className="form__actions">
-          <button type="button" className="button button--ghost" onClick={onClose}>
+          <button type="button" className="button button--ghost" autoFocus onClick={onClose}>
             {t('common.cancel')}
           </button>
-          <button type="submit" className="button button--danger" disabled={!confirmed || busy}>
+          <button
+            type="button"
+            className="button button--danger"
+            disabled={busy}
+            onClick={() => void confirmDelete()}
+          >
             {t('profiles.deleteDialog.confirm')}
           </button>
         </div>
-      </form>
+      </div>
     </Dialog>
   );
 }

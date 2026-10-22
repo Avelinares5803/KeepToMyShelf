@@ -1,0 +1,70 @@
+{
+  "language": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "close": "Cerrar"
+  },
+  "profiles": {
+    "title": "¿Quién va a usar KeepToMyShelf?",
+    "firstProfile": "Crea tu primer perfil para empezar",
+    "new": "Nuevo perfil",
+    "open": "Abrir el perfil de {{name}}",
+    "rename": "Renombrar",
+    "renameProfile": "Renombrar el perfil de {{name}}",
+    "delete": "Eliminar",
+    "deleteProfile": "Eliminar el perfil de {{name}}",
+    "renamedNotice": "Ya existía un perfil con ese nombre, así que se ha guardado como «{{name}}».",
+    "form": {
+      "name": "Nombre",
+      "language": "Idioma",
+      "create": "Crear perfil"
+    },
+    "renameDialog": {
+      "title": "Renombrar perfil"
+    },
+    "deleteDialog": {
+      "title": "Eliminar perfil",
+      "question": "¿Seguro que quieres eliminar este perfil?",
+      "warning": "Se borrarán para siempre su biblioteca, sus valoraciones y sus colecciones. Esta acción no se puede deshacer.",
+      "confirm": "Eliminar perfil"
+    }
+  },
+  "home": {
+    "greeting": "Hola, {{name}}",
+    "comingSoon": "Aquí podrás elegir entre Videojuegos, Películas y Series.",
+    "switchProfile": "Cambiar de perfil"
+  },
+  "errors": {
+    "date": {
+      "invalid_format": "La fecha no tiene un formato válido.",
+      "invalid_year": "El año no es válido.",
+      "invalid_month": "El mes no es válido.",
+      "invalid_day": "Ese día no existe en ese mes.",
+      "day_without_month": "Para indicar el día, indica también el mes.",
+      "end_before_start": "La fecha de finalización no puede ser anterior a la de comienzo."
+    },
+    "profile": {
+      "name_empty": "Escribe un nombre.",
+      "name_too_long": "El nombre no puede tener más de 40 caracteres.",
+      "name_invalid_characters": "El nombre contiene caracteres no válidos.",
+      "not_found": "Ese perfil ya no existe.",
+      "in_use": "No se puede eliminar el perfil que está abierto."
+    },
+    "session": {
+      "stale": "La sesión ha caducado. Vuelve a elegir tu perfil."
+    },
+    "settings": {
+      "invalid_value": "Ese valor no es válido."
+    },
+    "ipc": {
+      "invalid_input": "Los datos enviados no son válidos."
+    },
+    "internal": "Ha ocurrido un error inesperado.",
+    "unknown": "Ha ocurrido un error inesperado."
+  }
+}

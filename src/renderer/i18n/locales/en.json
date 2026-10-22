@@ -1,0 +1,70 @@
+{
+  "language": {
+    "label": "Language",
+    "es": "Español",
+    "en": "English"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close"
+  },
+  "profiles": {
+    "title": "Who's using KeepToMyShelf?",
+    "firstProfile": "Create your first profile to get started",
+    "new": "New profile",
+    "open": "Open {{name}}'s profile",
+    "rename": "Rename",
+    "renameProfile": "Rename {{name}}'s profile",
+    "delete": "Delete",
+    "deleteProfile": "Delete {{name}}'s profile",
+    "renamedNotice": "A profile with that name already existed, so it was saved as “{{name}}”.",
+    "form": {
+      "name": "Name",
+      "language": "Language",
+      "create": "Create profile"
+    },
+    "renameDialog": {
+      "title": "Rename profile"
+    },
+    "deleteDialog": {
+      "title": "Delete profile",
+      "question": "Are you sure you want to delete this profile?",
+      "warning": "Its library, ratings and collections will be deleted forever. This cannot be undone.",
+      "confirm": "Delete profile"
+    }
+  },
+  "home": {
+    "greeting": "Hi, {{name}}",
+    "comingSoon": "Here you will choose between Video games, Movies and Series.",
+    "switchProfile": "Switch profile"
+  },
+  "errors": {
+    "date": {
+      "invalid_format": "The date format is not valid.",
+      "invalid_year": "The year is not valid.",
+      "invalid_month": "The month is not valid.",
+      "invalid_day": "That day does not exist in that month.",
+      "day_without_month": "To enter a day, enter the month too.",
+      "end_before_start": "The end date cannot be before the start date."
+    },
+    "profile": {
+      "name_empty": "Enter a name.",
+      "name_too_long": "The name cannot be longer than 40 characters.",
+      "name_invalid_characters": "The name contains invalid characters.",
+      "not_found": "That profile no longer exists.",
+      "in_use": "The open profile cannot be deleted."
+    },
+    "session": {
+      "stale": "Your session has expired. Please choose your profile again."
+    },
+    "settings": {
+      "invalid_value": "That value is not valid."
+    },
+    "ipc": {
+      "invalid_input": "The data sent is not valid."
+    },
+    "internal": "Something unexpected went wrong.",
+    "unknown": "Something unexpected went wrong."
+  }
+}

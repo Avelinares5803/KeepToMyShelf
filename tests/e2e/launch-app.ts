@@ -11,7 +11,9 @@ export async function launchApp(
   }
   env['KTMS_USER_DATA_DIR'] = userDataDir;
 
-  const app = await electron.launch({ args: ['.'], env });
+  // Always start with an English system locale so results do not depend on the machine
+  // (GitHub runners are in English); tests switch the UI language explicitly when needed.
+  const app = await electron.launch({ args: ['.', '--lang=en-US'], env });
   const page = await app.firstWindow();
   return { app, page };
 }

@@ -14,9 +14,11 @@ export function CreateProfileForm({ onCreated, onCancel }: CreateProfileFormProp
   const { t, i18n } = useTranslation();
   const languageId = useId();
   const [name, setName] = useState('');
-  const [language, setLanguage] = useState<Language>(
-    LANGUAGES.find((candidate) => candidate === i18n.language) ?? 'es',
-  );
+  // Until the user picks a language, the new profile follows the current UI language,
+  // even if it is switched while the form is open.
+  const [chosenLanguage, setChosenLanguage] = useState<Language | null>(null);
+  const language =
+    chosenLanguage ?? LANGUAGES.find((candidate) => candidate === i18n.language) ?? 'es';
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -40,7 +42,7 @@ export function CreateProfileForm({ onCreated, onCancel }: CreateProfileFormProp
         <select
           id={languageId}
           value={language}
-          onChange={(event) => setLanguage(event.target.value as Language)}
+          onChange={(event) => setChosenLanguage(event.target.value as Language)}
         >
           {LANGUAGES.map((option) => (
             <option key={option} value={option}>

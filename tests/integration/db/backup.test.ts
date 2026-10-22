@@ -7,7 +7,7 @@ import {
   preMigrationBackupPath,
 } from '../../../src/main/infrastructure/db/backup';
 import { openDatabase, type SqliteDatabase } from '../../../src/main/infrastructure/db/connection';
-import { createTempDir } from './temp-dir';
+import { createTempDir } from '../../support/temp-dir';
 
 describe('database backups', () => {
   let tempDir: ReturnType<typeof createTempDir>;

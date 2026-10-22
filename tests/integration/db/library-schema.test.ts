@@ -6,7 +6,7 @@ import type { SqliteDatabase } from '../../../src/main/infrastructure/db/connect
 import { openLibraryDatabase } from '../../../src/main/infrastructure/db/library-database';
 import { libraryMigrations } from '../../../src/main/infrastructure/db/migrations/library';
 import { getSchemaVersion } from '../../../src/main/infrastructure/db/migrator';
-import { createTempDir } from './temp-dir';
+import { createTempDir } from '../../support/temp-dir';
 
 const NOW = '2026-10-21T15:00:00.000Z';
 

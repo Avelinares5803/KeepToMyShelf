@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { openDatabase, type SqliteDatabase } from '../../../src/main/infrastructure/db/connection';
-import { createTempDir } from './temp-dir';
+import { createTempDir } from '../../support/temp-dir';
 
 describe('openDatabase', () => {
   let tempDir: ReturnType<typeof createTempDir>;

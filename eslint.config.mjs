@@ -13,6 +13,25 @@ export default defineConfig(
     languageOptions: { globals: globals.node },
   },
   {
+    // The sandboxed preload cannot load npm packages at runtime, so it and the IPC contract
+    // it imports may use other modules for types only.
+    files: ['src/preload/**/*.ts', 'src/shared/ipc.ts'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['zod', '**/ipc-schemas', '**/settings'],
+              allowTypeImports: true,
+              message: 'Sandboxed preload code may only import these modules as types.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/renderer/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended],
     languageOptions: { globals: globals.browser },

@@ -5,7 +5,9 @@ export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
 
   useEffect(() => {
-    void window.api.getAppInfo().then(setInfo);
+    void window.api.getAppInfo().then((result) => {
+      if (result.ok) setInfo(result.value);
+    });
   }, []);
 
   return (

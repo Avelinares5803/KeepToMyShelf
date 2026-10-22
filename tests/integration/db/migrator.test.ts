@@ -9,7 +9,7 @@ import {
   MigrationError,
   type Migration,
 } from '../../../src/main/infrastructure/db/migrator';
-import { createTempDir } from './temp-dir';
+import { createTempDir } from '../../support/temp-dir';
 
 const createBooks: Migration = {
   version: 1,

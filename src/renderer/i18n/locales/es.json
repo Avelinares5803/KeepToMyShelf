@@ -34,10 +34,36 @@
       "confirm": "Eliminar perfil"
     }
   },
-  "home": {
-    "greeting": "Hola, {{name}}",
-    "comingSoon": "Aquí podrás elegir entre Videojuegos, Películas y Series.",
-    "switchProfile": "Cambiar de perfil"
+  "nav": {
+    "back": "Volver",
+    "breadcrumbs": "Ruta de navegación",
+    "profiles": "Perfiles"
+  },
+  "modes": {
+    "title": "¿Qué quieres consultar?",
+    "game": "Videojuegos",
+    "movie": "Películas",
+    "series": "Series"
+  },
+  "library": {
+    "empty": "Tu biblioteca está vacía. Muy pronto podrás añadir elementos."
+  },
+  "theme": {
+    "label": "Tema",
+    "system": "Según el sistema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "toggle": "Tema: {{current}}. Pulsa para cambiarlo"
+  },
+  "settings": {
+    "open": "Ajustes",
+    "title": "Ajustes",
+    "scopeProfile": "Estos ajustes solo afectan al perfil «{{name}}».",
+    "scopeGlobal": "Estos ajustes se aplican a los perfiles que no tienen los suyos propios.",
+    "applyToAll": "Aplicar a todos los perfiles",
+    "applyLanguageToAll": "Aplicar este idioma a todos los perfiles",
+    "applyThemeToAll": "Aplicar este tema a todos los perfiles",
+    "appliedToAll": "Aplicado a todos los perfiles."
   },
   "errors": {
     "date": {

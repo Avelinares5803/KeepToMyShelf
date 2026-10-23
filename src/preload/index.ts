@@ -29,6 +29,9 @@ const api: KeepToMyShelfApi = {
     setForProfile: invoke(IpcChannels.setProfileSetting),
     applyToAllProfiles: invoke(IpcChannels.applySettingToAllProfiles),
   },
+  window: {
+    setNativeTheme: invoke(IpcChannels.setNativeTheme),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

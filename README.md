@@ -19,6 +19,8 @@ npm install        # instala dependencias y descarga el ejecutable de Electron
 npm run dev        # abre la app en modo desarrollo con recarga automática
 ```
 
+En modo desarrollo, **F12** abre las herramientas de desarrollo del navegador (la app no tiene menú).
+
 ## Scripts
 
 | Comando               | Qué hace                                               |

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, Menu } from 'electron';
 import type { AppSettings } from '../shared/settings';
 import { ProfileService } from './application/profile-service';
 import { SessionManager } from './application/session-manager';
@@ -26,6 +26,10 @@ function startApp(): void {
 
   profiles.removeDeletedProfileFolders();
   registerIpcHandlers({ profiles, sessions, settings });
+
+  // The app has its own top bar; the default Electron menu (File, Edit, View...) is removed.
+  // Editing shortcuts (copy, paste, undo...) keep working in text fields on Windows and Linux.
+  Menu.setApplicationMenu(null);
 
   // Close databases cleanly so the WAL is checkpointed into the main file.
   app.on('will-quit', () => {

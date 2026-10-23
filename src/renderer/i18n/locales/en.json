@@ -34,10 +34,36 @@
       "confirm": "Delete profile"
     }
   },
-  "home": {
-    "greeting": "Hi, {{name}}",
-    "comingSoon": "Here you will choose between Video games, Movies and Series.",
-    "switchProfile": "Switch profile"
+  "nav": {
+    "back": "Back",
+    "breadcrumbs": "Breadcrumbs",
+    "profiles": "Profiles"
+  },
+  "modes": {
+    "title": "What would you like to browse?",
+    "game": "Video games",
+    "movie": "Movies",
+    "series": "Series"
+  },
+  "library": {
+    "empty": "Your library is empty. You will be able to add items very soon."
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "System default",
+    "light": "Light",
+    "dark": "Dark",
+    "toggle": "Theme: {{current}}. Click to change it"
+  },
+  "settings": {
+    "open": "Settings",
+    "title": "Settings",
+    "scopeProfile": "These settings only affect the profile “{{name}}”.",
+    "scopeGlobal": "These settings apply to profiles that do not have their own.",
+    "applyToAll": "Apply to all profiles",
+    "applyLanguageToAll": "Apply this language to all profiles",
+    "applyThemeToAll": "Apply this theme to all profiles",
+    "appliedToAll": "Applied to all profiles."
   },
   "errors": {
     "date": {

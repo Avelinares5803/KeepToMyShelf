@@ -4,7 +4,7 @@
  * script does not depend on zod (a sandboxed preload cannot load npm packages).
  */
 import { z } from 'zod';
-import { languageSchema, settingUpdateSchema } from './settings';
+import { languageSchema, settingUpdateSchema, themeSchema } from './settings';
 
 const profileIdSchema = z.uuid();
 const sessionTokenSchema = z.uuid();
@@ -24,6 +24,7 @@ export const ipcInputSchemas = {
   setGlobalSetting: z.object({ setting: settingUpdateSchema }),
   setProfileSetting: z.object({ token: sessionTokenSchema, setting: settingUpdateSchema }),
   applySettingToAllProfiles: z.object({ setting: settingUpdateSchema }),
+  setNativeTheme: z.object({ theme: themeSchema }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

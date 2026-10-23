@@ -21,6 +21,13 @@ export function createMainWindow(): BrowserWindow {
   // Show the window only once its content is ready, avoiding a blank flash.
   window.once('ready-to-show', () => window.show());
 
+  // Without the default menu there is no DevTools shortcut: F12 opens them during development.
+  if (!app.isPackaged) {
+    window.webContents.on('before-input-event', (_event, input) => {
+      if (input.type === 'keyDown' && input.key === 'F12') window.webContents.toggleDevTools();
+    });
+  }
+
   // External links open in the user's browser, never inside the app.
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://')) {

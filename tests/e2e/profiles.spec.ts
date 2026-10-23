@@ -24,13 +24,16 @@ test('profiles can be created, opened, renamed and deleted, and persist across r
 
     // Open it: its library database is created with the migrations applied.
     await page.getByRole('button', { name: 'Abrir el perfil de Adrián' }).click();
-    await expect(page.getByRole('heading', { name: 'Hola, Adrián' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿Qué quieres consultar?' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Ruta de navegación' })).toContainText(
+      'Adrián',
+    );
     const profileFolders = readdirSync(join(dataDir, 'profiles'));
     expect(profileFolders).toHaveLength(1);
     expect(existsSync(join(dataDir, 'profiles', profileFolders[0] as string, 'library.db'))).toBe(
       true,
     );
-    await page.getByRole('button', { name: 'Cambiar de perfil' }).click();
+    await page.getByRole('button', { name: 'Perfiles', exact: true }).click();
 
     // A duplicate name (ignoring case and accents) gets a suffix and the user is told.
     await page.getByRole('button', { name: 'Nuevo perfil' }).click();
@@ -42,8 +45,11 @@ test('profiles can be created, opened, renamed and deleted, and persist across r
 
     // The profile's own language applies inside it; the global one applies outside.
     await page.getByRole('button', { name: 'Abrir el perfil de adrian (1)' }).click();
-    await expect(page.getByRole('heading', { name: 'Hi, adrian (1)' })).toBeVisible();
-    await page.getByRole('button', { name: 'Switch profile' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'What would you like to browse?' }),
+    ).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Breadcrumbs' })).toContainText('adrian (1)');
+    await page.getByRole('button', { name: 'Profiles', exact: true }).click();
     await expect(
       page.getByRole('heading', { name: '¿Quién va a usar KeepToMyShelf?' }),
     ).toBeVisible();

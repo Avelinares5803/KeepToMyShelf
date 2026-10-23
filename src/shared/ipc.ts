@@ -22,6 +22,7 @@ export const IpcChannels = {
   setGlobalSetting: 'settings:set-global',
   setProfileSetting: 'settings:set-profile',
   applySettingToAllProfiles: 'settings:apply-to-all',
+  setNativeTheme: 'window:set-native-theme',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -77,5 +78,9 @@ export interface KeepToMyShelfApi {
     setGlobal(input: IpcInput<'setGlobalSetting'>): Promise<IpcResult<void>>;
     setForProfile(input: IpcInput<'setProfileSetting'>): Promise<IpcResult<void>>;
     applyToAllProfiles(input: IpcInput<'applySettingToAllProfiles'>): Promise<IpcResult<void>>;
+  };
+  window: {
+    /** Aligns native parts of the window (e.g. the Windows title bar) with the UI theme. */
+    setNativeTheme(input: IpcInput<'setNativeTheme'>): Promise<IpcResult<void>>;
   };
 }

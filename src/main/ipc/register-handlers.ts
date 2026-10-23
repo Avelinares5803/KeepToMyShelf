@@ -1,4 +1,4 @@
-import { app, ipcMain } from 'electron';
+import { app, ipcMain, nativeTheme } from 'electron';
 import { IpcChannels } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
 import type { ProfileService } from '../application/profile-service';
@@ -46,6 +46,9 @@ export function registerIpcHandlers({ profiles, sessions, settings }: Services):
       ipcInputSchemas.applySettingToAllProfiles,
       ({ setting }) => settings.applyToAllProfiles(setting),
     ),
+    setNativeTheme: createHandler(ipcInputSchemas.setNativeTheme, ({ theme }) => {
+      nativeTheme.themeSource = theme;
+    }),
   };
 
   for (const [name, handler] of Object.entries(handlers)) {

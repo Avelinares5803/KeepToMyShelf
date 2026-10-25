@@ -87,7 +87,10 @@
       "invalid_minutes": "Minutes must be a whole number between 0 and 59.",
       "hours_only_for_games": "Only video games have hours played.",
       "counts_only_for_series": "Only series have seasons and episodes.",
-      "invalid_count": "It must be a whole number of 0 or more."
+      "invalid_count": "It must be a whole number of 0 or more.",
+      "not_found": "That item no longer exists.",
+      "in_trash": "That item is in the trash. Restore it to edit it.",
+      "not_in_trash": "Only items in the trash can be deleted permanently."
     },
     "profile": {
       "name_empty": "Enter a name.",

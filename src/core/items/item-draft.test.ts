@@ -79,6 +79,21 @@ describe('validateItemDraft', () => {
     ['a decimal rating', { rating: 4.5 }, 'item.invalid_rating'],
     ['negative minutes played', { minutesPlayed: -1 }, 'item.invalid_hours'],
     [
+      'a start date that does not exist',
+      { startedOn: knownUsageDate({ year: 2021, month: 4, day: 31 }) },
+      'date.invalid_day',
+    ],
+    [
+      'an end date with an invalid month',
+      { finishedOn: knownUsageDate({ year: 2021, month: 13 }) },
+      'date.invalid_month',
+    ],
+    [
+      'a day without a month',
+      { startedOn: knownUsageDate({ year: 2021, day: 5 }) },
+      'date.day_without_month',
+    ],
+    [
       'an end date before the start date',
       { startedOn: knownUsageDate({ year: 2021 }), finishedOn: knownUsageDate({ year: 2020 }) },
       'date.end_before_start',

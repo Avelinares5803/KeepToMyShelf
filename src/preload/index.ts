@@ -32,6 +32,17 @@ const api: KeepToMyShelfApi = {
   window: {
     setNativeTheme: invoke(IpcChannels.setNativeTheme),
   },
+  items: {
+    list: invoke(IpcChannels.listItems),
+    listTrash: invoke(IpcChannels.listTrash),
+    get: invoke(IpcChannels.getItem),
+    create: invoke(IpcChannels.createItem),
+    update: invoke(IpcChannels.updateItem),
+    moveToTrash: invoke(IpcChannels.moveItemToTrash),
+    restore: invoke(IpcChannels.restoreItem),
+    deletePermanently: invoke(IpcChannels.deleteItemPermanently),
+    emptyTrash: invoke(IpcChannels.emptyTrash),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

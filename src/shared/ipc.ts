@@ -7,6 +7,7 @@
  */
 import type { z } from 'zod';
 import type { IpcInputSchemas } from './ipc-schemas';
+import type { ItemDetails, ItemSummary } from './items';
 import type { AppSettings } from './settings';
 
 export const IpcChannels = {
@@ -23,6 +24,15 @@ export const IpcChannels = {
   setProfileSetting: 'settings:set-profile',
   applySettingToAllProfiles: 'settings:apply-to-all',
   setNativeTheme: 'window:set-native-theme',
+  listItems: 'items:list',
+  listTrash: 'items:list-trash',
+  getItem: 'items:get',
+  createItem: 'items:create',
+  updateItem: 'items:update',
+  moveItemToTrash: 'items:move-to-trash',
+  restoreItem: 'items:restore',
+  deleteItemPermanently: 'items:delete-permanently',
+  emptyTrash: 'items:empty-trash',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -82,5 +92,17 @@ export interface KeepToMyShelfApi {
   window: {
     /** Aligns native parts of the window (e.g. the Windows title bar) with the UI theme. */
     setNativeTheme(input: IpcInput<'setNativeTheme'>): Promise<IpcResult<void>>;
+  };
+  items: {
+    list(input: IpcInput<'listItems'>): Promise<IpcResult<ItemSummary[]>>;
+    listTrash(input: IpcInput<'listTrash'>): Promise<IpcResult<ItemSummary[]>>;
+    get(input: IpcInput<'getItem'>): Promise<IpcResult<ItemDetails>>;
+    create(input: IpcInput<'createItem'>): Promise<IpcResult<ItemDetails>>;
+    update(input: IpcInput<'updateItem'>): Promise<IpcResult<ItemDetails>>;
+    moveToTrash(input: IpcInput<'moveItemToTrash'>): Promise<IpcResult<void>>;
+    restore(input: IpcInput<'restoreItem'>): Promise<IpcResult<void>>;
+    deletePermanently(input: IpcInput<'deleteItemPermanently'>): Promise<IpcResult<void>>;
+    /** Resolves to the number of items deleted. */
+    emptyTrash(input: IpcInput<'emptyTrash'>): Promise<IpcResult<number>>;
   };
 }

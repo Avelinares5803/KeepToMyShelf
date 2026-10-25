@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { app, BrowserWindow, dialog, Menu } from 'electron';
 import type { AppSettings } from '../shared/settings';
+import { ItemService } from './application/item-service';
 import { ProfileService } from './application/profile-service';
 import { SessionManager } from './application/session-manager';
 import { SettingsService } from './application/settings-service';
@@ -24,8 +25,10 @@ function startApp(): void {
   const sessions = new SessionManager({ appDb, paths, now, newId: randomUUID });
   const profiles = new ProfileService({ appDb, paths, sessions, settings, now, newId: randomUUID });
 
+  const items = new ItemService({ sessions, now, newId: randomUUID });
+
   profiles.removeDeletedProfileFolders();
-  registerIpcHandlers({ profiles, sessions, settings });
+  registerIpcHandlers({ profiles, sessions, settings, items });
 
   // The app has its own top bar; the default Electron menu (File, Edit, View...) is removed.
   // Editing shortcuts (copy, paste, undo...) keep working in text fields on Windows and Linux.

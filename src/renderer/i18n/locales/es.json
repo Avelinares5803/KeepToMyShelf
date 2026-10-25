@@ -87,7 +87,10 @@
       "invalid_minutes": "Los minutos deben ser un número entero entre 0 y 59.",
       "hours_only_for_games": "Solo los videojuegos tienen horas jugadas.",
       "counts_only_for_series": "Solo las series tienen temporadas y capítulos.",
-      "invalid_count": "Debe ser un número entero de 0 o más."
+      "invalid_count": "Debe ser un número entero de 0 o más.",
+      "not_found": "Ese elemento ya no existe.",
+      "in_trash": "Ese elemento está en la papelera. Restáuralo para editarlo.",
+      "not_in_trash": "Solo se pueden eliminar definitivamente los elementos de la papelera."
     },
     "profile": {
       "name_empty": "Escribe un nombre.",

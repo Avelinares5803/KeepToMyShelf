@@ -1,4 +1,5 @@
 import type { ItemKind } from '../../shared/content';
+import { createPartialDate } from '../dates/partial-date';
 import { validateUsagePeriod, type UsageDate } from '../dates/usage-period';
 import { ValidationError } from '../errors';
 import { characterCount, cleanMultiLine, cleanSingleLine } from '../text/clean-text';
@@ -114,6 +115,13 @@ function cleanAlternateTitles(raw: readonly string[]): string[] {
   return titles;
 }
 
+/** Dates may come from outside (e.g. the UI): re-check that each one exists in the calendar. */
+function assertValidUsageDate(value: UsageDate | null): void {
+  if (value?.kind === 'known') {
+    createPartialDate(value.date.year, value.date.month, value.date.day);
+  }
+}
+
 function assertCount(value: number | null, code: string, max: number): void {
   if (value !== null && (!Number.isInteger(value) || value < 0 || value > max)) {
     throw new ValidationError(code, `Invalid number: ${value}`);
@@ -127,6 +135,8 @@ export function validateItemDraft(kind: ItemKind, draft: ItemDraft): ValidItemDr
   if (draft.rating !== null && !isValidRating(draft.rating)) {
     throw new ValidationError('item.invalid_rating', `Invalid rating: ${draft.rating}`);
   }
+  assertValidUsageDate(draft.startedOn);
+  assertValidUsageDate(draft.finishedOn);
   validateUsagePeriod(draft.startedOn, draft.finishedOn);
 
   if (kind !== 'game' && draft.minutesPlayed !== null) {

@@ -1,6 +1,7 @@
 import { app, ipcMain, nativeTheme } from 'electron';
 import { IpcChannels } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
+import type { ItemService } from '../application/item-service';
 import type { ProfileService } from '../application/profile-service';
 import type { SessionManager } from '../application/session-manager';
 import type { SettingsService } from '../application/settings-service';
@@ -10,10 +11,11 @@ export interface Services {
   readonly profiles: ProfileService;
   readonly sessions: SessionManager;
   readonly settings: SettingsService;
+  readonly items: ItemService;
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
-export function registerIpcHandlers({ profiles, sessions, settings }: Services): void {
+export function registerIpcHandlers({ profiles, sessions, settings, items }: Services): void {
   const handlers: Record<keyof typeof IpcChannels, (input: unknown) => unknown> = {
     getAppInfo: createHandler(ipcInputSchemas.getAppInfo, () => ({
       name: app.getName(),
@@ -49,6 +51,31 @@ export function registerIpcHandlers({ profiles, sessions, settings }: Services):
     setNativeTheme: createHandler(ipcInputSchemas.setNativeTheme, ({ theme }) => {
       nativeTheme.themeSource = theme;
     }),
+    listItems: createHandler(ipcInputSchemas.listItems, ({ token, kind }) =>
+      items.list(token, kind),
+    ),
+    listTrash: createHandler(ipcInputSchemas.listTrash, ({ token, kind }) =>
+      items.listTrash(token, kind),
+    ),
+    getItem: createHandler(ipcInputSchemas.getItem, ({ token, id }) => items.get(token, id)),
+    createItem: createHandler(ipcInputSchemas.createItem, ({ token, kind, draft }) =>
+      items.create(token, kind, draft),
+    ),
+    updateItem: createHandler(ipcInputSchemas.updateItem, ({ token, id, draft }) =>
+      items.update(token, id, draft),
+    ),
+    moveItemToTrash: createHandler(ipcInputSchemas.moveItemToTrash, ({ token, id }) =>
+      items.moveToTrash(token, id),
+    ),
+    restoreItem: createHandler(ipcInputSchemas.restoreItem, ({ token, id }) =>
+      items.restore(token, id),
+    ),
+    deleteItemPermanently: createHandler(ipcInputSchemas.deleteItemPermanently, ({ token, id }) =>
+      items.deletePermanently(token, id),
+    ),
+    emptyTrash: createHandler(ipcInputSchemas.emptyTrash, ({ token, kind }) =>
+      items.emptyTrash(token, kind),
+    ),
   };
 
   for (const [name, handler] of Object.entries(handlers)) {

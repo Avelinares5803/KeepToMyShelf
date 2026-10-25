@@ -74,6 +74,21 @@
       "day_without_month": "To enter a day, enter the month too.",
       "end_before_start": "The end date cannot be before the start date."
     },
+    "item": {
+      "title_invalid_characters": "The title contains invalid characters.",
+      "title_too_long": "The title cannot be longer than 300 characters.",
+      "alternate_title_invalid_characters": "An alternate title contains invalid characters.",
+      "alternate_title_too_long": "An alternate title cannot be longer than 300 characters.",
+      "too_many_alternate_titles": "You cannot add more than 50 alternate titles.",
+      "description_too_long": "The description is too long.",
+      "notes_too_long": "The notes are too long.",
+      "invalid_rating": "The rating is not valid.",
+      "invalid_hours": "Hours must be a whole number between 0 and 99,999.",
+      "invalid_minutes": "Minutes must be a whole number between 0 and 59.",
+      "hours_only_for_games": "Only video games have hours played.",
+      "counts_only_for_series": "Only series have seasons and episodes.",
+      "invalid_count": "It must be a whole number of 0 or more."
+    },
     "profile": {
       "name_empty": "Enter a name.",
       "name_too_long": "The name cannot be longer than 40 characters.",

@@ -22,11 +22,16 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-/** Every error code thrown by application code, e.g. new ValidationError('profile.name_empty', ...). */
+/**
+ * Every error code written in application code. Codes are 'domain.code' string literals
+ * (e.g. 'profile.name_empty'), found wherever they appear, even when passed in a variable.
+ */
 function thrownErrorCodes(): string[] {
-  const pattern = /new (?:AppError|ValidationError|NotFoundError|ConflictError)\(\s*'([^']+)'/g;
+  const pattern = /'((?:date|item|profile|session|settings|ipc)\.[a-z_]+)'/g;
   const codes = new Set<string>();
-  for (const file of sourceFiles(join(__dirname, '../../src'))) {
+  // Error codes originate outside the UI; renderer keys (t('settings.title')) look alike.
+  const roots = ['core', 'main', 'shared'].map((dir) => join(__dirname, '../../src', dir));
+  for (const file of roots.flatMap(sourceFiles)) {
     for (const match of readFileSync(file, 'utf8').matchAll(pattern)) {
       codes.add(match[1] as string);
     }

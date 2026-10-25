@@ -197,6 +197,37 @@ test('moves items to the trash, restores them and deletes them permanently', asy
   await expect(button('Papelera (0)')).toBeVisible();
 });
 
+test('asks before closing the window with unsaved changes', async () => {
+  // Same as clicking the window's close button.
+  const closeWindow = () =>
+    app!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.close());
+
+  await button('Videojuegos').click();
+  await button('Añadir').click();
+  await page.getByLabel('Título', { exact: true }).fill('Guardado al cerrar');
+
+  await closeWindow();
+  const unsaved = page.getByRole('dialog', { name: 'Cambios sin guardar' });
+  await unsaved.getByRole('button', { name: 'Seguir editando' }).click();
+  await expect(page.getByLabel('Título', { exact: true })).toHaveValue('Guardado al cerrar');
+
+  // "Save" saves and then closes the app.
+  const closed = app!.waitForEvent('close');
+  await closeWindow();
+  await unsaved.getByRole('button', { name: 'Guardar' }).click();
+  await closed;
+
+  // The item was saved; without unsaved changes the window closes right away.
+  ({ app, page } = await launchApp(dataDir));
+  await page.getByRole('button', { name: 'Abrir el perfil de Ana' }).click();
+  await button('Videojuegos').click();
+  await expect(button('Guardado al cerrar')).toBeVisible();
+  const closedAgain = app.waitForEvent('close');
+  await closeWindow();
+  await closedAgain;
+  app = undefined;
+});
+
 test('shows untitled items in the current language', async () => {
   await button('Series').click();
   await button('Añadir').click();

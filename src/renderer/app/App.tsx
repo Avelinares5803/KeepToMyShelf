@@ -1,4 +1,4 @@
-import { useCallback, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SessionInfo } from '../../shared/ipc';
 import type { AppSettings, SettingUpdate } from '../../shared/settings';
@@ -44,6 +44,24 @@ export function App({ initialSettings }: AppProps) {
     if (editorGuard.current?.isDirty()) setPendingLeave({ run });
     else run();
   };
+
+  // Closing the window with unsaved changes asks too. In Electron, cancelling "beforeunload"
+  // silently keeps the window open, so the app shows its own dialog instead.
+  const closeConfirmed = useRef(false);
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (closeConfirmed.current || !editorGuard.current?.isDirty()) return;
+      event.preventDefault();
+      setPendingLeave({
+        run: () => {
+          closeConfirmed.current = true;
+          window.close();
+        },
+      });
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, []);
 
   async function attempt(action: () => Promise<void>): Promise<void> {
     setError(null);

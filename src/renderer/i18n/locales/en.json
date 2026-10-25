@@ -45,8 +45,110 @@
     "movie": "Movies",
     "series": "Series"
   },
-  "library": {
-    "empty": "Your library is empty. You will be able to add items very soon."
+  "items": {
+    "untitled": "Untitled {{number}}",
+    "add": "Add",
+    "empty": "Nothing here yet. Click “Add” to create the first one.",
+    "notSpecified": "Not specified",
+    "kind": {
+      "game": "Video game",
+      "movie": "Movie",
+      "series": "Series"
+    },
+    "new": {
+      "game": "New video game",
+      "movie": "New movie",
+      "series": "New series"
+    },
+    "edit": "Edit",
+    "editItem": "Edit “{{title}}”",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete “{{title}}”? It will be moved to the trash.",
+    "markFavorite": "Mark as favorite",
+    "unmarkFavorite": "Remove from favorites",
+    "fields": {
+      "title": "Title",
+      "titlePlaceholder": "If left empty, it will be called “Untitled”",
+      "favorite": "Favorite",
+      "alternateTitles": "Alternate titles",
+      "alternateTitle": "Alternate title {{number}}",
+      "addAlternateTitle": "Add alternate title",
+      "removeAlternateTitle": "Remove alternate title {{number}}",
+      "remove": "Remove",
+      "status": "Status",
+      "format": "Format",
+      "hoursPlayed": "Hours played",
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "seasons": "Seasons",
+      "episodes": "Episodes",
+      "description": "Description",
+      "notes": "Notes",
+      "addedOn": "Added on"
+    },
+    "rating": {
+      "label": "Rating",
+      "value": "{{stars}} out of 5 stars",
+      "set_one": "{{stars}} star",
+      "set_other": "{{stars}} stars",
+      "clear": "Clear rating"
+    },
+    "status": {
+      "game": {
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "abandoned": "Abandoned"
+      },
+      "screen": {
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "abandoned": "Abandoned"
+      }
+    },
+    "replay": {
+      "game": "Replayed",
+      "screen": "Rewatched"
+    },
+    "format": {
+      "physical": "Physical",
+      "digital": "Digital",
+      "both": "Both"
+    },
+    "dates": {
+      "game": "Play dates",
+      "screen": "Watch dates",
+      "start": "Start",
+      "end": "End",
+      "day": "Day",
+      "month": "Month",
+      "year": "Year",
+      "noMonth": "—",
+      "unknown": "Unknown"
+    }
+  },
+  "unsaved": {
+    "title": "Unsaved changes",
+    "message": "You have changes that have not been saved yet.",
+    "keepEditing": "Keep editing",
+    "discard": "Discard changes"
+  },
+  "trash": {
+    "title": "Trash",
+    "openWithCount": "Trash ({{count}})",
+    "show": "Show",
+    "all": "Everything",
+    "empty": "The trash is empty.",
+    "deletedOn": "Deleted on {{date}}",
+    "restore": "Restore",
+    "restoreItem": "Restore “{{title}}”",
+    "deletePermanently": "Delete permanently",
+    "deletePermanentlyItem": "Delete “{{title}}” permanently",
+    "deletePermanentlyConfirm": "Are you sure you want to delete “{{title}}” permanently? This cannot be undone.",
+    "emptyTrash": "Empty trash",
+    "emptyConfirm_one": "1 item from “{{scope}}” will be deleted permanently. This cannot be undone.",
+    "emptyConfirm_other": "{{count}} items from “{{scope}}” will be deleted permanently. This cannot be undone."
   },
   "theme": {
     "label": "Theme",

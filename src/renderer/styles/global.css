@@ -132,9 +132,24 @@ h1 {
 
 .app-main {
   flex: 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 1rem 1.25rem 3rem;
+}
+
+/* Choosing screens are centred vertically; content screens start at the top. */
+.profiles,
+.modes {
+  margin-block: auto;
+}
+
+.library,
+.trash,
+.item-detail,
+.item-edit {
+  width: 100%;
+  max-width: 64rem;
 }
 
 /* Controls */
@@ -426,4 +441,264 @@ h1 {
 .mode-card__label {
   font-size: 1.15rem;
   font-weight: 500;
+}
+
+/* Library */
+.library__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.library__count {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.library__actions,
+.item-detail__actions,
+.trash-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.library__actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 7rem;
+  padding: 1rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.item-card:hover,
+.item-card:focus-visible {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.item-card__title {
+  overflow-wrap: anywhere;
+}
+
+.item-card__favorite {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
+  color: var(--color-danger);
+}
+
+/* Item detail */
+.item-detail__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.item-detail__header h1 {
+  overflow-wrap: anywhere;
+}
+
+.icon-button--active {
+  color: var(--color-danger);
+}
+
+.details {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1rem 0 0;
+}
+
+.details__row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr;
+  gap: 1rem;
+}
+
+.details dt {
+  color: var(--color-muted);
+}
+
+.details dd {
+  margin: 0;
+}
+
+.plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.long-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Stars */
+.stars {
+  display: inline-flex;
+  gap: 0.15rem;
+  color: #e3a008;
+}
+
+.star {
+  position: relative;
+  display: inline-flex;
+}
+
+.star__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+}
+
+.star-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.star-input__star {
+  position: relative;
+  display: inline-flex;
+}
+
+.star-input__half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.star-input__half--left {
+  left: 0;
+}
+
+.star-input__half--right {
+  right: 0;
+}
+
+/* Item form */
+.item-form {
+  max-width: 44rem;
+}
+
+.field__label {
+  font-weight: 400;
+}
+
+.field textarea,
+.inline-field input,
+.inline-field select {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.fieldset {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.date-input {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.date-input legend {
+  margin-bottom: 0.35rem;
+  color: var(--color-muted);
+}
+
+.date-input__parts,
+.inline-field,
+.radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+}
+
+/* Trash */
+.trash-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trash-list__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.trash-list__title {
+  display: block;
+  font-weight: 500;
+}
+
+.trash-list__meta {
+  font-size: 0.85rem;
 }

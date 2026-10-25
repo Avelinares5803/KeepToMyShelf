@@ -1,13 +1,19 @@
 import type { ReactNode } from 'react';
 
+interface IconProps {
+  children: ReactNode;
+  size?: number;
+  filled?: boolean;
+}
+
 /** Small line icons drawn in-house. Decorative: buttons always carry an accessible label. */
-function Icon({ children, size = 18 }: { children: ReactNode; size?: number }) {
+function Icon({ children, size = 18, filled = false }: IconProps) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth={2}
       strokeLinecap="round"
@@ -50,6 +56,36 @@ export const GearIcon = () => (
   <Icon>
     <circle cx="12" cy="12" r="3" />
     <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" />
+  </Icon>
+);
+
+export const PlusIcon = () => (
+  <Icon>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+export const PencilIcon = () => (
+  <Icon>
+    <path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" />
+  </Icon>
+);
+
+export const TrashIcon = () => (
+  <Icon>
+    <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5" />
+  </Icon>
+);
+
+export const HeartIcon = ({ filled = false }: { filled?: boolean }) => (
+  <Icon filled={filled}>
+    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+  </Icon>
+);
+
+export const StarIcon = ({ filled = false, size = 22 }: { filled?: boolean; size?: number }) => (
+  <Icon filled={filled} size={size}>
+    <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />
   </Icon>
 );
 

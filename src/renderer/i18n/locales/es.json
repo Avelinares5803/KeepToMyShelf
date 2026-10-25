@@ -45,8 +45,110 @@
     "movie": "Películas",
     "series": "Series"
   },
-  "library": {
-    "empty": "Tu biblioteca está vacía. Muy pronto podrás añadir elementos."
+  "items": {
+    "untitled": "Sin nombre {{number}}",
+    "add": "Añadir",
+    "empty": "Todavía no hay nada aquí. Pulsa «Añadir» para crear el primero.",
+    "notSpecified": "Sin indicar",
+    "kind": {
+      "game": "Videojuego",
+      "movie": "Película",
+      "series": "Serie"
+    },
+    "new": {
+      "game": "Nuevo videojuego",
+      "movie": "Nueva película",
+      "series": "Nueva serie"
+    },
+    "edit": "Editar",
+    "editItem": "Editar «{{title}}»",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Seguro que quieres eliminar «{{title}}»? Se enviará a la papelera.",
+    "markFavorite": "Marcar como favorito",
+    "unmarkFavorite": "Quitar de favoritos",
+    "fields": {
+      "title": "Título",
+      "titlePlaceholder": "Si lo dejas vacío, se llamará «Sin nombre»",
+      "favorite": "Favorito",
+      "alternateTitles": "Títulos alternativos",
+      "alternateTitle": "Título alternativo {{number}}",
+      "addAlternateTitle": "Añadir título alternativo",
+      "removeAlternateTitle": "Quitar el título alternativo {{number}}",
+      "remove": "Quitar",
+      "status": "Estado",
+      "format": "Formato",
+      "hoursPlayed": "Horas jugadas",
+      "hours": "Horas",
+      "minutes": "Minutos",
+      "seasons": "Temporadas",
+      "episodes": "Capítulos",
+      "description": "Descripción",
+      "notes": "Notas",
+      "addedOn": "Añadido el"
+    },
+    "rating": {
+      "label": "Valoración",
+      "value": "{{stars}} de 5 estrellas",
+      "set_one": "{{stars}} estrella",
+      "set_other": "{{stars}} estrellas",
+      "clear": "Quitar valoración"
+    },
+    "status": {
+      "game": {
+        "not_started": "Por empezar",
+        "in_progress": "En curso",
+        "completed": "Terminado",
+        "abandoned": "Abandonado"
+      },
+      "screen": {
+        "not_started": "Por empezar",
+        "in_progress": "En curso",
+        "completed": "Terminada",
+        "abandoned": "Abandonada"
+      }
+    },
+    "replay": {
+      "game": "Rejugado",
+      "screen": "Revisto"
+    },
+    "format": {
+      "physical": "Físico",
+      "digital": "Digital",
+      "both": "Ambos"
+    },
+    "dates": {
+      "game": "Fechas de juego",
+      "screen": "Fechas de visionado",
+      "start": "Inicio",
+      "end": "Fin",
+      "day": "Día",
+      "month": "Mes",
+      "year": "Año",
+      "noMonth": "—",
+      "unknown": "Indeterminada"
+    }
+  },
+  "unsaved": {
+    "title": "Cambios sin guardar",
+    "message": "Has hecho cambios que todavía no has guardado.",
+    "keepEditing": "Seguir editando",
+    "discard": "Descartar cambios"
+  },
+  "trash": {
+    "title": "Papelera",
+    "openWithCount": "Papelera ({{count}})",
+    "show": "Mostrar",
+    "all": "Todo",
+    "empty": "La papelera está vacía.",
+    "deletedOn": "Eliminado el {{date}}",
+    "restore": "Restaurar",
+    "restoreItem": "Restaurar «{{title}}»",
+    "deletePermanently": "Eliminar definitivamente",
+    "deletePermanentlyItem": "Eliminar definitivamente «{{title}}»",
+    "deletePermanentlyConfirm": "¿Seguro que quieres eliminar definitivamente «{{title}}»? Esta acción no se puede deshacer.",
+    "emptyTrash": "Vaciar papelera",
+    "emptyConfirm_one": "Se eliminará definitivamente 1 elemento de «{{scope}}». Esta acción no se puede deshacer.",
+    "emptyConfirm_other": "Se eliminarán definitivamente {{count}} elementos de «{{scope}}». Esta acción no se puede deshacer."
   },
   "theme": {
     "label": "Tema",

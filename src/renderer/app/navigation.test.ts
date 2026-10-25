@@ -66,6 +66,42 @@ describe('navigationReducer', () => {
     expect(navigationReducer(before, { type: 'goTo', index: -1 })).toBe(before);
   });
 
+  it('treats item screens as the same screen regardless of their label', () => {
+    const item = { name: 'item', kind: 'game', itemId: 7, label: 'Zelda' } as const;
+    const state = run(
+      { type: 'open', screen: item },
+      { type: 'open', screen: { ...item, label: 'Renamed' } },
+    );
+
+    expect(state.stack).toHaveLength(2);
+  });
+
+  it('replaces the current screen, e.g. a new item editor with its detail view', () => {
+    const state = run(
+      { type: 'open', screen: games },
+      { type: 'open', screen: { name: 'edit', kind: 'game', itemId: null } },
+      { type: 'replace', screen: { name: 'item', kind: 'game', itemId: 1, label: 'Zelda' } },
+    );
+
+    expect(state.stack).toEqual([
+      { name: 'modes' },
+      games,
+      { name: 'item', kind: 'game', itemId: 1, label: 'Zelda' },
+    ]);
+  });
+
+  it('relabels only the current item screen', () => {
+    const item = { name: 'item', kind: 'game', itemId: 1, label: 'Old' } as const;
+
+    expect(
+      currentScreen(run({ type: 'open', screen: item }, { type: 'relabel', label: 'New' })),
+    ).toEqual({ ...item, label: 'New' });
+    expect(run({ type: 'open', screen: games }, { type: 'relabel', label: 'x' }).stack).toEqual([
+      { name: 'modes' },
+      games,
+    ]);
+  });
+
   it('resets to the mode selection screen', () => {
     expect(run({ type: 'open', screen: games }, { type: 'reset' })).toEqual(initialNavigation);
   });

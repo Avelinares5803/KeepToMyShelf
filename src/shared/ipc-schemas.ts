@@ -30,7 +30,7 @@ const usageDateSchema = z
   .nullable();
 const itemDraftSchema = z.object({
   title: z.string().max(5_000),
-  alternateTitles: z.array(z.string().max(5_000)).max(500),
+  alternateTitles: z.array(z.string().max(5_000)).max(500).readonly(),
   description: z.string().max(500_000),
   notes: z.string().max(500_000),
   isFavorite: z.boolean(),

@@ -1,28 +1,25 @@
 import { ValidationError } from '../errors';
+import { characterCount, cleanSingleLine } from '../text/clean-text';
 import { normalizeForSearch } from '../text/normalize';
 
 export const PROFILE_NAME_MAX_LENGTH = 40;
-
-const CONTROL_CHARACTERS = /\p{Cc}/u;
-const WHITESPACE_RUNS = /\s+/g;
 
 /**
  * Cleans and validates a profile name typed by the user: trims and collapses whitespace,
  * and rejects empty names, names longer than 40 characters and control characters.
  */
 export function normalizeProfileName(raw: string): string {
-  if (CONTROL_CHARACTERS.test(raw.replace(WHITESPACE_RUNS, ' '))) {
+  const name = cleanSingleLine(raw);
+  if (name === null) {
     throw new ValidationError(
       'profile.name_invalid_characters',
       'Profile name has control characters',
     );
   }
-  const name = raw.normalize('NFC').replace(WHITESPACE_RUNS, ' ').trim();
   if (name.length === 0) {
     throw new ValidationError('profile.name_empty', 'Profile name is empty');
   }
-  // Count characters (code points), not UTF-16 units, so emoji count as one.
-  if ([...name].length > PROFILE_NAME_MAX_LENGTH) {
+  if (characterCount(name) > PROFILE_NAME_MAX_LENGTH) {
     throw new ValidationError(
       'profile.name_too_long',
       `Profile name exceeds ${PROFILE_NAME_MAX_LENGTH} characters`,

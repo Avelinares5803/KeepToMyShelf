@@ -25,7 +25,7 @@ describe('CatalogService', () => {
   const db = () => fx.sessions.require(token).db;
   const names = (catalog: Catalog) => fx.catalogs.list(token, catalog).map((e) => e.name);
   const add = (catalog: Catalog, name: string) =>
-    fx.catalogs.create(token, catalog, { name, scope: null });
+    fx.catalogs.create(token, catalog, { name, aliases: [], scope: null });
   const createItem = (kind: ItemKind, title: string) =>
     fx.items.create(token, kind, { ...EMPTY_ITEM_DRAFT, title }).id;
   const link = (itemId: number, entryId: number, role: string) =>
@@ -48,7 +48,8 @@ describe('CatalogService', () => {
       expect(names('region')).toHaveLength(DEFAULT_CATALOGS.es.region.length);
       expect(names('screen_genre')).toContain('Suspense');
       expect(names('game_genre')).toContain('Plataformas');
-      expect(names('platform')).toContain('Recreativa');
+      expect(names('platform')).toContain('Móvil');
+      expect(names('game_genre')).toEqual(expect.arrayContaining(['Ritmo', 'Musical']));
       expect(fx.catalogs.list(token, 'screen_genre').find((e) => e.name === 'Sitcom')?.scope).toBe(
         'series',
       );
@@ -105,10 +106,14 @@ describe('CatalogService', () => {
 
     it('accepts a scope only for movie/series genres', () => {
       expect(
-        fx.catalogs.create(token, 'screen_genre', { name: 'Anime OVA', scope: 'movie' }).scope,
+        fx.catalogs.create(token, 'screen_genre', {
+          name: 'Anime OVA',
+          aliases: [],
+          scope: 'movie',
+        }).scope,
       ).toBe('movie');
       expectCode(
-        () => fx.catalogs.create(token, 'company', { name: 'Pixar', scope: 'movie' }),
+        () => fx.catalogs.create(token, 'company', { name: 'Pixar', aliases: [], scope: 'movie' }),
         ValidationError,
         'catalog.scope_not_allowed',
       );
@@ -158,7 +163,7 @@ describe('CatalogService', () => {
       const zelda = createItem('game', 'Zelda');
       link(zelda, entry.id, 'developer');
 
-      fx.catalogs.update(token, entry.id, { name: 'Nintendo Co., Ltd.', scope: null });
+      fx.catalogs.update(token, entry.id, { name: 'Nintendo Co., Ltd.', aliases: [], scope: null });
 
       const linked = db()
         .prepare(
@@ -174,11 +179,11 @@ describe('CatalogService', () => {
       const entry = add('company', 'nintendo');
       add('company', 'Sega');
 
-      expect(fx.catalogs.update(token, entry.id, { name: 'Nintendo', scope: null }).name).toBe(
-        'Nintendo',
-      );
+      expect(
+        fx.catalogs.update(token, entry.id, { name: 'Nintendo', aliases: [], scope: null }).name,
+      ).toBe('Nintendo');
       expectCode(
-        () => fx.catalogs.update(token, entry.id, { name: 'Sega', scope: null }),
+        () => fx.catalogs.update(token, entry.id, { name: 'Sega', aliases: [], scope: null }),
         ConflictError,
         'catalog.duplicate_name',
       );
@@ -187,14 +192,14 @@ describe('CatalogService', () => {
     it('changes the scope of a movie/series genre', () => {
       const genre = fx.catalogs.list(token, 'screen_genre').find((e) => e.name === 'Telenovela')!;
 
-      expect(fx.catalogs.update(token, genre.id, { name: 'Telenovela', scope: null }).scope).toBe(
-        null,
-      );
+      expect(
+        fx.catalogs.update(token, genre.id, { name: 'Telenovela', aliases: [], scope: null }).scope,
+      ).toBe(null);
     });
 
     it('fails for a value that does not exist', () => {
       expectCode(
-        () => fx.catalogs.update(token, 9999, { name: 'X', scope: null }),
+        () => fx.catalogs.update(token, 9999, { name: 'X', aliases: [], scope: null }),
         NotFoundError,
         'catalog.not_found',
       );
@@ -252,6 +257,67 @@ describe('CatalogService', () => {
 
     it('fails for a value that does not exist', () => {
       expectCode(() => fx.catalogs.delete(token, 9999), NotFoundError, 'catalog.not_found');
+    });
+  });
+
+  describe('other names (aliases)', () => {
+    it('come with the default regional platform names', () => {
+      const find = (name: string) =>
+        fx.catalogs.list(token, 'platform').find((e) => e.name === name);
+
+      expect(find('Mega Drive')?.aliases).toEqual(['Genesis']);
+      expect(find('Super Nintendo')?.aliases).toEqual(['Super Famicom', 'SNES']);
+      expect(find('NES')?.aliases).toEqual(['Famicom']);
+      expect(find('PC')?.aliases).toEqual([]);
+    });
+
+    it('are saved cleaned with the value and replaced when it is edited', () => {
+      const entry = fx.catalogs.create(token, 'franchise', {
+        name: 'Pokémon',
+        aliases: [' Pocket Monsters ', '', 'Pokémon', 'Pocket Monsters'],
+        scope: null,
+      });
+      expect(entry.aliases).toEqual(['Pocket Monsters']);
+
+      const updated = fx.catalogs.update(token, entry.id, {
+        name: 'Pokémon',
+        aliases: ['ポケモン'],
+        scope: null,
+      });
+      expect(updated.aliases).toEqual(['ポケモン']);
+      expect(fx.catalogs.list(token, 'franchise')[0]?.aliases).toEqual(['ポケモン']);
+    });
+
+    it('are stored with a search key without case or accents', () => {
+      fx.catalogs.create(token, 'company', {
+        name: 'Square',
+        aliases: ['SquareSoft'],
+        scope: null,
+      });
+
+      expect(
+        db()
+          .prepare('SELECT name_key FROM catalog_entry_alias WHERE name = ?')
+          .pluck()
+          .get('SquareSoft'),
+      ).toBe('squaresoft');
+    });
+
+    it('are deleted with their value', () => {
+      const entry = fx.catalogs.create(token, 'company', {
+        name: 'Square',
+        aliases: ['SquareSoft'],
+        scope: null,
+      });
+
+      fx.catalogs.delete(token, entry.id);
+
+      expect(
+        db()
+          .prepare('SELECT COUNT(*) FROM catalog_entry_alias WHERE entry_id = ?')
+          .pluck()
+          .get(entry.id),
+      ).toBe(0);
     });
   });
 

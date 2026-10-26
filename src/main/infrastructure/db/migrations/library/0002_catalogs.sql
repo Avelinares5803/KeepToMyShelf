@@ -18,6 +18,17 @@ CREATE TABLE catalog_entry (
 
 CREATE INDEX catalog_entry_search ON catalog_entry (catalog, name_key);
 
+-- Other names of a value (e.g. "Genesis" for "Mega Drive"), found when searching.
+CREATE TABLE catalog_entry_alias (
+  id       INTEGER PRIMARY KEY,
+  entry_id INTEGER NOT NULL REFERENCES catalog_entry (id) ON DELETE CASCADE,
+  name     TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  name_key TEXT NOT NULL,
+  UNIQUE (entry_id, name)
+) STRICT;
+
+CREATE INDEX catalog_entry_alias_search ON catalog_entry_alias (name_key);
+
 -- Which values an item has, and in which role ("developer", "actor", "owned_on"...).
 CREATE TABLE item_entry (
   item_id    INTEGER NOT NULL REFERENCES item (id) ON DELETE CASCADE,

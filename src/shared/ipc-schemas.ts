@@ -20,6 +20,7 @@ const catalogSchema = z.enum(CATALOGS);
 const catalogEntryIdSchema = z.number().int().positive();
 const catalogEntryInputSchema = z.object({
   name: z.string().max(1_000),
+  aliases: z.array(z.string().max(1_000)).max(500).readonly(),
   scope: z.enum(['movie', 'series']).nullable(),
 });
 

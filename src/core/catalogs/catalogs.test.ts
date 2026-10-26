@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ValidationError } from '../errors';
 import {
+  CATALOG_MAX_ALIASES,
   CATALOG_NAME_MAX_LENGTH,
   catalogForRole,
   isScopeCompatible,
+  normalizeAliases,
   normalizeCatalogName,
   rolesForKind,
 } from './catalogs';
@@ -53,6 +55,26 @@ describe('roles per kind', () => {
     expect(isScopeCompatible('series', 'series')).toBe(true);
     expect(isScopeCompatible('series', 'movie')).toBe(false);
     expect(isScopeCompatible('movie', 'series')).toBe(false);
+  });
+});
+
+describe('normalizeAliases', () => {
+  it('drops blank names, exact repetitions and the value’s own name, keeping order', () => {
+    expect(
+      normalizeAliases('Super Nintendo', [' SNES ', '', 'Super Famicom', 'SNES', 'Super Nintendo']),
+    ).toEqual(['SNES', 'Super Famicom']);
+  });
+
+  it('keeps names that differ in case or accents', () => {
+    expect(normalizeAliases('Pokémon', ['Pokemon', 'POKÉMON'])).toEqual(['Pokemon', 'POKÉMON']);
+  });
+
+  it('validates every name and limits how many there are', () => {
+    expect(() => normalizeAliases('X', ['a'.repeat(CATALOG_NAME_MAX_LENGTH + 1)])).toThrow(
+      ValidationError,
+    );
+    const tooMany = Array.from({ length: CATALOG_MAX_ALIASES + 1 }, (_, i) => `Alias ${i}`);
+    expect(() => normalizeAliases('X', tooMany)).toThrow(ValidationError);
   });
 });
 

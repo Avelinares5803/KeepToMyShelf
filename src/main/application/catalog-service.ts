@@ -1,4 +1,9 @@
-import { normalizeCatalogName, type Catalog, type GenreScope } from '../../core/catalogs/catalogs';
+import {
+  normalizeAliases,
+  normalizeCatalogName,
+  type Catalog,
+  type GenreScope,
+} from '../../core/catalogs/catalogs';
 import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import { normalizeForSearch } from '../../core/text/normalize';
 import type { CatalogEntrySummary } from '../../shared/catalogs';
@@ -18,6 +23,8 @@ interface EntryRow {
 
 export interface CatalogEntryInput {
   readonly name: string;
+  /** Other names the value is also known by (e.g. "Genesis" for "Mega Drive"). */
+  readonly aliases: readonly string[];
   /** Only for movie/series genres; null means both. */
   readonly scope: GenreScope | null;
 }
@@ -39,10 +46,11 @@ const USAGE_QUERY = `
   LEFT JOIN usage u ON u.entry_id = e.id
   LEFT JOIN item i ON i.id = u.item_id`;
 
-const toSummary = (row: EntryRow): CatalogEntrySummary => ({
+const toSummary = (row: EntryRow, aliases: string[]): CatalogEntrySummary => ({
   id: row.id,
   catalog: row.catalog,
   name: row.name,
+  aliases,
   scope: row.scope,
   usage: { total: row.total, game: row.game, movie: row.movie, series: row.series },
 });
@@ -53,38 +61,62 @@ export class CatalogService {
 
   /** Values of one catalog, ordered by name ignoring case and accents. */
   list(token: string, catalog: Catalog): CatalogEntrySummary[] {
-    const rows = this.db(token)
+    const db = this.db(token);
+    const rows = db
       .prepare(`${USAGE_QUERY} WHERE e.catalog = ? GROUP BY e.id ORDER BY e.name_key, e.name`)
       .all(catalog) as EntryRow[];
-    return rows.map(toSummary);
+
+    const aliases = new Map<number, string[]>();
+    const aliasRows = db
+      .prepare(
+        `SELECT a.entry_id, a.name FROM catalog_entry_alias a
+         JOIN catalog_entry e ON e.id = a.entry_id
+         WHERE e.catalog = ? ORDER BY a.id`,
+      )
+      .all(catalog) as { entry_id: number; name: string }[];
+    for (const { entry_id, name } of aliasRows) {
+      aliases.set(entry_id, [...(aliases.get(entry_id) ?? []), name]);
+    }
+
+    return rows.map((row) => toSummary(row, aliases.get(row.id) ?? []));
   }
 
   create(token: string, catalog: Catalog, input: CatalogEntryInput): CatalogEntrySummary {
     const db = this.db(token);
     const name = normalizeCatalogName(input.name);
+    const aliases = normalizeAliases(name, input.aliases);
     assertScopeAllowed(catalog, input.scope);
     this.assertNameFree(db, catalog, name, null);
 
-    const result = db
-      .prepare('INSERT INTO catalog_entry (catalog, name, name_key, scope) VALUES (?, ?, ?, ?)')
-      .run(catalog, name, normalizeForSearch(name), input.scope);
-    return this.read(db, Number(result.lastInsertRowid));
+    const id = db.transaction(() => {
+      const result = db
+        .prepare('INSERT INTO catalog_entry (catalog, name, name_key, scope) VALUES (?, ?, ?, ?)')
+        .run(catalog, name, normalizeForSearch(name), input.scope);
+      const newId = Number(result.lastInsertRowid);
+      writeAliases(db, newId, aliases);
+      return newId;
+    })();
+    return this.read(db, id);
   }
 
-  /** Renames a value (all items that use it show the new name) and/or changes its scope. */
+  /** Renames a value (all items that use it show the new name), its other names and scope. */
   update(token: string, id: number, input: CatalogEntryInput): CatalogEntrySummary {
     const db = this.db(token);
     const current = this.read(db, id);
     const name = normalizeCatalogName(input.name);
+    const aliases = normalizeAliases(name, input.aliases);
     assertScopeAllowed(current.catalog, input.scope);
     this.assertNameFree(db, current.catalog, name, id);
 
-    db.prepare('UPDATE catalog_entry SET name = ?, name_key = ?, scope = ? WHERE id = ?').run(
-      name,
-      normalizeForSearch(name),
-      input.scope,
-      id,
-    );
+    db.transaction(() => {
+      db.prepare('UPDATE catalog_entry SET name = ?, name_key = ?, scope = ? WHERE id = ?').run(
+        name,
+        normalizeForSearch(name),
+        input.scope,
+        id,
+      );
+      writeAliases(db, id, aliases);
+    })();
     return this.read(db, id);
   }
 
@@ -120,7 +152,11 @@ export class CatalogService {
     if (!row) {
       throw new NotFoundError('catalog.not_found', `Catalog value ${id} does not exist`);
     }
-    return toSummary(row);
+    const aliases = db
+      .prepare('SELECT name FROM catalog_entry_alias WHERE entry_id = ? ORDER BY id')
+      .pluck()
+      .all(id) as string[];
+    return toSummary(row, aliases);
   }
 
   // Exact text comparison: values that differ in case or accents can coexist.
@@ -144,4 +180,13 @@ function assertScopeAllowed(catalog: Catalog, scope: GenreScope | null): void {
   if (scope !== null && catalog !== 'screen_genre') {
     throw new ValidationError('catalog.scope_not_allowed', 'Only movie/series genres have a scope');
   }
+}
+
+/** Replaces the other names of a value. */
+function writeAliases(db: SqliteDatabase, entryId: number, aliases: readonly string[]): void {
+  db.prepare('DELETE FROM catalog_entry_alias WHERE entry_id = ?').run(entryId);
+  const insert = db.prepare(
+    'INSERT INTO catalog_entry_alias (entry_id, name, name_key) VALUES (?, ?, ?)',
+  );
+  for (const alias of aliases) insert.run(entryId, alias, normalizeForSearch(alias));
 }

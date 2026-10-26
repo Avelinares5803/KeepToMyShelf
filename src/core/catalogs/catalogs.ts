@@ -82,6 +82,7 @@ export function isScopeCompatible(scope: GenreScope | null, kind: ItemKind): boo
 }
 
 export const CATALOG_NAME_MAX_LENGTH = 200;
+export const CATALOG_MAX_ALIASES = 50;
 
 /** Cleans a catalog value typed by the user. Case and accents are kept as typed. */
 export function normalizeCatalogName(raw: string): string {
@@ -96,4 +97,21 @@ export function normalizeCatalogName(raw: string): string {
     throw new ValidationError('catalog.name_too_long', 'Name is too long');
   }
   return name;
+}
+
+/**
+ * Cleans the other names of a value: blank ones and exact repetitions (including the
+ * value's own name) are dropped, keeping the order typed.
+ */
+export function normalizeAliases(name: string, raw: readonly string[]): string[] {
+  const aliases: string[] = [];
+  for (const candidate of raw) {
+    if (cleanSingleLine(candidate)?.length === 0) continue;
+    const alias = normalizeCatalogName(candidate);
+    if (alias !== name && !aliases.includes(alias)) aliases.push(alias);
+  }
+  if (aliases.length > CATALOG_MAX_ALIASES) {
+    throw new ValidationError('catalog.too_many_aliases', 'Too many other names');
+  }
+  return aliases;
 }

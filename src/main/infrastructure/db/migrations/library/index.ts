@@ -1,5 +1,9 @@
 import type { Migration } from '../../migrator';
 import items from './0001_items.sql?raw';
+import catalogs from './0002_catalogs.sql?raw';
 
 // Append new migrations at the end. Never edit or reorder a migration once it is released.
-export const libraryMigrations: readonly Migration[] = [{ version: 1, name: 'items', sql: items }];
+export const libraryMigrations: readonly Migration[] = [
+  { version: 1, name: 'items', sql: items },
+  { version: 2, name: 'catalogs', sql: catalogs },
+];

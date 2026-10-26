@@ -1,6 +1,8 @@
 import { mkdirSync } from 'node:fs';
 import { AppError, NotFoundError } from '../../core/errors';
+import type { Language } from '../../shared/settings';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
+import { seedDefaultCatalogs } from '../infrastructure/db/default-catalogs';
 import { openLibraryDatabase } from '../infrastructure/db/library-database';
 import type { DataPaths } from '../infrastructure/paths';
 
@@ -15,6 +17,8 @@ export interface SessionManagerDeps {
   readonly paths: DataPaths;
   readonly now: () => Date;
   readonly newId: () => string;
+  /** Current language of a profile, used to load the default catalogs the first time. */
+  readonly languageOf: (profileId: string) => Language;
 }
 
 /**
@@ -36,6 +40,8 @@ export class SessionManager {
     this.closeCurrent();
     mkdirSync(paths.profileDir(profileId), { recursive: true });
     const db = openLibraryDatabase(paths.libraryDatabase(profileId));
+    // Profiles created before catalogs existed get the default lists on their next opening.
+    seedDefaultCatalogs(db, this.deps.languageOf(profileId));
     appDb
       .prepare('UPDATE profile SET last_opened_at = ? WHERE id = ?')
       .run(now().toISOString(), profileId);

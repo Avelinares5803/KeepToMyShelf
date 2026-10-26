@@ -1,6 +1,7 @@
 import { app, ipcMain, nativeTheme } from 'electron';
 import { IpcChannels } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
+import type { CatalogService } from '../application/catalog-service';
 import type { ItemService } from '../application/item-service';
 import type { ProfileService } from '../application/profile-service';
 import type { SessionManager } from '../application/session-manager';
@@ -12,10 +13,17 @@ export interface Services {
   readonly sessions: SessionManager;
   readonly settings: SettingsService;
   readonly items: ItemService;
+  readonly catalogs: CatalogService;
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
-export function registerIpcHandlers({ profiles, sessions, settings, items }: Services): void {
+export function registerIpcHandlers({
+  profiles,
+  sessions,
+  settings,
+  items,
+  catalogs,
+}: Services): void {
   const handlers: Record<keyof typeof IpcChannels, (input: unknown) => unknown> = {
     getAppInfo: createHandler(ipcInputSchemas.getAppInfo, () => ({
       name: app.getName(),
@@ -75,6 +83,23 @@ export function registerIpcHandlers({ profiles, sessions, settings, items }: Ser
     ),
     emptyTrash: createHandler(ipcInputSchemas.emptyTrash, ({ token, kind }) =>
       items.emptyTrash(token, kind),
+    ),
+    listCatalog: createHandler(ipcInputSchemas.listCatalog, ({ token, catalog }) =>
+      catalogs.list(token, catalog),
+    ),
+    createCatalogEntry: createHandler(
+      ipcInputSchemas.createCatalogEntry,
+      ({ token, catalog, entry }) => catalogs.create(token, catalog, entry),
+    ),
+    updateCatalogEntry: createHandler(ipcInputSchemas.updateCatalogEntry, ({ token, id, entry }) =>
+      catalogs.update(token, id, entry),
+    ),
+    deleteCatalogEntry: createHandler(ipcInputSchemas.deleteCatalogEntry, ({ token, id }) =>
+      catalogs.delete(token, id),
+    ),
+    deleteUnusedCatalogEntries: createHandler(
+      ipcInputSchemas.deleteUnusedCatalogEntries,
+      ({ token, catalog }) => catalogs.deleteUnused(token, catalog),
     ),
   };
 

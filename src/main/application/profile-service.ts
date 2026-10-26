@@ -9,6 +9,7 @@ import {
 import type { Profile, ProfileChange } from '../../shared/ipc';
 import type { Language } from '../../shared/settings';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
+import { seedDefaultCatalogs } from '../infrastructure/db/default-catalogs';
 import { openLibraryDatabase } from '../infrastructure/db/library-database';
 import { DELETED_PROFILE_PREFIX, type DataPaths } from '../infrastructure/paths';
 import type { SessionManager } from './session-manager';
@@ -81,7 +82,12 @@ export class ProfileService {
     const profileDir = paths.profileDir(profile.id);
     mkdirSync(profileDir, { recursive: true });
     try {
-      openLibraryDatabase(paths.libraryDatabase(profile.id)).close();
+      const library = openLibraryDatabase(paths.libraryDatabase(profile.id));
+      try {
+        seedDefaultCatalogs(library, input.language ?? settings.getGlobal().language);
+      } finally {
+        library.close();
+      }
       appDb.transaction(() => {
         appDb
           .prepare('INSERT INTO profile (id, name, name_key, created_at) VALUES (?, ?, ?, ?)')

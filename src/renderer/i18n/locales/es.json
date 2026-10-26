@@ -168,6 +168,15 @@
     "appliedToAll": "Aplicado a todos los perfiles."
   },
   "errors": {
+    "catalog": {
+      "name_empty": "Escribe un nombre.",
+      "name_invalid_characters": "El nombre contiene caracteres no válidos.",
+      "name_too_long": "El nombre no puede tener más de 200 caracteres.",
+      "duplicate_name": "Ya existe un valor con ese nombre exacto.",
+      "not_found": "Ese valor ya no existe.",
+      "scope_not_allowed": "Solo los géneros de películas y series pueden limitarse a un tipo.",
+      "too_many_aliases": "No se pueden añadir más de 50 nombres alternativos."
+    },
     "date": {
       "invalid_format": "La fecha no tiene un formato válido.",
       "invalid_year": "El año no es válido.",

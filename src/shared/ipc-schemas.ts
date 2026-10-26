@@ -4,6 +4,7 @@
  * script does not depend on zod (a sandboxed preload cannot load npm packages).
  */
 import { z } from 'zod';
+import { CATALOGS } from '../core/catalogs/catalogs';
 import { ITEM_STATUSES } from '../core/items/item-draft';
 import { ITEM_KINDS } from './content';
 import { languageSchema, settingUpdateSchema, themeSchema } from './settings';
@@ -15,6 +16,14 @@ const profileNameSchema = z.string().max(200);
 
 // Item input: zod checks the shape and rejects absurd payloads; core/items applies the
 // business rules (lengths, dates that exist, kind-specific fields) with translatable errors.
+const catalogSchema = z.enum(CATALOGS);
+const catalogEntryIdSchema = z.number().int().positive();
+const catalogEntryInputSchema = z.object({
+  name: z.string().max(1_000),
+  aliases: z.array(z.string().max(1_000)).max(500).readonly(),
+  scope: z.enum(['movie', 'series']).nullable(),
+});
+
 const itemKindSchema = z.enum(ITEM_KINDS);
 const itemIdSchema = z.number().int().positive();
 const partialDateSchema = z.object({
@@ -69,6 +78,19 @@ export const ipcInputSchemas = {
   restoreItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   deleteItemPermanently: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   emptyTrash: z.object({ token: sessionTokenSchema, kind: itemKindSchema.nullable() }),
+  listCatalog: z.object({ token: sessionTokenSchema, catalog: catalogSchema }),
+  createCatalogEntry: z.object({
+    token: sessionTokenSchema,
+    catalog: catalogSchema,
+    entry: catalogEntryInputSchema,
+  }),
+  updateCatalogEntry: z.object({
+    token: sessionTokenSchema,
+    id: catalogEntryIdSchema,
+    entry: catalogEntryInputSchema,
+  }),
+  deleteCatalogEntry: z.object({ token: sessionTokenSchema, id: catalogEntryIdSchema }),
+  deleteUnusedCatalogEntries: z.object({ token: sessionTokenSchema, catalog: catalogSchema }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

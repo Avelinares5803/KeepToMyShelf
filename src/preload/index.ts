@@ -43,6 +43,13 @@ const api: KeepToMyShelfApi = {
     deletePermanently: invoke(IpcChannels.deleteItemPermanently),
     emptyTrash: invoke(IpcChannels.emptyTrash),
   },
+  catalogs: {
+    list: invoke(IpcChannels.listCatalog),
+    create: invoke(IpcChannels.createCatalogEntry),
+    update: invoke(IpcChannels.updateCatalogEntry),
+    delete: invoke(IpcChannels.deleteCatalogEntry),
+    deleteUnused: invoke(IpcChannels.deleteUnusedCatalogEntries),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
+import { CatalogService } from '../../src/main/application/catalog-service';
 import { ItemService } from '../../src/main/application/item-service';
 import { ProfileService } from '../../src/main/application/profile-service';
 import { SessionManager } from '../../src/main/application/session-manager';
@@ -19,6 +20,7 @@ export interface ProfileFixture {
   readonly sessions: SessionManager;
   readonly profiles: ProfileService;
   readonly items: ItemService;
+  readonly catalogs: CatalogService;
   readonly cleanup: () => void;
 }
 
@@ -34,11 +36,19 @@ export function createProfileFixture(): ProfileFixture {
   const now = () => new Date((tick += 1000));
 
   const settings = new SettingsService(appDb, DEFAULT_SETTINGS);
-  const sessions = new SessionManager({ appDb, paths, now, newId: randomUUID });
+  const sessions = new SessionManager({
+    appDb,
+    paths,
+    now,
+    newId: randomUUID,
+    languageOf: (profileId) => settings.getForProfile(profileId).language,
+  });
   const profiles = new ProfileService({ appDb, paths, sessions, settings, now, newId: randomUUID });
   const items = new ItemService({ sessions, now, newId: randomUUID });
+  const catalogs = new CatalogService({ sessions });
 
   return {
+    catalogs,
     paths,
     appDb,
     settings,

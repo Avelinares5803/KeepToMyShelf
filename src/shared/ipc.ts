@@ -6,6 +6,7 @@
  * input validation lives in ipc-schemas.ts and runs in the main process.
  */
 import type { z } from 'zod';
+import type { CatalogEntrySummary } from './catalogs';
 import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemSummary } from './items';
 import type { AppSettings } from './settings';
@@ -33,6 +34,11 @@ export const IpcChannels = {
   restoreItem: 'items:restore',
   deleteItemPermanently: 'items:delete-permanently',
   emptyTrash: 'items:empty-trash',
+  listCatalog: 'catalogs:list',
+  createCatalogEntry: 'catalogs:create',
+  updateCatalogEntry: 'catalogs:update',
+  deleteCatalogEntry: 'catalogs:delete',
+  deleteUnusedCatalogEntries: 'catalogs:delete-unused',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -104,5 +110,13 @@ export interface KeepToMyShelfApi {
     deletePermanently(input: IpcInput<'deleteItemPermanently'>): Promise<IpcResult<void>>;
     /** Resolves to the number of items deleted. */
     emptyTrash(input: IpcInput<'emptyTrash'>): Promise<IpcResult<number>>;
+  };
+  catalogs: {
+    list(input: IpcInput<'listCatalog'>): Promise<IpcResult<CatalogEntrySummary[]>>;
+    create(input: IpcInput<'createCatalogEntry'>): Promise<IpcResult<CatalogEntrySummary>>;
+    update(input: IpcInput<'updateCatalogEntry'>): Promise<IpcResult<CatalogEntrySummary>>;
+    delete(input: IpcInput<'deleteCatalogEntry'>): Promise<IpcResult<void>>;
+    /** Resolves to the number of values deleted. */
+    deleteUnused(input: IpcInput<'deleteUnusedCatalogEntries'>): Promise<IpcResult<number>>;
   };
 }

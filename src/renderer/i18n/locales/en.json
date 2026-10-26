@@ -168,6 +168,14 @@
     "appliedToAll": "Applied to all profiles."
   },
   "errors": {
+    "catalog": {
+      "name_empty": "Enter a name.",
+      "name_invalid_characters": "The name contains invalid characters.",
+      "name_too_long": "The name cannot be longer than 200 characters.",
+      "duplicate_name": "A value with exactly that name already exists.",
+      "not_found": "That value no longer exists.",
+      "scope_not_allowed": "Only movie and series genres can be limited to one kind."
+    },
     "date": {
       "invalid_format": "The date format is not valid.",
       "invalid_year": "The year is not valid.",

@@ -265,9 +265,13 @@ describe('CatalogService', () => {
       const find = (name: string) =>
         fx.catalogs.list(token, 'platform').find((e) => e.name === name);
 
-      expect(find('Mega Drive')?.aliases).toEqual(['Genesis']);
-      expect(find('Super Nintendo')?.aliases).toEqual(['Super Famicom', 'SNES']);
-      expect(find('NES')?.aliases).toEqual(['Famicom']);
+      expect(find('Mega Drive')?.aliases).toEqual(['Sega Genesis', 'Sega Mega Drive']);
+      expect(find('SNES')?.aliases).toEqual([
+        'Super Nintendo Entertainment System',
+        'Super Famicom',
+        'Super FC',
+        'SFC',
+      ]);
       expect(find('PC')?.aliases).toEqual([]);
     });
 

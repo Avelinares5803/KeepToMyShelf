@@ -15,52 +15,166 @@ interface DefaultCatalogs {
   readonly region: readonly string[];
 }
 
-// Platform names are the same in every language except a few generic ones.
+// Platform names are the same in every language except a few generic ones. Grouped by
+// manufacturer, home consoles (hybrids included) before handhelds; the app lists them
+// alphabetically.
 const platforms = (mobile: string, arcade: string): string[] => [
   'PC',
   'macOS',
   'Linux',
-  'PlayStation',
-  'PlayStation 2',
-  'PlayStation 3',
-  'PlayStation 4',
-  'PlayStation 5',
-  'PSP',
-  'PS Vita',
-  'Xbox',
-  'Xbox 360',
-  'Xbox One',
-  'Xbox Series X|S',
+  arcade,
+  mobile,
+  // Magnavox
+  'Magnavox Odyssey',
+  // Atari
+  'Atari Home Pong',
+  'Atari 2600',
+  'Atari 5200',
+  'Atari 7800',
+  'Atari Jaguar',
+  'Atari Jaguar CD',
+  'Atari Lynx',
+  // Fairchild
+  'Fairchild Channel F',
+  // Coleco
+  'Coleco Telstar',
+  'ColecoVision',
+  // Mattel
+  'Intellivision',
+  // GCE
+  'Vectrex',
+  // Nintendo
   'NES',
-  'Super Nintendo',
+  'Famicom Disk System',
+  'SNES',
   'Nintendo 64',
+  'Nintendo 64DD',
   'GameCube',
+  'iQue Player',
   'Wii',
   'Wii U',
   'Nintendo Switch',
   'Nintendo Switch 2',
+  'Game & Watch',
   'Game Boy',
+  'Virtual Boy',
   'Game Boy Color',
   'Game Boy Advance',
   'Nintendo DS',
+  'Nintendo DSi',
   'Nintendo 3DS',
+  // Sega
+  'SG-1000',
+  'SG-1000 II',
   'Master System',
   'Mega Drive',
-  'Sega Saturn',
+  'Mega-CD',
+  '32X',
+  'Saturn',
   'Dreamcast',
   'Game Gear',
-  'Atari 2600',
+  // NEC
+  'PC Engine',
+  'PC Engine CD-ROM',
+  'TurboDuo',
+  'PC-FX',
+  // SNK
   'Neo Geo',
-  mobile,
-  arcade,
+  'Neo Geo CD',
+  'Neo Geo Pocket',
+  'Neo Geo Pocket Color',
+  // Philips
+  'CD-i',
+  // 3DO
+  '3DO',
+  // Capcom
+  'CPS Changer',
+  // Apple
+  'Apple Pippin',
+  // Bandai
+  'WonderSwan',
+  'WonderSwan Color',
+  // Sony
+  'PlayStation',
+  'PlayStation 2',
+  'PlayStation 3',
+  'PlayStation 4',
+  'PlayStation 4 Pro',
+  'PlayStation 5',
+  'PlayStation 5 Pro',
+  'PlayStation Portable',
+  'PlayStation Vita',
+  // Microsoft
+  'Xbox',
+  'Xbox 360',
+  'Xbox One',
+  'Xbox One X',
+  'Xbox Series X|S',
+  // Nokia
+  'N-Gage',
+  // Zeebo
+  'Zeebo',
+  // Google
+  'Stadia',
+  // Valve
+  'Steam Machine',
+  'Steam Deck',
 ];
 
-/** Other names of default platforms, mostly regional (found when searching). */
+/**
+ * Other names of default platforms (regional names, abbreviations), found when searching.
+ * An alias contained in the name or in another alias would add nothing to the search.
+ */
 export const DEFAULT_PLATFORM_ALIASES: Readonly<Record<string, readonly string[]>> = {
-  NES: ['Famicom'],
-  'Super Nintendo': ['Super Famicom', 'SNES'],
-  'Mega Drive': ['Genesis'],
-  'Xbox Series X|S': ['Xbox Series'],
+  'Atari 5200': ['Atari 5200 SuperSystem', 'Atari 5200 Advanced Video Entertainment System'],
+  'Atari 7800': ['Atari 7800 ProSystem'],
+  'Atari Jaguar CD': ['Jag CD'],
+  Intellivision: ['Mattel Intellivision'],
+  Vectrex: ['GCE Vectrex'],
+  NES: ['Nintendo Entertainment System', 'Family Computer', 'Famicom'],
+  'Famicom Disk System': ['FDS'],
+  SNES: ['Super Nintendo Entertainment System', 'Super Famicom', 'Super FC', 'SFC'],
+  'Nintendo 64': ['Ultra 64', 'N64'],
+  'Nintendo 64DD': ['Nintendo 64 Disk Drive'],
+  GameCube: ['Nintendo GameCube'],
+  Wii: ['Nintendo Wii'],
+  'Wii U': ['Nintendo Wii U', 'Project Café'],
+  'Nintendo Switch': ['NX'],
+  'Game & Watch': ['tricOtronic'],
+  'Game Boy': ['Nintendo Game Boy', 'GB'],
+  'Virtual Boy': ['Nintendo Virtual Boy'],
+  'Game Boy Color': ['GBC'],
+  'Game Boy Advance': ['GBA'],
+  'Nintendo DS': ['NDS'],
+  'Nintendo DSi': ['NDSi'],
+  'Nintendo 3DS': ['N3DS'],
+  'SG-1000': ['Sega SG-1000'],
+  'SG-1000 II': ['Sega SG-1000 II'],
+  'Master System': ['Sega Mark III', 'Sega Master System'],
+  'Mega Drive': ['Sega Genesis', 'Sega Mega Drive'],
+  'Mega-CD': ['Sega CD', 'Mega CD'],
+  '32X': ['Sega 32X', 'Genesis 32X', 'Super 32X', 'Mega 32X', 'Mega Drive 32X'],
+  Saturn: ['Sega Saturn', 'SegaSaturn'],
+  Dreamcast: ['Sega Dreamcast'],
+  'Game Gear': ['Sega Game Gear'],
+  'PC Engine': ['TurboGrafx-16'],
+  'PC Engine CD-ROM': ['TurboGrafx-CD'],
+  'Neo Geo': ['Neo Geo AES'],
+  'CD-i': ['Compact Disc-Interactive'],
+  '3DO': ['3DO REAL Interactive Multiplayer', '3DO Interactive Multiplayer'],
+  'CPS Changer': ['Capcom Power System Changer'],
+  'Apple Pippin': ['PiPP!N'],
+  PlayStation: ['PS1', 'PSX', 'Sony PlayStation'],
+  'PlayStation 2': ['PS2', 'Sony PlayStation 2'],
+  'PlayStation 3': ['PS3', 'Sony PlayStation 3'],
+  'PlayStation 4': ['PS4', 'Sony PlayStation 4'],
+  'PlayStation 4 Pro': ['PS4 Pro', 'Sony PlayStation 4 Pro'],
+  'PlayStation 5': ['PS5', 'Sony PlayStation 5'],
+  'PlayStation 5 Pro': ['PS5 Pro', 'Sony PlayStation 5 Pro'],
+  'PlayStation Portable': ['PSP', 'Sony PlayStation Portable'],
+  'PlayStation Vita': ['PS Vita', 'Sony PlayStation Vita'],
+  'N-Gage': ['Nokia N-Gage'],
+  Stadia: ['Google Stadia'],
 };
 
 /** Initial lists copied into every new profile, in the profile's language. */

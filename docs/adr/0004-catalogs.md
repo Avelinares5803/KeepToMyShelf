@@ -65,7 +65,7 @@ Las fechas de lanzamiento o estreno van en `item_release` (región + fecha parci
 - **Orden del formulario y de la ficha:**
   - Identificación: título, títulos alternativos, descripción, sagas.
   - Mi seguimiento: estado, valoración, fechas de uso, horas, formato, «Lo tengo en», favorito, notas.
-  - Ficha. Videojuegos: «Publicado en», géneros, desarrolladoras, distribuidoras, música, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, música, fechas de estreno.
+  - Ficha. Videojuegos: «Publicado en», géneros, distribuidoras, desarrolladoras, música, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, música, fechas de estreno.
   - Etiquetas.
 
 ## Consecuencias

@@ -17,8 +17,8 @@ describe('roles per kind', () => {
       'owned_on',
       'released_on',
       'genre',
-      'developer',
       'publisher',
+      'developer',
       'composer',
       'tag',
     ]);

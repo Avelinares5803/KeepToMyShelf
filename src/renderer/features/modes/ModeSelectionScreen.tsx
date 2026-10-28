@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { ITEM_KINDS, type ItemKind } from '../../../shared/content';
-import { FilmIcon, GamepadIcon, TvIcon } from '../../components/icons';
+import { FilmIcon, GamepadIcon, ListIcon, TvIcon } from '../../components/icons';
 
 interface ModeSelectionScreenProps {
   onSelect: (kind: ItemKind) => void;
+  onOpenCatalogs: () => void;
 }
 
 const ICONS: Record<ItemKind, () => React.JSX.Element> = {
@@ -12,7 +13,7 @@ const ICONS: Record<ItemKind, () => React.JSX.Element> = {
   series: TvIcon,
 };
 
-export function ModeSelectionScreen({ onSelect }: ModeSelectionScreenProps) {
+export function ModeSelectionScreen({ onSelect, onOpenCatalogs }: ModeSelectionScreenProps) {
   const { t } = useTranslation();
 
   return (
@@ -31,6 +32,13 @@ export function ModeSelectionScreen({ onSelect }: ModeSelectionScreenProps) {
           );
         })}
       </ul>
+      <button
+        type="button"
+        className="button button--ghost modes__catalogs"
+        onClick={onOpenCatalogs}
+      >
+        <ListIcon /> {t('catalogs.title')}
+      </button>
     </section>
   );
 }

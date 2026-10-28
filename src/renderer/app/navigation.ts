@@ -12,7 +12,9 @@ export type Screen =
     }
   /** `itemId` is null when creating a new item. */
   | { readonly name: 'edit'; readonly kind: ItemKind; readonly itemId: number | null }
-  | { readonly name: 'trash'; readonly kind: ItemKind };
+  | { readonly name: 'trash'; readonly kind: ItemKind }
+  /** `kind` is the library it was opened from, or null from the mode selection. */
+  | { readonly name: 'catalogs'; readonly kind: ItemKind | null };
 
 export interface NavigationState {
   /** History of visited screens; the last one is shown. Never empty. */
@@ -39,6 +41,8 @@ function screenKey(screen: Screen): string {
     case 'library':
     case 'trash':
       return `${screen.name}:${screen.kind}`;
+    case 'catalogs':
+      return 'catalogs';
     case 'item':
     case 'edit':
       return `${screen.name}:${screen.kind}:${screen.itemId ?? 'new'}`;

@@ -150,6 +150,64 @@
     "emptyConfirm_one": "Se eliminará definitivamente 1 elemento de «{{scope}}». Esta acción no se puede deshacer.",
     "emptyConfirm_other": "Se eliminarán definitivamente {{count}} elementos de «{{scope}}». Esta acción no se puede deshacer."
   },
+  "catalogs": {
+    "title": "Catálogos",
+    "listLabel": "Catálogos",
+    "names": {
+      "platform": "Plataformas",
+      "game_genre": "Géneros de videojuegos",
+      "screen_genre": "Géneros de películas y series",
+      "franchise": "Sagas",
+      "company": "Empresas",
+      "person": "Personas",
+      "tag": "Etiquetas",
+      "region": "Regiones"
+    },
+    "add": "Añadir",
+    "edit": "Editar",
+    "editValue": "Editar «{{name}}»",
+    "delete": "Eliminar",
+    "deleteValue": "Eliminar «{{name}}»",
+    "search": "Buscar en {{catalog}}",
+    "show": "Mostrar",
+    "allValues": "Todos",
+    "empty": "Este catálogo está vacío. Pulsa «Añadir» para crear el primer valor.",
+    "noMatches": "Ningún valor coincide con la búsqueda.",
+    "noneForKind": "Ningún elemento de «{{kind}}» usa todavía valores de este catálogo.",
+    "alsoKnownAs": "También: {{names}}",
+    "usage_zero": "Sin usar",
+    "usage_one": "1 elemento",
+    "usage_other": "{{count}} elementos",
+    "scope": {
+      "both": "Películas y series",
+      "movie": "Solo películas",
+      "series": "Solo series"
+    },
+    "fields": {
+      "name": "Nombre",
+      "aliases": "Otros nombres",
+      "aliasesHint": "Sirven para encontrar el valor al buscar, por ejemplo «Genesis» para «Mega Drive».",
+      "alias": "Otro nombre {{number}}",
+      "removeAlias": "Quitar el otro nombre {{number}}",
+      "addAlias": "Añadir otro nombre",
+      "scope": "Disponible para"
+    },
+    "addDialog": {
+      "title": "Añadir a {{catalog}}"
+    },
+    "editDialog": {
+      "title": "Editar «{{name}}»"
+    },
+    "deleteDialog": {
+      "title": "Eliminar valor",
+      "unused": "¿Seguro que quieres eliminar «{{name}}»?",
+      "used_one": "«{{name}}» se quitará de 1 elemento. El elemento no se elimina.",
+      "used_other": "«{{name}}» se quitará de {{count}} elementos. Los elementos no se eliminan."
+    },
+    "deleteUnused": "Eliminar valores sin uso",
+    "deleteUnusedConfirm_one": "Se eliminará 1 valor de «{{catalog}}» que no usa ningún elemento.",
+    "deleteUnusedConfirm_other": "Se eliminarán {{count}} valores de «{{catalog}}» que no usa ningún elemento."
+  },
   "theme": {
     "label": "Tema",
     "system": "Según el sistema",

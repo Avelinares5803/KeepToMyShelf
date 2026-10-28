@@ -146,6 +146,7 @@ h1 {
 
 .library,
 .trash,
+.catalogs,
 .item-detail,
 .item-edit {
   width: 100%;
@@ -443,6 +444,13 @@ h1 {
   font-weight: 500;
 }
 
+.modes__catalogs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 2rem;
+}
+
 /* Library */
 .library__header {
   display: flex;
@@ -700,5 +708,109 @@ h1 {
 }
 
 .trash-list__meta {
+  font-size: 0.85rem;
+}
+
+/* Catalogs */
+.catalogs__layout {
+  display: grid;
+  grid-template-columns: minmax(11rem, 14rem) 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.catalogs__nav {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.catalogs__nav-button {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.catalogs__nav-button:hover {
+  border-color: var(--color-border);
+}
+
+.catalogs__nav-button[aria-current='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  font-weight: 600;
+}
+
+.catalogs__panel {
+  min-width: 0;
+}
+
+.catalogs__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.catalogs__toolbar h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.catalogs__toolbar .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.catalogs__filters {
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.catalogs__search {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.catalog-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 65vh;
+  margin: 0;
+  padding: 0 0.25rem 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.catalog-list__aliases {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.field__hint {
+  margin: 0;
   font-size: 0.85rem;
 }

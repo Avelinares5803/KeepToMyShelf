@@ -1,10 +1,19 @@
+import {
+  catalogForRole,
+  isScopeCompatible,
+  type Catalog,
+  type GenreScope,
+  type ItemRole,
+} from '../../core/catalogs/catalogs';
+import { parseIsoPartialDate, toIsoPartialDate } from '../../core/dates/partial-date';
 import { parseStoredUsageDate, toStoredUsageDate } from '../../core/dates/usage-period';
-import { ConflictError, NotFoundError } from '../../core/errors';
+import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import { validateItemDraft, type ItemDraft, type ItemStatus } from '../../core/items/item-draft';
+import type { EntryRef } from '../../core/items/item-relations';
 import { lowestFreeNumber } from '../../core/naming/lowest-free-number';
 import { normalizeForSearch } from '../../core/text/normalize';
 import type { ItemKind } from '../../shared/content';
-import type { ItemDetails, ItemSummary } from '../../shared/items';
+import type { EntryName, ItemDetails, ItemRelease, ItemSummary } from '../../shared/items';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
 import type { SessionManager } from './session-manager';
 
@@ -236,6 +245,61 @@ export class ItemService {
            seasons_count = excluded.seasons_count, episodes_count = excluded.episodes_count`,
       ).run(id, valid.seasonsCount, valid.episodesCount);
     }
+
+    db.prepare('DELETE FROM item_entry WHERE item_id = ?').run(id);
+    // A value referenced twice (e.g. as existing and as a new name) is linked once.
+    const insertEntry = db.prepare(
+      'INSERT OR IGNORE INTO item_entry (item_id, entry_id, role, sort_order) VALUES (?, ?, ?, ?)',
+    );
+    for (const [role, refs] of Object.entries(valid.relations) as [ItemRole, EntryRef[]][]) {
+      // validateItemDraft only keeps roles that apply to the kind.
+      const catalog = catalogForRole(kind, role)!;
+      refs.forEach((ref, index) =>
+        insertEntry.run(id, resolveEntry(db, catalog, kind, ref), role, index),
+      );
+    }
+
+    db.prepare('DELETE FROM item_release WHERE item_id = ?').run(id);
+    const insertRelease = db.prepare(
+      'INSERT INTO item_release (item_id, region_id, date, sort_order) VALUES (?, ?, ?, ?)',
+    );
+    valid.releases.forEach(({ region, date }, index) =>
+      insertRelease.run(
+        id,
+        region === null ? null : resolveEntry(db, 'region', kind, region),
+        toIsoPartialDate(date),
+        index,
+      ),
+    );
+  }
+
+  private readRelations(db: SqliteDatabase, id: number): ItemDetails['relations'] {
+    const rows = db
+      .prepare(
+        `SELECT ie.role, e.id, e.name FROM item_entry ie
+         JOIN catalog_entry e ON e.id = ie.entry_id
+         WHERE ie.item_id = ? ORDER BY ie.sort_order, e.name_key, e.name`,
+      )
+      .all(id) as (EntryName & { role: ItemRole })[];
+    const relations: Partial<Record<ItemRole, EntryName[]>> = {};
+    for (const { role, id: entryId, name } of rows) {
+      (relations[role] ??= []).push({ id: entryId, name });
+    }
+    return relations;
+  }
+
+  private readReleases(db: SqliteDatabase, id: number): ItemRelease[] {
+    const rows = db
+      .prepare(
+        `SELECT r.date, e.id, e.name FROM item_release r
+         LEFT JOIN catalog_entry e ON e.id = r.region_id
+         WHERE r.item_id = ? ORDER BY r.sort_order, r.id`,
+      )
+      .all(id) as { date: string; id: number | null; name: string | null }[];
+    return rows.map((row) => ({
+      region: row.id === null ? null : { id: row.id, name: row.name! },
+      date: parseIsoPartialDate(row.date),
+    }));
   }
 
   private read(db: SqliteDatabase, id: number): ItemDetails {
@@ -267,8 +331,41 @@ export class ItemService {
       minutesPlayed: row.minutes_played,
       seasonsCount: row.seasons_count,
       episodesCount: row.episodes_count,
+      relations: this.readRelations(db, id),
+      releases: this.readReleases(db, id),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
   }
+}
+
+/**
+ * The id of the catalog value a reference points to. A new name is created, unless a value
+ * with exactly that name already exists (e.g. created meanwhile in another window).
+ */
+function resolveEntry(db: SqliteDatabase, catalog: Catalog, kind: ItemKind, ref: EntryRef): number {
+  const entry = (
+    ref.kind === 'existing'
+      ? db.prepare('SELECT id, catalog, scope FROM catalog_entry WHERE id = ?').get(ref.id)
+      : db
+          .prepare('SELECT id, catalog, scope FROM catalog_entry WHERE catalog = ? AND name = ?')
+          .get(catalog, ref.name)
+  ) as { id: number; catalog: Catalog; scope: GenreScope | null } | undefined;
+
+  if (entry === undefined) {
+    if (ref.kind === 'existing') {
+      throw new NotFoundError('catalog.not_found', `Catalog value ${ref.id} does not exist`);
+    }
+    const result = db
+      .prepare('INSERT INTO catalog_entry (catalog, name, name_key) VALUES (?, ?, ?)')
+      .run(catalog, ref.name, normalizeForSearch(ref.name));
+    return Number(result.lastInsertRowid);
+  }
+  if (entry.catalog !== catalog) {
+    throw new ValidationError('item.wrong_catalog', `Value ${entry.id} is not in ${catalog}`);
+  }
+  if (!isScopeCompatible(entry.scope, kind)) {
+    throw new ValidationError('item.genre_scope_mismatch', `Genre ${entry.id} is not for ${kind}`);
+  }
+  return entry.id;
 }

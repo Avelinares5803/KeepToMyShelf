@@ -5,6 +5,12 @@ import { ValidationError } from '../errors';
 import { characterCount, cleanMultiLine, cleanSingleLine } from '../text/clean-text';
 import { normalizeForSearch } from '../text/normalize';
 import { MAX_HOURS_PLAYED } from './duration';
+import {
+  validateRelations,
+  validateReleases,
+  type ItemRelationsDraft,
+  type ReleaseDraft,
+} from './item-relations';
 import { isValidRating } from './rating';
 
 export const ITEM_STATUSES = ['not_started', 'in_progress', 'completed', 'abandoned'] as const;
@@ -37,6 +43,9 @@ export interface ItemDraft {
   /** Series only. */
   readonly seasonsCount: number | null;
   readonly episodesCount: number | null;
+  /** Catalog values per role (platforms, genres, people...). */
+  readonly relations: ItemRelationsDraft;
+  readonly releases: readonly ReleaseDraft[];
 }
 
 /** A validated draft ready to be stored. A null title means "use a placeholder title". */
@@ -62,6 +71,8 @@ export const EMPTY_ITEM_DRAFT: ItemDraft = {
   minutesPlayed: null,
   seasonsCount: null,
   episodesCount: null,
+  relations: {},
+  releases: [],
 };
 
 interface TitleErrorCodes {
@@ -156,5 +167,7 @@ export function validateItemDraft(kind: ItemKind, draft: ItemDraft): ValidItemDr
     alternateTitles: cleanAlternateTitles(draft.alternateTitles),
     description: cleanLongText(draft.description, 'item.description_too_long'),
     notes: cleanLongText(draft.notes, 'item.notes_too_long'),
+    relations: validateRelations(kind, draft.relations),
+    releases: validateReleases(draft.releases),
   };
 }

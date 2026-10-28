@@ -7,6 +7,11 @@ import {
 import { ValidationError } from '../../../core/errors';
 import { toHoursAndMinutes, toTotalMinutes } from '../../../core/items/duration';
 import { validateItemDraft, type ItemDraft, type ItemStatus } from '../../../core/items/item-draft';
+import type {
+  EntryRef,
+  ItemRelationsDraft,
+  ReleaseDraft,
+} from '../../../core/items/item-relations';
 import {
   toOwnershipFlags,
   toOwnershipFormat,
@@ -40,6 +45,8 @@ export interface ItemFormState {
   readonly minutes: string;
   readonly seasons: string;
   readonly episodes: string;
+  readonly relations: ItemRelationsDraft;
+  readonly releases: readonly ReleaseDraft[];
 }
 
 export const EMPTY_DATE_FIELDS: DateFields = { day: '', month: '', year: '', unknown: false };
@@ -55,6 +62,14 @@ function toDateFields(value: UsageDate | null): DateFields {
     year: text(value.date.year),
     unknown: false,
   };
+}
+
+const existing = ({ id }: { id: number }): EntryRef => ({ kind: 'existing', id });
+
+function toRelationsDraft(relations: ItemDetails['relations']): ItemRelationsDraft {
+  return Object.fromEntries(
+    Object.entries(relations).map(([role, entries]) => [role, entries.map(existing)]),
+  );
 }
 
 export function toFormState(item: ItemDetails | null): ItemFormState {
@@ -75,6 +90,12 @@ export function toFormState(item: ItemDetails | null): ItemFormState {
     minutes: text(duration?.minutes),
     seasons: text(item?.seasonsCount),
     episodes: text(item?.episodesCount),
+    relations: item ? toRelationsDraft(item.relations) : {},
+    releases:
+      item?.releases.map(({ region, date }) => ({
+        region: region === null ? null : existing(region),
+        date,
+      })) ?? [],
   };
 }
 
@@ -125,6 +146,8 @@ export function toItemDraft(kind: ItemKind, form: ItemFormState): ItemDraft {
     minutesPlayed: kind === 'game' ? parseDuration(form.hours, form.minutes) : null,
     seasonsCount: kind === 'series' ? parseNumber(form.seasons) : null,
     episodesCount: kind === 'series' ? parseNumber(form.episodes) : null,
+    relations: form.relations,
+    releases: form.releases,
   };
   validateItemDraft(kind, draft);
   return draft;

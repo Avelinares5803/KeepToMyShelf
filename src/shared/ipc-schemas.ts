@@ -4,7 +4,7 @@
  * script does not depend on zod (a sandboxed preload cannot load npm packages).
  */
 import { z } from 'zod';
-import { CATALOGS } from '../core/catalogs/catalogs';
+import { CATALOGS, ITEM_ROLES } from '../core/catalogs/catalogs';
 import { ITEM_STATUSES } from '../core/items/item-draft';
 import { ITEM_KINDS } from './content';
 import { languageSchema, settingUpdateSchema, themeSchema } from './settings';
@@ -37,6 +37,15 @@ const usageDateSchema = z
     z.object({ kind: z.literal('unknown') }),
   ])
   .nullable();
+const entryRefSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('existing'), id: catalogEntryIdSchema }),
+  z.object({ kind: z.literal('new'), name: z.string().max(1_000) }),
+]);
+const relationsSchema = z.partialRecord(
+  z.enum(ITEM_ROLES),
+  z.array(entryRefSchema).max(5_000).readonly(),
+);
+const releaseSchema = z.object({ region: entryRefSchema.nullable(), date: partialDateSchema });
 const itemDraftSchema = z.object({
   title: z.string().max(5_000),
   alternateTitles: z.array(z.string().max(5_000)).max(500).readonly(),
@@ -53,6 +62,8 @@ const itemDraftSchema = z.object({
   minutesPlayed: z.number().nullable(),
   seasonsCount: z.number().nullable(),
   episodesCount: z.number().nullable(),
+  relations: relationsSchema,
+  releases: z.array(releaseSchema).max(1_000).readonly(),
 });
 
 export const ipcInputSchemas = {

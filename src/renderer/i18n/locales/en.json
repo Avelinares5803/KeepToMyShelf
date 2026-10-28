@@ -201,7 +201,12 @@
       "invalid_count": "It must be a whole number of 0 or more.",
       "not_found": "That item no longer exists.",
       "in_trash": "That item is in the trash. Restore it to edit it.",
-      "not_in_trash": "Only items in the trash can be deleted permanently."
+      "not_in_trash": "Only items in the trash can be deleted permanently.",
+      "role_not_allowed": "That attribute does not apply to this kind of item.",
+      "wrong_catalog": "That value does not belong to the list of this attribute.",
+      "genre_scope_mismatch": "That genre is not available for this kind of item.",
+      "too_many_values": "You cannot add more than 500 values to one attribute.",
+      "too_many_releases": "You cannot add more than 100 release dates."
     },
     "profile": {
       "name_empty": "Enter a name.",

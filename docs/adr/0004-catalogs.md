@@ -1,6 +1,6 @@
 # ADR 0004: Catálogos y relaciones
 
-- **Estado:** aceptada (F5-A implementada; F5-B, F5-C y F5-D pendientes)
+- **Estado:** aceptada (F5-A y F5-B implementadas; F5-C y F5-D pendientes)
 - **Fecha:** 2026-10-26
 
 ## Contexto
@@ -34,7 +34,14 @@ Los elementos se relacionan con valores reutilizables: plataformas, géneros, sa
 | Compositores                                            | Personas                | Personas                                           |
 | Etiquetas                                               | Etiquetas (lista común) | Etiquetas (lista común)                            |
 
-Las fechas de lanzamiento o estreno van en `item_release` (región + fecha parcial).
+Las fechas de lanzamiento o estreno van en `item_release` (región + fecha parcial). Puede haber varias por elemento, sin región o repitiendo región (relanzamientos).
+
+### Guardar un elemento
+
+- Cada papel recibe una lista ordenada de referencias: un valor existente o un nombre nuevo. Al editar, las listas y las fechas se sustituyen enteras.
+- Los nombres nuevos se crean en la misma transacción que el elemento. Si ya existe un valor con exactamente ese nombre (creado entretanto en otra ventana), se reutiliza.
+- Un valor repetido en el mismo papel se guarda una vez; en papeles distintos, una vez por papel.
+- Se rechazan, como red de seguridad (el formulario no los ofrece): papeles que no corresponden al tipo, valores de otro catálogo y géneros limitados al otro tipo.
 
 ### Reglas de integridad
 

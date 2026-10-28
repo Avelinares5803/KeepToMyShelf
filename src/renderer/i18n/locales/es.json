@@ -201,7 +201,12 @@
       "invalid_count": "Debe ser un número entero de 0 o más.",
       "not_found": "Ese elemento ya no existe.",
       "in_trash": "Ese elemento está en la papelera. Restáuralo para editarlo.",
-      "not_in_trash": "Solo se pueden eliminar definitivamente los elementos de la papelera."
+      "not_in_trash": "Solo se pueden eliminar definitivamente los elementos de la papelera.",
+      "role_not_allowed": "Ese atributo no corresponde a este tipo de elemento.",
+      "wrong_catalog": "Ese valor no pertenece a la lista de este atributo.",
+      "genre_scope_mismatch": "Ese género no está disponible para este tipo de elemento.",
+      "too_many_values": "No se pueden añadir más de 500 valores a un mismo atributo.",
+      "too_many_releases": "No se pueden añadir más de 100 fechas de lanzamiento."
     },
     "profile": {
       "name_empty": "Escribe un nombre.",

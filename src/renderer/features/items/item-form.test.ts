@@ -44,6 +44,17 @@ const details: ItemDetails = {
   startedOn: knownUsageDate({ year: 1995, month: 3 }),
   finishedOn: UNKNOWN_USAGE_DATE,
   minutesPlayed: 2730,
+  relations: {
+    developer: [{ id: 7, name: 'Square' }],
+    owned_on: [
+      { id: 3, name: 'SNES' },
+      { id: 4, name: 'PlayStation' },
+    ],
+  },
+  releases: [
+    { region: { id: 20, name: 'Japón' }, date: { year: 1995, month: 3, day: 11 } },
+    { region: null, date: { year: 1995 } },
+  ],
   createdAt: '2026-10-25T10:00:00.000Z',
   updatedAt: '2026-10-25T10:00:00.000Z',
   deletedAt: null,
@@ -78,6 +89,17 @@ describe('item form', () => {
       startedOn: knownUsageDate({ year: 1995, month: 3 }),
       finishedOn: UNKNOWN_USAGE_DATE,
       minutesPlayed: 2730,
+      relations: {
+        developer: [{ kind: 'existing', id: 7 }],
+        owned_on: [
+          { kind: 'existing', id: 3 },
+          { kind: 'existing', id: 4 },
+        ],
+      },
+      releases: [
+        { region: { kind: 'existing', id: 20 }, date: { year: 1995, month: 3, day: 11 } },
+        { region: null, date: { year: 1995 } },
+      ],
     });
   });
 

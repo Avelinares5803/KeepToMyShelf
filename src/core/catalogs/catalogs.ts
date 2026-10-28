@@ -49,19 +49,19 @@ const ROLE_CATALOGS: Record<ItemKind, Partial<Record<ItemRole, Catalog>>> = {
   movie: {
     franchise: 'franchise',
     genre: 'screen_genre',
+    producer: 'company',
     director: 'person',
     actor: 'person',
     composer: 'person',
-    producer: 'company',
     tag: 'tag',
   },
   series: {
     franchise: 'franchise',
     genre: 'screen_genre',
+    producer: 'company',
     director: 'person',
     actor: 'person',
     composer: 'person',
-    producer: 'company',
     tag: 'tag',
   },
 };

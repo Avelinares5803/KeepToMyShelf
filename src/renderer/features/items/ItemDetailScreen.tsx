@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ItemRole } from '../../../core/catalogs/catalogs';
 import { formatPartialDate, localDayOf } from '../../../core/dates/format-date';
 import { describeUsagePeriod, type UsageDate } from '../../../core/dates/usage-period';
 import { formatDuration } from '../../../core/items/duration';
@@ -12,7 +13,14 @@ import { HeartIcon, PencilIcon, TrashIcon } from '../../components/icons';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { toFormState, toItemDraft } from './item-form';
-import { datesLabel, replayLabel, statusLabel } from './labels';
+import {
+  datesLabel,
+  releasesLabel,
+  replayLabel,
+  roleLabel,
+  sheetRoles,
+  statusLabel,
+} from './labels';
 import { StarRating } from './StarRating';
 import { useItemTitle } from './use-item-title';
 
@@ -82,6 +90,16 @@ function ItemDetail({
     .filter((part) => part !== null)
     .join(' · ');
 
+  const relationRow = (role: ItemRole) => {
+    const entries = item.relations[role] ?? [];
+    if (entries.length === 0) return null;
+    return (
+      <Row key={role} label={roleLabel(t, role)}>
+        {entries.map((entry) => entry.name).join(', ')}
+      </Row>
+    );
+  };
+
   return (
     <article className="item-detail">
       <header className="item-detail__header">
@@ -132,14 +150,17 @@ function ItemDetail({
             </ul>
           </Row>
         )}
+        {item.description !== null && (
+          <Row label={t('items.fields.description')}>
+            <p className="long-text">{item.description}</p>
+          </Row>
+        )}
+        {relationRow('franchise')}
+        {status !== '' && <Row label={t('items.fields.status')}>{status}</Row>}
         {item.rating !== null && (
           <Row label={t('items.rating.label')}>
             <StarRating rating={item.rating} />
           </Row>
-        )}
-        {status !== '' && <Row label={t('items.fields.status')}>{status}</Row>}
-        {format !== null && (
-          <Row label={t('items.fields.format')}>{t(`items.format.${format}`)}</Row>
         )}
         {period.kind === 'single' && (
           <Row label={datesLabel(t, kind)}>{formatPartialDate(period.date, language)}</Row>
@@ -161,22 +182,36 @@ function ItemDetail({
         {kind === 'game' && item.minutesPlayed !== null && (
           <Row label={t('items.fields.hoursPlayed')}>{formatDuration(item.minutesPlayed)}</Row>
         )}
+        {format !== null && (
+          <Row label={t('items.fields.format')}>{t(`items.format.${format}`)}</Row>
+        )}
+        {relationRow('owned_on')}
+        {item.notes !== null && (
+          <Row label={t('items.fields.notes')}>
+            <p className="long-text">{item.notes}</p>
+          </Row>
+        )}
         {kind === 'series' && item.seasonsCount !== null && (
           <Row label={t('items.fields.seasons')}>{item.seasonsCount}</Row>
         )}
         {kind === 'series' && item.episodesCount !== null && (
           <Row label={t('items.fields.episodes')}>{item.episodesCount}</Row>
         )}
-        {item.description !== null && (
-          <Row label={t('items.fields.description')}>
-            <p className="long-text">{item.description}</p>
+        {sheetRoles(kind).map(relationRow)}
+        {item.releases.length > 0 && (
+          <Row label={releasesLabel(t, kind)}>
+            <ul className="plain-list">
+              {item.releases.map(({ region, date }, index) => (
+                <li key={index}>
+                  {region === null
+                    ? formatPartialDate(date, language)
+                    : `${region.name}: ${formatPartialDate(date, language)}`}
+                </li>
+              ))}
+            </ul>
           </Row>
         )}
-        {item.notes !== null && (
-          <Row label={t('items.fields.notes')}>
-            <p className="long-text">{item.notes}</p>
-          </Row>
-        )}
+        {relationRow('tag')}
         <Row label={t('items.fields.addedOn')}>
           {formatPartialDate(localDayOf(new Date(item.createdAt)), language)}
         </Row>

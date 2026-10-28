@@ -25,10 +25,10 @@ describe('roles per kind', () => {
     expect(rolesForKind('movie')).toEqual([
       'franchise',
       'genre',
+      'producer',
       'director',
       'actor',
       'composer',
-      'producer',
       'tag',
     ]);
     expect(rolesForKind('series')).toEqual(rolesForKind('movie'));

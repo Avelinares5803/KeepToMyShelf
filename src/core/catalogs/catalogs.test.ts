@@ -17,18 +17,18 @@ describe('roles per kind', () => {
       'owned_on',
       'released_on',
       'genre',
-      'developer',
       'publisher',
+      'developer',
       'composer',
       'tag',
     ]);
     expect(rolesForKind('movie')).toEqual([
       'franchise',
       'genre',
+      'producer',
       'director',
       'actor',
       'composer',
-      'producer',
       'tag',
     ]);
     expect(rolesForKind('series')).toEqual(rolesForKind('movie'));

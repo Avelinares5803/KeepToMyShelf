@@ -228,6 +228,111 @@ test('asks before closing the window with unsaved changes', async () => {
   app = undefined;
 });
 
+const field = (name: string) => page.getByRole('combobox', { name, exact: true });
+const chosenList = (name: string) => page.getByRole('list', { name: `Elegidos en ${name}` });
+// Names of the chosen values, without the "new" mark or the buttons.
+const chosen = (name: string) => chosenList(name).locator('.chip > span:first-child');
+// Suggestions only: month and status drop-downs have options too.
+const suggestions = () => page.getByRole('listbox').getByRole('option');
+const option = (name: string) => page.getByRole('listbox').getByText(name, { exact: true });
+const detailRow = (label: string) => page.locator('.details__row', { hasText: label });
+
+test('chooses catalog values with suggestions and shows them in the detail view', async () => {
+  await button('Videojuegos').click();
+  await button('Añadir').click();
+  await page.getByLabel('Título', { exact: true }).fill('Sonic the Hedgehog');
+
+  // Suggestions are found by other names too, and are only chosen when picked.
+  await field('Lo tengo en').fill('genesis');
+  await expect(suggestions()).toHaveText([
+    '32X (Genesis 32X)',
+    'Mega Drive (Sega Genesis)',
+    'Crear «genesis»',
+  ]);
+  await option('Mega Drive (Sega Genesis)').click();
+  await expect(chosen('Lo tengo en')).toHaveText('Mega Drive');
+
+  // Enter alone never creates a value; "Create" must be picked.
+  await field('Desarrolladoras').fill('Sega');
+  await field('Desarrolladoras').press('Enter');
+  await expect(chosen('Desarrolladoras')).toHaveCount(0);
+  await option('Crear «Sega»').click();
+  await expect(chosen('Desarrolladoras')).toHaveText('Sega');
+  await expect(chosenList('Desarrolladoras')).toContainText('nuevo');
+
+  // Keyboard: arrows and Enter pick a suggestion; Enter alone adds an exact name.
+  await field('Distribuidoras').fill('Sega');
+  await field('Distribuidoras').press('ArrowDown');
+  await field('Distribuidoras').press('Enter');
+  await expect(chosen('Distribuidoras')).toContainText('Sega');
+  await field('Géneros').fill('Plataformas');
+  await field('Géneros').press('Enter');
+  await expect(chosen('Géneros')).toHaveText('Plataformas');
+
+  // A release date with a region.
+  await button('Añadir fecha').click();
+  const release = page.getByRole('group', { name: 'Fecha 1' });
+  await release.getByRole('combobox', { name: 'Región' }).fill('jap');
+  await option('Japón').click();
+  await release.getByLabel('Día').fill('23');
+  await release.getByLabel('Mes').selectOption({ label: 'junio' });
+  await release.getByLabel('Año').fill('1991');
+
+  await button('Guardar').click();
+  await expect(heading('Sonic the Hedgehog')).toBeVisible();
+  await expect(detailRow('Lo tengo en')).toContainText('Mega Drive');
+  await expect(detailRow('Desarrolladoras')).toContainText('Sega');
+  await expect(detailRow('Distribuidoras')).toContainText('Sega');
+  await expect(detailRow('Géneros')).toContainText('Plataformas');
+  await expect(detailRow('Fechas de lanzamiento')).toContainText('Japón: 23/06/1991');
+
+  // The new company exists once, used by one item; renaming it changes the item too.
+  await page
+    .getByRole('navigation', { name: 'Ruta de navegación' })
+    .getByRole('button', { name: 'Ana' })
+    .click();
+  await button('Catálogos').click();
+  await page
+    .getByRole('navigation', { name: 'Catálogos' })
+    .getByRole('button', { name: 'Empresas' })
+    .click();
+  const sega = page.locator('.catalog-list > li');
+  await expect(sega).toHaveCount(1);
+  await expect(sega).toContainText('1 elemento');
+  await button('Eliminar «Sega»').click();
+  await expect(page.getByRole('dialog')).toContainText(
+    '«Sega» se quitará de 1 elemento. El elemento no se elimina.',
+  );
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+  await button('Editar «Sega»').click();
+  await page.getByRole('dialog').getByLabel('Nombre', { exact: true }).fill('Sega Corporation');
+  await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click();
+
+  await openLibrary('Videojuegos');
+  await button('Sonic the Hedgehog').click();
+  await expect(detailRow('Desarrolladoras')).toContainText('Sega Corporation');
+
+  // Editing keeps the chosen values.
+  await page.getByRole('button', { name: 'Editar', exact: true }).click();
+  await expect(chosen('Lo tengo en')).toHaveText('Mega Drive');
+  await expect(page.getByRole('group', { name: 'Fecha 1' }).getByLabel('Año')).toHaveValue('1991');
+});
+
+test('keeps the cast in the chosen order', async () => {
+  await button('Películas').click();
+  await button('Añadir').click();
+  await page.getByLabel('Título', { exact: true }).fill('Matrix');
+  for (const actor of ['Carrie-Anne Moss', 'Keanu Reeves']) {
+    await field('Reparto').fill(actor);
+    await option(`Crear «${actor}»`).click();
+  }
+  await button('Mover «Keanu Reeves» antes').click();
+  await expect(button('Mover «Keanu Reeves» antes')).toBeDisabled();
+
+  await button('Guardar').click();
+  await expect(detailRow('Reparto')).toContainText('Keanu Reeves, Carrie-Anne Moss');
+});
+
 test('shows untitled items in the current language', async () => {
   await button('Series').click();
   await button('Añadir').click();

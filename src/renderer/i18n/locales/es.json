@@ -126,6 +126,42 @@
       "year": "Año",
       "noMonth": "—",
       "unknown": "Indeterminada"
+    },
+    "sections": {
+      "identity": "Identificación",
+      "tracking": "Mi seguimiento",
+      "sheet": "Ficha",
+      "tags": "Etiquetas"
+    },
+    "roles": {
+      "franchise": "Sagas",
+      "owned_on": "Lo tengo en",
+      "released_on": "Publicado en",
+      "genre": "Géneros",
+      "developer": "Desarrolladoras",
+      "publisher": "Distribuidoras",
+      "producer": "Productoras",
+      "director": "Dirección",
+      "actor": "Reparto",
+      "composer": "Música",
+      "tag": "Etiquetas"
+    },
+    "relations": {
+      "placeholder": "Escribe para buscar o crear",
+      "chosen": "Elegidos en {{field}}",
+      "new": "nuevo",
+      "create": "Crear «{{name}}»",
+      "remove": "Quitar «{{name}}» de {{field}}",
+      "moveEarlier": "Mover «{{name}}» antes",
+      "moveLater": "Mover «{{name}}» después"
+    },
+    "releases": {
+      "game": "Fechas de lanzamiento",
+      "screen": "Fechas de estreno",
+      "add": "Añadir fecha",
+      "row": "Fecha {{number}}",
+      "region": "Región",
+      "remove": "Quitar la fecha {{number}}"
     }
   },
   "unsaved": {
@@ -264,7 +300,8 @@
       "wrong_catalog": "Ese valor no pertenece a la lista de este atributo.",
       "genre_scope_mismatch": "Ese género no está disponible para este tipo de elemento.",
       "too_many_values": "No se pueden añadir más de 500 valores a un mismo atributo.",
-      "too_many_releases": "No se pueden añadir más de 100 fechas de lanzamiento."
+      "too_many_releases": "No se pueden añadir más de 100 fechas de lanzamiento.",
+      "release_date_required": "Indica al menos el año de cada fecha de lanzamiento o estreno."
     },
     "profile": {
       "name_empty": "Escribe un nombre.",

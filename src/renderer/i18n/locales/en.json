@@ -126,6 +126,42 @@
       "year": "Year",
       "noMonth": "—",
       "unknown": "Unknown"
+    },
+    "sections": {
+      "identity": "Identification",
+      "tracking": "My tracking",
+      "sheet": "Details",
+      "tags": "Tags"
+    },
+    "roles": {
+      "franchise": "Franchises",
+      "owned_on": "I own it on",
+      "released_on": "Released on",
+      "genre": "Genres",
+      "developer": "Developers",
+      "publisher": "Publishers",
+      "producer": "Production companies",
+      "director": "Directors",
+      "actor": "Cast",
+      "composer": "Music",
+      "tag": "Tags"
+    },
+    "relations": {
+      "placeholder": "Type to search or create",
+      "chosen": "Chosen in {{field}}",
+      "new": "new",
+      "create": "Create “{{name}}”",
+      "remove": "Remove “{{name}}” from {{field}}",
+      "moveEarlier": "Move “{{name}}” earlier",
+      "moveLater": "Move “{{name}}” later"
+    },
+    "releases": {
+      "game": "Release dates",
+      "screen": "Premiere dates",
+      "add": "Add date",
+      "row": "Date {{number}}",
+      "region": "Region",
+      "remove": "Remove date {{number}}"
     }
   },
   "unsaved": {
@@ -264,7 +300,8 @@
       "wrong_catalog": "That value does not belong to the list of this attribute.",
       "genre_scope_mismatch": "That genre is not available for this kind of item.",
       "too_many_values": "You cannot add more than 500 values to one attribute.",
-      "too_many_releases": "You cannot add more than 100 release dates."
+      "too_many_releases": "You cannot add more than 100 release dates.",
+      "release_date_required": "Enter at least the year of every release or premiere date."
     },
     "profile": {
       "name_empty": "Enter a name.",

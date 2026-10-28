@@ -1,4 +1,5 @@
-import { createPartialDate } from '../../../core/dates/partial-date';
+import type { ItemRole } from '../../../core/catalogs/catalogs';
+import { createPartialDate, type PartialDate } from '../../../core/dates/partial-date';
 import {
   knownUsageDate,
   UNKNOWN_USAGE_DATE,
@@ -18,7 +19,8 @@ import {
   type OwnershipFormat,
 } from '../../../core/items/ownership';
 import type { ItemKind } from '../../../shared/content';
-import type { ItemDetails } from '../../../shared/items';
+import type { EntryName, ItemDetails } from '../../../shared/items';
+import type { EntryChoice } from './entry-picker';
 
 /** Date inputs as typed: every part optional, or "unknown". */
 export interface DateFields {
@@ -45,11 +47,23 @@ export interface ItemFormState {
   readonly minutes: string;
   readonly seasons: string;
   readonly episodes: string;
-  readonly relations: ItemRelationsDraft;
-  readonly releases: readonly ReleaseDraft[];
+  readonly relations: RelationFields;
+  readonly releases: readonly ReleaseFields[];
+}
+
+/** The values chosen for each role, with their names so the form can show them. */
+export type RelationFields = Readonly<Partial<Record<ItemRole, readonly EntryChoice[]>>>;
+
+/** A release date row as typed: an optional region and the parts of the date. */
+export interface ReleaseFields {
+  readonly region: EntryChoice | null;
+  readonly day: string;
+  readonly month: string;
+  readonly year: string;
 }
 
 export const EMPTY_DATE_FIELDS: DateFields = { day: '', month: '', year: '', unknown: false };
+export const EMPTY_RELEASE_FIELDS: ReleaseFields = { region: null, day: '', month: '', year: '' };
 
 const text = (value: number | undefined | null) => (value == null ? '' : String(value));
 
@@ -64,12 +78,24 @@ function toDateFields(value: UsageDate | null): DateFields {
   };
 }
 
-const existing = ({ id }: { id: number }): EntryRef => ({ kind: 'existing', id });
+const existing = ({ id, name }: EntryName): EntryChoice => ({ kind: 'existing', id, name });
 
-function toRelationsDraft(relations: ItemDetails['relations']): ItemRelationsDraft {
+const toRef = (choice: EntryChoice): EntryRef =>
+  choice.kind === 'existing' ? { kind: 'existing', id: choice.id } : choice;
+
+function toRelationFields(relations: ItemDetails['relations']): RelationFields {
   return Object.fromEntries(
     Object.entries(relations).map(([role, entries]) => [role, entries.map(existing)]),
   );
+}
+
+function toReleaseFields({ region, date }: ItemDetails['releases'][number]): ReleaseFields {
+  return {
+    region: region === null ? null : existing(region),
+    day: text(date.day),
+    month: text(date.month),
+    year: text(date.year),
+  };
 }
 
 export function toFormState(item: ItemDetails | null): ItemFormState {
@@ -90,12 +116,8 @@ export function toFormState(item: ItemDetails | null): ItemFormState {
     minutes: text(duration?.minutes),
     seasons: text(item?.seasonsCount),
     episodes: text(item?.episodesCount),
-    relations: item ? toRelationsDraft(item.relations) : {},
-    releases:
-      item?.releases.map(({ region, date }) => ({
-        region: region === null ? null : existing(region),
-        date,
-      })) ?? [],
+    relations: item ? toRelationFields(item.relations) : {},
+    releases: item?.releases.map(toReleaseFields) ?? [],
   };
 }
 
@@ -105,8 +127,8 @@ function parseNumber(value: string): number | null {
   return trimmed === '' ? null : /^\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
 }
 
-function parseDateFields(fields: DateFields): UsageDate | null {
-  if (fields.unknown) return UNKNOWN_USAGE_DATE;
+/** A partial date from its typed parts, or null when all of them are blank. */
+function parsePartialDate(fields: Omit<DateFields, 'unknown'>): PartialDate | null {
   const year = parseNumber(fields.year);
   const month = parseNumber(fields.month);
   const day = parseNumber(fields.day);
@@ -115,7 +137,33 @@ function parseDateFields(fields: DateFields): UsageDate | null {
     throw new ValidationError('date.invalid_year', 'A date needs a year');
   }
   // createPartialDate rejects impossible values (day 31 in April, a day without a month...).
-  return knownUsageDate(createPartialDate(year, month ?? undefined, day ?? undefined));
+  return createPartialDate(year, month ?? undefined, day ?? undefined);
+}
+
+function parseDateFields(fields: DateFields): UsageDate | null {
+  if (fields.unknown) return UNKNOWN_USAGE_DATE;
+  const date = parsePartialDate(fields);
+  return date === null ? null : knownUsageDate(date);
+}
+
+function toRelationsDraft(relations: RelationFields): ItemRelationsDraft {
+  return Object.fromEntries(
+    Object.entries(relations).map(([role, choices]) => [role, choices.map(toRef)]),
+  );
+}
+
+/** Rows left completely empty are ignored; any other row needs at least a year. */
+function toReleasesDraft(rows: readonly ReleaseFields[]): ReleaseDraft[] {
+  const releases: ReleaseDraft[] = [];
+  for (const row of rows) {
+    const date = parsePartialDate(row);
+    if (date === null && row.region === null) continue;
+    if (date === null) {
+      throw new ValidationError('item.release_date_required', 'A release date needs a year');
+    }
+    releases.push({ region: row.region === null ? null : toRef(row.region), date });
+  }
+  return releases;
 }
 
 function parseDuration(hours: string, minutes: string): number | null {
@@ -146,8 +194,8 @@ export function toItemDraft(kind: ItemKind, form: ItemFormState): ItemDraft {
     minutesPlayed: kind === 'game' ? parseDuration(form.hours, form.minutes) : null,
     seasonsCount: kind === 'series' ? parseNumber(form.seasons) : null,
     episodesCount: kind === 'series' ? parseNumber(form.episodes) : null,
-    relations: form.relations,
-    releases: form.releases,
+    relations: toRelationsDraft(form.relations),
+    releases: toReleasesDraft(form.releases),
   };
   validateItemDraft(kind, draft);
   return draft;

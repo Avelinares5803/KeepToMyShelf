@@ -1,6 +1,6 @@
 # ADR 0004: Catálogos y relaciones
 
-- **Estado:** aceptada (F5-A, F5-B y F5-C implementadas; F5-D pendiente)
+- **Estado:** aceptada e implementada (F5-A a F5-D)
 - **Fecha:** 2026-10-26
 
 ## Contexto
@@ -57,12 +57,16 @@ Las fechas de lanzamiento o estreno van en `item_release` (región + fecha parci
 - Se copian **una sola vez** en cada perfil, en su idioma: al crearlo o, para los perfiles anteriores, al abrirlo por primera vez (marca en `library_meta`). Después son valores normales: se pueden renombrar o eliminar, y no se traducen ni se vuelven a crear.
 - Empresas, personas, sagas y etiquetas empiezan vacías.
 
-### Interfaz (pendiente: F5-C y F5-D)
+### Interfaz
 
 - **Pantalla «Catálogos»**, accesible desde la selección de modo y desde cada biblioteca. Cada catálogo muestra un buscador (también por alias), el número de usos y las acciones de añadir, renombrar, editar alias y ámbito, eliminar (avisando de cuántos elementos lo usan) y «Eliminar valores sin uso».
 - **Catálogos compartidos** (sagas, empresas, personas y etiquetas): en «Catálogos» y en los filtros (F7), un selector Videojuegos / Películas / Series / Todos muestra los valores que usa algún elemento de ese tipo. Empieza en el tipo de la biblioteca desde la que se abre, o en «Todos» desde la selección de modo. Los valores sin uso solo aparecen en «Todos», que es donde se pueden eliminar en bloque. En el formulario se sugieren todos.
-- **Formulario:** campos con autocompletado. Las sugerencias nunca se eligen solas; mientras no exista un valor exactamente igual a lo escrito, aparece «Crear "…"». Los valores nuevos se crean al guardar el elemento, en la misma transacción: si se cancela, no queda nada suelto.
-- **Orden del formulario y de la ficha:** Identificación (título, títulos alternativos, descripción, sagas) → Mi seguimiento (estado, valoración, fechas de uso, horas, formato, «Lo tengo en», favorito, notas) → Ficha («Publicado en», géneros, fechas de lanzamiento, empresas, personas) → Etiquetas.
+- **Formulario:** campos con autocompletado (también por alias, mostrando el alias que coincide). Las sugerencias nunca se eligen solas: se eligen con clic o con las flechas y Enter. Mientras no exista un valor exactamente igual a lo escrito, aparece «Crear "…"», que también hay que elegir; Enter sin sugerencia marcada solo añade un valor exactamente igual a lo escrito, así que nunca se crea un valor sin querer. Los valores nuevos se marcan como «nuevo» y se crean al guardar el elemento, en la misma transacción: si se cancela, no queda nada suelto. El reparto se ordena con botones ← →; en los demás papeles se guarda el orden en que se añaden.
+- **Orden del formulario y de la ficha:**
+  - Identificación: título, títulos alternativos, descripción, sagas.
+  - Mi seguimiento: estado, valoración, fechas de uso, horas, formato, «Lo tengo en», favorito, notas.
+  - Ficha. Videojuegos: «Publicado en», géneros, distribuidoras, desarrolladoras, música, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, música, fechas de estreno.
+  - Etiquetas.
 
 ## Consecuencias
 

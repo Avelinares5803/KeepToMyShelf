@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next';
+import type { ItemRole } from '../../../core/catalogs/catalogs';
 import type { ItemStatus } from '../../../core/items/item-draft';
 import type { ItemKind } from '../../../shared/content';
 
@@ -13,3 +14,16 @@ export const replayLabel = (t: TFunction, kind: ItemKind) => t(`items.replay.${g
 
 /** "Play dates" for games, "Watch dates" for movies and series. */
 export const datesLabel = (t: TFunction, kind: ItemKind) => t(`items.dates.${grammar(kind)}`);
+
+/** "Release dates" for games, "Premiere dates" for movies and series. */
+export const releasesLabel = (t: TFunction, kind: ItemKind) => t(`items.releases.${grammar(kind)}`);
+
+/** Name of a role in the form and the detail view ("Developers", "Cast"...). */
+export const roleLabel = (t: TFunction, role: ItemRole) => t(`items.roles.${role}`);
+
+/** Roles of the "Details" section, in the order the form and the detail view show them. */
+export function sheetRoles(kind: ItemKind): ItemRole[] {
+  return kind === 'game'
+    ? ['released_on', 'genre', 'publisher', 'developer', 'composer']
+    : ['genre', 'producer', 'director', 'actor', 'composer'];
+}

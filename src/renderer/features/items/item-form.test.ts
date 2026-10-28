@@ -5,6 +5,7 @@ import { EMPTY_ITEM_DRAFT } from '../../../core/items/item-draft';
 import type { ItemDetails } from '../../../shared/items';
 import {
   EMPTY_DATE_FIELDS,
+  EMPTY_RELEASE_FIELDS,
   hasChanges,
   toFormState,
   toItemDraft,
@@ -184,6 +185,55 @@ describe('item form', () => {
 
     it('rejects a series count that is not a whole number', () => {
       expectCode(() => toItemDraft('series', form({ seasons: 'tres' })), 'item.invalid_count');
+    });
+  });
+
+  describe('relations and release dates', () => {
+    it('shows the names of the chosen values and sends only references', () => {
+      const state = toFormState(details);
+      expect(state.relations.developer).toEqual([{ kind: 'existing', id: 7, name: 'Square' }]);
+
+      const draft = toItemDraft(
+        'game',
+        form({
+          relations: { tag: [{ kind: 'new', name: 'Favoritos' }, ...state.relations.developer!] },
+        }),
+      );
+      expect(draft.relations).toEqual({
+        tag: [
+          { kind: 'new', name: 'Favoritos' },
+          { kind: 'existing', id: 7 },
+        ],
+      });
+    });
+
+    it('ignores empty release rows and builds dates with any precision', () => {
+      const draft = toItemDraft(
+        'movie',
+        form({
+          releases: [
+            EMPTY_RELEASE_FIELDS,
+            { region: { kind: 'new', name: 'Chile' }, day: '', month: '7', year: '2001' },
+            { ...EMPTY_RELEASE_FIELDS, year: '2002' },
+          ],
+        }),
+      );
+      expect(draft.releases).toEqual([
+        { region: { kind: 'new', name: 'Chile' }, date: { year: 2001, month: 7 } },
+        { region: null, date: { year: 2002 } },
+      ]);
+    });
+
+    it('requires a year in a release row that has a region or other parts', () => {
+      const region = { kind: 'existing', id: 1, name: 'Japón' } as const;
+      expectCode(
+        () => toItemDraft('game', form({ releases: [{ ...EMPTY_RELEASE_FIELDS, region }] })),
+        'item.release_date_required',
+      );
+      expectCode(
+        () => toItemDraft('game', form({ releases: [{ ...EMPTY_RELEASE_FIELDS, month: '3' }] })),
+        'date.invalid_year',
+      );
     });
   });
 

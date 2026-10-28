@@ -150,6 +150,64 @@
     "emptyConfirm_one": "1 item from “{{scope}}” will be deleted permanently. This cannot be undone.",
     "emptyConfirm_other": "{{count}} items from “{{scope}}” will be deleted permanently. This cannot be undone."
   },
+  "catalogs": {
+    "title": "Catalogs",
+    "listLabel": "Catalogs",
+    "names": {
+      "platform": "Platforms",
+      "game_genre": "Video game genres",
+      "screen_genre": "Movie and series genres",
+      "franchise": "Franchises",
+      "company": "Companies",
+      "person": "People",
+      "tag": "Tags",
+      "region": "Regions"
+    },
+    "add": "Add",
+    "edit": "Edit",
+    "editValue": "Edit “{{name}}”",
+    "delete": "Delete",
+    "deleteValue": "Delete “{{name}}”",
+    "search": "Search {{catalog}}",
+    "show": "Show",
+    "allValues": "All",
+    "empty": "This catalog is empty. Click “Add” to create the first value.",
+    "noMatches": "No value matches the search.",
+    "noneForKind": "No item in “{{kind}}” uses values from this catalog yet.",
+    "alsoKnownAs": "Also: {{names}}",
+    "usage_zero": "Unused",
+    "usage_one": "1 item",
+    "usage_other": "{{count}} items",
+    "scope": {
+      "both": "Movies and series",
+      "movie": "Movies only",
+      "series": "Series only"
+    },
+    "fields": {
+      "name": "Name",
+      "aliases": "Other names",
+      "aliasesHint": "They help find the value when searching, e.g. “Genesis” for “Mega Drive”.",
+      "alias": "Other name {{number}}",
+      "removeAlias": "Remove other name {{number}}",
+      "addAlias": "Add another name",
+      "scope": "Available for"
+    },
+    "addDialog": {
+      "title": "Add to {{catalog}}"
+    },
+    "editDialog": {
+      "title": "Edit “{{name}}”"
+    },
+    "deleteDialog": {
+      "title": "Delete value",
+      "unused": "Are you sure you want to delete “{{name}}”?",
+      "used_one": "“{{name}}” will be removed from 1 item. The item is not deleted.",
+      "used_other": "“{{name}}” will be removed from {{count}} items. The items are not deleted."
+    },
+    "deleteUnused": "Delete unused values",
+    "deleteUnusedConfirm_one": "1 value from “{{catalog}}” that no item uses will be deleted.",
+    "deleteUnusedConfirm_other": "{{count}} values from “{{catalog}}” that no item uses will be deleted."
+  },
   "theme": {
     "label": "Theme",
     "system": "System default",

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
-import { HeartIcon, PlusIcon, TrashIcon } from '../../components/icons';
+import { HeartIcon, ListIcon, PlusIcon, TrashIcon } from '../../components/icons';
 import { errorMessage } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
@@ -12,10 +12,18 @@ interface LibraryScreenProps {
   onOpenItem: (item: ItemSummary) => void;
   onAdd: () => void;
   onOpenTrash: () => void;
+  onOpenCatalogs: () => void;
 }
 
 /** Grid of the items of one kind. Covers replace the title tiles in phase F6. */
-export function LibraryScreen({ token, kind, onOpenItem, onAdd, onOpenTrash }: LibraryScreenProps) {
+export function LibraryScreen({
+  token,
+  kind,
+  onOpenItem,
+  onAdd,
+  onOpenTrash,
+  onOpenCatalogs,
+}: LibraryScreenProps) {
   const { t } = useTranslation();
   const displayTitle = useItemTitle();
   const items = useLoad(() => window.api.items.list({ token, kind }), [token, kind]);
@@ -36,6 +44,9 @@ export function LibraryScreen({ token, kind, onOpenItem, onAdd, onOpenTrash }: L
           </button>
           <button type="button" className="button button--ghost" onClick={onOpenTrash}>
             <TrashIcon /> {t('trash.openWithCount', { count: trashCount })}
+          </button>
+          <button type="button" className="button button--ghost" onClick={onOpenCatalogs}>
+            <ListIcon /> {t('catalogs.title')}
           </button>
         </div>
       </header>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SessionInfo } from '../../shared/ipc';
 import type { AppSettings, SettingUpdate } from '../../shared/settings';
+import { CatalogsScreen } from '../features/catalogs/CatalogsScreen';
 import { ItemDetailScreen } from '../features/items/ItemDetailScreen';
 import { ItemEditScreen, type EditorGuard } from '../features/items/ItemEditScreen';
 import { UnsavedChangesDialog } from '../features/items/UnsavedChangesDialog';
@@ -123,6 +124,8 @@ export function App({ initialSettings }: AppProps) {
         return screen.itemId === null ? t(`items.new.${screen.kind}`) : t('items.edit');
       case 'trash':
         return t('trash.title');
+      case 'catalogs':
+        return t('catalogs.title');
     }
   };
 
@@ -145,6 +148,9 @@ export function App({ initialSettings }: AppProps) {
         return (
           <ModeSelectionScreen
             onSelect={(kind) => dispatch({ type: 'open', screen: { name: 'library', kind } })}
+            onOpenCatalogs={() =>
+              dispatch({ type: 'open', screen: { name: 'catalogs', kind: null } })
+            }
           />
         );
       case 'library':
@@ -157,6 +163,9 @@ export function App({ initialSettings }: AppProps) {
             }
             onOpenTrash={() =>
               dispatch({ type: 'open', screen: { name: 'trash', kind: screen.kind } })
+            }
+            onOpenCatalogs={() =>
+              dispatch({ type: 'open', screen: { name: 'catalogs', kind: screen.kind } })
             }
             onOpenItem={(item) =>
               dispatch({
@@ -204,6 +213,8 @@ export function App({ initialSettings }: AppProps) {
         );
       case 'trash':
         return <TrashScreen token={token} initialKind={screen.kind} />;
+      case 'catalogs':
+        return <CatalogsScreen token={token} initialKind={screen.kind} />;
     }
   }
 

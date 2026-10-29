@@ -89,6 +89,9 @@ const platforms = (mobile: string, arcade: string): string[] => [
   '3DO',
   // Capcom
   'CPS Changer',
+  // Commodore
+  'CDTV',
+  'Amiga CD32',
   // Apple
   'Apple Pippin',
   // Bandai
@@ -163,6 +166,7 @@ export const DEFAULT_PLATFORM_ALIASES: Readonly<Record<string, readonly string[]
   'CD-i': ['Compact Disc-Interactive'],
   '3DO': ['3DO REAL Interactive Multiplayer', '3DO Interactive Multiplayer'],
   'CPS Changer': ['Capcom Power System Changer'],
+  CDTV: ['Commodore Dynamic Total Vision', 'Compact Disc Television'],
   'Apple Pippin': ['PiPP!N'],
   PlayStation: ['PS1', 'PSX', 'Sony PlayStation'],
   'PlayStation 2': ['PS2', 'Sony PlayStation 2'],

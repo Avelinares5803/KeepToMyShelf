@@ -1,7 +1,7 @@
 # ADR 0004: Catálogos y relaciones
 
-- **Estado:** aceptada e implementada (F5-A a F5-D)
-- **Fecha:** 2026-10-26
+- **Estado:** aceptada e implementada (F5-A a F5-E)
+- **Fecha:** 2026-10-26 (países de origen añadidos el 2026-10-30)
 
 ## Contexto
 
@@ -9,9 +9,9 @@ Los elementos se relacionan con valores reutilizables: plataformas, géneros, sa
 
 ## Decisión
 
-### Ocho catálogos en una sola tabla
+### Nueve catálogos en una sola tabla
 
-`catalog_entry` guarda los valores de los ocho catálogos: `platform`, `game_genre`, `screen_genre`, `tag`, `region`, `company`, `person` y `franchise`. Todos se comportan igual, lo que permite un solo servicio, una sola pantalla de gestión y un solo mecanismo de filtros. Si algún catálogo necesita más datos (por ejemplo, la foto de una persona), se añadirá una tabla complementaria, igual que `series_details`.
+`catalog_entry` guarda los valores de los nueve catálogos: `platform`, `game_genre`, `screen_genre`, `tag`, `region`, `company`, `person`, `franchise` y `country` (países de origen, añadido en la migración 0003). Todos se comportan igual, lo que permite un solo servicio, una sola pantalla de gestión y un solo mecanismo de filtros. Si algún catálogo necesita más datos (por ejemplo, la foto de una persona), se añadirá una tabla complementaria, igual que `series_details`.
 
 - **Unicidad por texto exacto** dentro de cada catálogo: «Hipo», «Hipó» e «HIPO» pueden convivir. Un mismo nombre puede existir en catálogos distintos («Nintendo» como empresa y como saga).
 - **La búsqueda ignora mayúsculas y tildes** (`name_key`), también en los alias.
@@ -32,9 +32,12 @@ Los elementos se relacionan con valores reutilizables: plataformas, géneros, sa
 | Productoras                                             | —                       | Empresas                                           |
 | Directores, actores                                     | —                       | Personas (los actores en el orden elegido)         |
 | Compositores                                            | Personas                | Personas                                           |
+| Países de origen (`origin_country`)                     | Países                  | Países                                             |
 | Etiquetas                                               | Etiquetas (lista común) | Etiquetas (lista común)                            |
 
 Las fechas de lanzamiento o estreno van en `item_release` (región + fecha parcial). Puede haber varias por elemento, sin región o repitiendo región (relanzamientos).
+
+Los **países de origen** tienen su propio catálogo, separado de las regiones: las regiones de lanzamiento son mercados (Europa, Norteamérica, Mundial…), mientras que el origen es siempre un país. Por eso «Japón» puede estar en las dos listas como valores independientes.
 
 ### Guardar un elemento
 
@@ -53,8 +56,9 @@ Las fechas de lanzamiento o estreno van en `item_release` (región + fecha parci
 
 ### Listas iniciales
 
-- Plataformas (con alias regionales), géneros de videojuegos, géneros de películas y series, y regiones. Están en `src/main/infrastructure/db/default-catalogs.ts`, fuera de la migración.
+- Plataformas, géneros de videojuegos, géneros de películas y series (los tres con alias), regiones y países (con alias). Están en `src/main/infrastructure/db/default-catalogs.ts`, fuera de la migración.
 - Se copian **una sola vez** en cada perfil, en su idioma: al crearlo o, para los perfiles anteriores, al abrirlo por primera vez (marca en `library_meta`). Después son valores normales: se pueden renombrar o eliminar, y no se traducen ni se vuelven a crear.
+- Añadir valores a una lista existente no los lleva a los perfiles que ya la recibieron. Un catálogo nuevo, en cambio, tiene su propia marca y llega una vez a todos los perfiles (así se hizo con los países).
 - Empresas, personas, sagas y etiquetas empiezan vacías.
 
 ### Interfaz

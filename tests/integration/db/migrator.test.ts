@@ -132,6 +132,53 @@ describe('migrate', () => {
     expect(tableNames(db)).toEqual(['book']);
   });
 
+  it('can rebuild a table that others point to without losing their rows', () => {
+    const shelves: Migration = {
+      version: 1,
+      name: 'shelves',
+      sql: `CREATE TABLE shelf (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+            CREATE TABLE book (id INTEGER PRIMARY KEY,
+              shelf_id INTEGER NOT NULL REFERENCES shelf (id) ON DELETE CASCADE);`,
+    };
+    const rebuildShelves: Migration = {
+      version: 2,
+      name: 'rebuild shelves',
+      sql: `CREATE TABLE shelf_new (id INTEGER PRIMARY KEY, name TEXT NOT NULL CHECK (name <> ''));
+            INSERT INTO shelf_new SELECT * FROM shelf;
+            DROP TABLE shelf;
+            ALTER TABLE shelf_new RENAME TO shelf;`,
+    };
+    migrate(db, [shelves]);
+    db.exec("INSERT INTO shelf VALUES (1, 'Salón'); INSERT INTO book VALUES (1, 1);");
+
+    migrate(db, [shelves, rebuildShelves]);
+
+    expect(db.prepare('SELECT COUNT(*) FROM book').pluck().get()).toBe(1);
+    expect(db.pragma('foreign_keys', { simple: true })).toBe(1);
+    db.prepare('DELETE FROM shelf WHERE id = 1').run();
+    expect(db.prepare('SELECT COUNT(*) FROM book').pluck().get()).toBe(0);
+  });
+
+  it('rolls back a migration that leaves broken references', () => {
+    const shelves: Migration = {
+      version: 1,
+      name: 'shelves',
+      sql: `CREATE TABLE shelf (id INTEGER PRIMARY KEY);
+            CREATE TABLE book (id INTEGER PRIMARY KEY, shelf_id INTEGER REFERENCES shelf (id));`,
+    };
+    const orphan: Migration = {
+      version: 2,
+      name: 'orphan',
+      sql: 'INSERT INTO book VALUES (1, 999);',
+    };
+    migrate(db, [shelves]);
+
+    expect(() => migrate(db, [shelves, orphan])).toThrow(MigrationError);
+    expect(getSchemaVersion(db)).toBe(1);
+    expect(db.prepare('SELECT COUNT(*) FROM book').pluck().get()).toBe(0);
+    expect(db.pragma('foreign_keys', { simple: true })).toBe(1);
+  });
+
   it('refuses to open a database created by a newer version of the app', () => {
     migrate(db, [createBooks, addAuthor, createShelves]);
 

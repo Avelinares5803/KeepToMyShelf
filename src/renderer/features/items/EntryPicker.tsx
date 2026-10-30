@@ -62,9 +62,12 @@ export function EntryPicker({
   ];
   const showList = open && options.length > 0 && !(single && value.length > 0);
 
+  // The list closes after choosing so it does not cover the rest of the form; typing or the
+  // down arrow opens it again.
   function add(choice: EntryChoice) {
     onChange([...value, choice]);
     setText('');
+    setOpen(false);
     setActive(-1);
   }
 

@@ -12,6 +12,7 @@ export const CATALOGS = [
   'company',
   'person',
   'franchise',
+  'country',
 ] as const;
 export type Catalog = (typeof CATALOGS)[number];
 
@@ -31,6 +32,7 @@ export const ITEM_ROLES = [
   'composer',
   'actor',
   'tag',
+  'origin_country',
 ] as const;
 export type ItemRole = (typeof ITEM_ROLES)[number];
 
@@ -44,6 +46,7 @@ const ROLE_CATALOGS: Record<ItemKind, Partial<Record<ItemRole, Catalog>>> = {
     publisher: 'company',
     developer: 'company',
     composer: 'person',
+    origin_country: 'country',
     tag: 'tag',
   },
   movie: {
@@ -53,6 +56,7 @@ const ROLE_CATALOGS: Record<ItemKind, Partial<Record<ItemRole, Catalog>>> = {
     director: 'person',
     actor: 'person',
     composer: 'person',
+    origin_country: 'country',
     tag: 'tag',
   },
   series: {
@@ -62,6 +66,7 @@ const ROLE_CATALOGS: Record<ItemKind, Partial<Record<ItemRole, Catalog>>> = {
     director: 'person',
     actor: 'person',
     composer: 'person',
+    origin_country: 'country',
     tag: 'tag',
   },
 };

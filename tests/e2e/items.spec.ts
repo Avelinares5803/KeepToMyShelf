@@ -328,9 +328,14 @@ test('keeps the cast in the chosen order', async () => {
   }
   await button('Mover «Keanu Reeves» antes').click();
   await expect(button('Mover «Keanu Reeves» antes')).toBeDisabled();
+  await field('Países de origen').fill('usa');
+  await option('Estados Unidos (USA)').click();
+  // The suggestions close after choosing, so they do not cover the rest of the form.
+  await expect(page.getByRole('listbox')).toHaveCount(0);
 
   await button('Guardar').click();
   await expect(detailRow('Reparto')).toContainText('Keanu Reeves, Carrie-Anne Moss');
+  await expect(detailRow('Países de origen')).toContainText('Estados Unidos');
 });
 
 test('shows untitled items in the current language', async () => {

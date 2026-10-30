@@ -19,6 +19,9 @@ interface DefaultCatalogs {
   /** Other names of default movie and series genres (e.g. "Noir" for "Cine negro"). */
   readonly screen_genre_aliases: DefaultAliases;
   readonly region: readonly string[];
+  /** Countries of origin. */
+  readonly country: readonly string[];
+  readonly country_aliases: DefaultAliases;
 }
 
 // Platform names are the same in every language except a few generic ones. Grouped by
@@ -298,6 +301,39 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'Australia',
       'Mundial',
     ],
+    country: [
+      'Estados Unidos',
+      'Canadá',
+      'México',
+      'Argentina',
+      'Brasil',
+      'Reino Unido',
+      'Irlanda',
+      'Francia',
+      'España',
+      'Portugal',
+      'Italia',
+      'Alemania',
+      'Países Bajos',
+      'Bélgica',
+      'Suecia',
+      'Dinamarca',
+      'Noruega',
+      'Finlandia',
+      'Polonia',
+      'Japón',
+      'Corea del Sur',
+      'China',
+      'Hong Kong',
+      'India',
+      'Australia',
+      'Nueva Zelanda',
+    ],
+    country_aliases: {
+      'Estados Unidos': ['EE. UU.', 'EEUU', 'USA'],
+      'Reino Unido': ['UK'],
+      'Países Bajos': ['Holanda'],
+    },
   },
   en: {
     platform: platforms('Mobile', 'Arcade'),
@@ -405,10 +441,46 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'Australia',
       'Worldwide',
     ],
+    country: [
+      'United States',
+      'Canada',
+      'Mexico',
+      'Argentina',
+      'Brazil',
+      'United Kingdom',
+      'Ireland',
+      'France',
+      'Spain',
+      'Portugal',
+      'Italy',
+      'Germany',
+      'Netherlands',
+      'Belgium',
+      'Sweden',
+      'Denmark',
+      'Norway',
+      'Finland',
+      'Poland',
+      'Japan',
+      'South Korea',
+      'China',
+      'Hong Kong',
+      'India',
+      'Australia',
+      'New Zealand',
+    ],
+    country_aliases: {
+      'United States': ['USA'],
+      'United Kingdom': ['UK'],
+      Netherlands: ['Holland'],
+    },
   },
 };
 
 const SEEDED_FLAG = 'default_catalogs_seeded';
+// Countries arrived later (schema v3), so they have their own flag: libraries seeded before
+// still receive them once.
+const COUNTRIES_SEEDED_FLAG = 'default_countries_seeded';
 
 /**
  * Copies the default catalogs into a library, once. Afterwards they are ordinary values the
@@ -416,7 +488,12 @@ const SEEDED_FLAG = 'default_catalogs_seeded';
  */
 export function seedDefaultCatalogs(db: SqliteDatabase, language: Language): void {
   db.transaction(() => {
-    if (db.prepare('SELECT 1 FROM library_meta WHERE key = ?').get(SEEDED_FLAG)) return;
+    const seeded = (flag: string) =>
+      db.prepare('SELECT 1 FROM library_meta WHERE key = ?').get(flag) !== undefined;
+    const markSeeded = (flag: string) =>
+      db
+        .prepare('INSERT INTO library_meta (key, value) VALUES (?, ?)')
+        .run(flag, new Date().toISOString());
 
     const insert = db.prepare(
       'INSERT OR IGNORE INTO catalog_entry (catalog, name, name_key, scope) VALUES (?, ?, ?, ?)',
@@ -437,20 +514,26 @@ export function seedDefaultCatalogs(db: SqliteDatabase, language: Language): voi
       }
     };
     const lists = DEFAULT_CATALOGS[language];
-    for (const name of lists.platform) {
-      insertWithAliases('platform', { name }, DEFAULT_PLATFORM_ALIASES);
-    }
-    for (const name of lists.game_genre) {
-      insertWithAliases('game_genre', { name }, lists.game_genre_aliases);
-    }
-    for (const entry of lists.screen_genre) {
-      insertWithAliases('screen_genre', entry, lists.screen_genre_aliases);
-    }
-    for (const name of lists.region) insert.run('region', name, normalizeForSearch(name), null);
 
-    db.prepare('INSERT INTO library_meta (key, value) VALUES (?, ?)').run(
-      SEEDED_FLAG,
-      new Date().toISOString(),
-    );
+    if (!seeded(SEEDED_FLAG)) {
+      for (const name of lists.platform) {
+        insertWithAliases('platform', { name }, DEFAULT_PLATFORM_ALIASES);
+      }
+      for (const name of lists.game_genre) {
+        insertWithAliases('game_genre', { name }, lists.game_genre_aliases);
+      }
+      for (const entry of lists.screen_genre) {
+        insertWithAliases('screen_genre', entry, lists.screen_genre_aliases);
+      }
+      for (const name of lists.region) insertWithAliases('region', { name }, {});
+      markSeeded(SEEDED_FLAG);
+    }
+
+    if (!seeded(COUNTRIES_SEEDED_FLAG)) {
+      for (const name of lists.country) {
+        insertWithAliases('country', { name }, lists.country_aliases);
+      }
+      markSeeded(COUNTRIES_SEEDED_FLAG);
+    }
   })();
 }

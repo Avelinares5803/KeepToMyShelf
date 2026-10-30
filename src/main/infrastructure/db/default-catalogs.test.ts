@@ -12,6 +12,7 @@ describe('default catalogs', () => {
         lists.game_genre,
         lists.screen_genre.map((e) => e.name),
         lists.region,
+        lists.country,
       ];
       for (const names of all) {
         expect(new Set(names).size).toBe(names.length);
@@ -32,6 +33,9 @@ describe('default catalogs', () => {
       for (const name of Object.keys(lists.screen_genre_aliases)) {
         expect(screenGenres).toContain(name);
       }
+      for (const name of Object.keys(lists.country_aliases)) {
+        expect(lists.country).toContain(name);
+      }
     }
   });
 
@@ -40,6 +44,7 @@ describe('default catalogs', () => {
     ...Object.values(DEFAULT_CATALOGS).flatMap((lists) => [
       lists.game_genre_aliases,
       lists.screen_genre_aliases,
+      lists.country_aliases,
     ]),
   ];
 

@@ -144,6 +144,7 @@
       "director": "Dirección",
       "actor": "Reparto",
       "composer": "Música",
+      "origin_country": "Países de origen",
       "tag": "Etiquetas"
     },
     "relations": {
@@ -197,7 +198,8 @@
       "company": "Empresas",
       "person": "Personas",
       "tag": "Etiquetas",
-      "region": "Regiones"
+      "region": "Regiones",
+      "country": "Países"
     },
     "add": "Añadir",
     "edit": "Editar",

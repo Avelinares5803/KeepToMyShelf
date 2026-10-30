@@ -67,6 +67,26 @@ describe('ItemService relations and release dates', () => {
     expect(fx.items.get(token, item.id).relations).toEqual(item.relations);
   });
 
+  it('stores the countries of origin of every kind of item', () => {
+    const japan = entry('country', 'Japón');
+
+    for (const kind of ['game', 'movie', 'series'] as const) {
+      const item = create(kind, {
+        relations: { origin_country: [existing(japan.id), added('Corea del Norte')] },
+      });
+      expect(item.relations.origin_country?.map((e) => e.name)).toEqual([
+        'Japón',
+        'Corea del Norte',
+      ]);
+    }
+    expect(fx.catalogs.list(token, 'country').find((e) => e.id === japan.id)?.usage).toEqual({
+      total: 3,
+      game: 1,
+      movie: 1,
+      series: 1,
+    });
+  });
+
   it('keeps the order of actors as chosen', () => {
     const item = create('movie', {
       relations: { actor: [added('Zoe Saldaña'), added('Ana de Armas'), added('Mía Goth')] },

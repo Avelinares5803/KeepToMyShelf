@@ -273,6 +273,9 @@ describe('CatalogService', () => {
         'SFC',
       ]);
       expect(find('PC')?.aliases).toEqual([]);
+      expect(
+        fx.catalogs.list(token, 'game_genre').find((e) => e.name === "Shoot 'em up")?.aliases,
+      ).toEqual(['Naves', 'Matamarcianos', 'Shmup']);
     });
 
     it('are saved cleaned with the value and replaced when it is edited', () => {

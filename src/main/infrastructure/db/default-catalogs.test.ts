@@ -20,14 +20,31 @@ describe('default catalogs', () => {
     },
   );
 
-  it('give aliases only to platforms in every language', () => {
-    for (const { platform } of Object.values(DEFAULT_CATALOGS)) {
-      for (const name of Object.keys(DEFAULT_PLATFORM_ALIASES)) expect(platform).toContain(name);
+  it('give aliases only to values of their list, in every language', () => {
+    for (const lists of Object.values(DEFAULT_CATALOGS)) {
+      const screenGenres = lists.screen_genre.map((e) => e.name);
+      for (const name of Object.keys(DEFAULT_PLATFORM_ALIASES)) {
+        expect(lists.platform).toContain(name);
+      }
+      for (const name of Object.keys(lists.game_genre_aliases)) {
+        expect(lists.game_genre).toContain(name);
+      }
+      for (const name of Object.keys(lists.screen_genre_aliases)) {
+        expect(screenGenres).toContain(name);
+      }
     }
   });
 
-  it('have clean platform aliases that are not contained in the name or another alias', () => {
-    for (const [name, aliases] of Object.entries(DEFAULT_PLATFORM_ALIASES)) {
+  const allAliases = [
+    DEFAULT_PLATFORM_ALIASES,
+    ...Object.values(DEFAULT_CATALOGS).flatMap((lists) => [
+      lists.game_genre_aliases,
+      lists.screen_genre_aliases,
+    ]),
+  ];
+
+  it('have clean aliases that are not contained in the name or another alias', () => {
+    for (const [name, aliases] of allAliases.flatMap((list) => Object.entries(list))) {
       expect(normalizeAliases(name, aliases)).toEqual(aliases);
 
       const keys = [name, ...aliases].map(normalizeForSearch);

@@ -1,4 +1,4 @@
-import type { GenreScope } from '../../../core/catalogs/catalogs';
+import type { Catalog, GenreScope } from '../../../core/catalogs/catalogs';
 import { normalizeForSearch } from '../../../core/text/normalize';
 import type { Language } from '../../../shared/settings';
 import type { SqliteDatabase } from './connection';
@@ -8,9 +8,13 @@ interface DefaultEntry {
   readonly scope?: GenreScope;
 }
 
+type DefaultAliases = Readonly<Record<string, readonly string[]>>;
+
 interface DefaultCatalogs {
   readonly platform: readonly string[];
   readonly game_genre: readonly string[];
+  /** Other names of default video game genres (e.g. "Naves" for "Shoot 'em up"). */
+  readonly game_genre_aliases: DefaultAliases;
   readonly screen_genre: readonly DefaultEntry[];
   readonly region: readonly string[];
 }
@@ -128,7 +132,7 @@ const platforms = (mobile: string, arcade: string): string[] => [
  * Other names of default platforms (regional names, abbreviations), found when searching.
  * An alias contained in the name or in another alias would add nothing to the search.
  */
-export const DEFAULT_PLATFORM_ALIASES: Readonly<Record<string, readonly string[]>> = {
+export const DEFAULT_PLATFORM_ALIASES: DefaultAliases = {
   'Atari 5200': ['Atari 5200 SuperSystem', 'Atari 5200 Advanced Video Entertainment System'],
   'Atari 7800': ['Atari 7800 ProSystem'],
   'Atari Jaguar CD': ['Jag CD'],
@@ -192,16 +196,24 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'RPG',
       'Rol de acción',
       'JRPG',
+      'RPG táctico',
+      'MMORPG',
+      'Dungeon crawler',
       'Estrategia',
-      'Táctico',
       'Plataformas',
       'Disparos',
+      "Shoot 'em up",
       'Lucha',
       "Beat 'em up",
+      'Hack and slash',
+      'Arcade',
       'Carreras',
       'Deportes',
       'Puzle',
+      'Point and click',
       'Simulación',
+      'Simulación de citas',
+      'Supervivencia',
       'Terror',
       'Sigilo',
       'Metroidvania',
@@ -211,8 +223,19 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'Musical',
       'Novela visual',
       'Party',
+      'Minijuegos',
+      'Trivia',
+      'Juego de mesa',
+      'Cartas',
       'Sandbox',
     ],
+    game_genre_aliases: {
+      'RPG táctico': ['SRPG'],
+      'Dungeon crawler': ['Mazmorras'],
+      "Shoot 'em up": ['Naves', 'Matamarcianos', 'Shmup'],
+      'Point and click': ['Aventura gráfica'],
+      'Simulación de citas': ['Dating sim'],
+    },
     screen_genre: [
       { name: 'Acción' },
       { name: 'Aventura' },
@@ -266,16 +289,24 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'RPG',
       'Action RPG',
       'JRPG',
+      'Tactical RPG',
+      'MMORPG',
+      'Dungeon crawler',
       'Strategy',
-      'Tactics',
       'Platformer',
       'Shooter',
+      "Shoot 'em up",
       'Fighting',
       "Beat 'em up",
+      'Hack and slash',
+      'Arcade',
       'Racing',
       'Sports',
       'Puzzle',
+      'Point and click',
       'Simulation',
+      'Dating sim',
+      'Survival',
       'Horror',
       'Stealth',
       'Metroidvania',
@@ -285,8 +316,18 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'Music',
       'Visual novel',
       'Party',
+      'Minigames',
+      'Trivia',
+      'Board game',
+      'Card game',
       'Sandbox',
     ],
+    game_genre_aliases: {
+      'Tactical RPG': ['SRPG', 'Strategy RPG'],
+      "Shoot 'em up": ['Shmup'],
+      'Point and click': ['Graphic adventure'],
+      'Dating sim': ['Dating simulation'],
+    },
     screen_genre: [
       { name: 'Action' },
       { name: 'Adventure' },
@@ -349,22 +390,24 @@ export function seedDefaultCatalogs(db: SqliteDatabase, language: Language): voi
     const insertAlias = db.prepare(
       'INSERT INTO catalog_entry_alias (entry_id, name, name_key) VALUES (?, ?, ?)',
     );
-    const lists = DEFAULT_CATALOGS[language];
-    for (const name of lists.platform) {
+    const insertWithAliases = (catalog: Catalog, name: string, aliases: DefaultAliases) => {
       const { changes, lastInsertRowid } = insert.run(
-        'platform',
+        catalog,
         name,
         normalizeForSearch(name),
         null,
       );
       // An ignored (already existing) row leaves lastInsertRowid pointing at another value.
-      if (changes === 0) continue;
-      for (const alias of DEFAULT_PLATFORM_ALIASES[name] ?? []) {
+      if (changes === 0) return;
+      for (const alias of aliases[name] ?? []) {
         insertAlias.run(Number(lastInsertRowid), alias, normalizeForSearch(alias));
       }
-    }
+    };
+    const lists = DEFAULT_CATALOGS[language];
+    for (const name of lists.platform)
+      insertWithAliases('platform', name, DEFAULT_PLATFORM_ALIASES);
     for (const name of lists.game_genre) {
-      insert.run('game_genre', name, normalizeForSearch(name), null);
+      insertWithAliases('game_genre', name, lists.game_genre_aliases);
     }
     for (const { name, scope } of lists.screen_genre) {
       insert.run('screen_genre', name, normalizeForSearch(name), scope ?? null);

@@ -233,8 +233,10 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'Juego de mesa',
       'Cartas',
       'Sandbox',
+      'Para adultos',
     ],
     game_genre_aliases: {
+      'Para adultos': ['+18', 'XXX', 'Eroge'],
       'RPG táctico': ['SRPG'],
       'Dungeon crawler': ['Mazmorras'],
       "Shoot 'em up": ['Naves', 'Matamarcianos', 'Shmup'],
@@ -376,8 +378,10 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       'Board game',
       'Card game',
       'Sandbox',
+      'Adult',
     ],
     game_genre_aliases: {
+      Adult: ['18+', 'XXX', 'Eroge'],
       'Tactical RPG': ['SRPG', 'Strategy RPG'],
       "Shoot 'em up": ['Shmup'],
       'Point and click': ['Graphic adventure'],

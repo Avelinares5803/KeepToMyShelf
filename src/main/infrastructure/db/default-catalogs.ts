@@ -16,6 +16,8 @@ interface DefaultCatalogs {
   /** Other names of default video game genres (e.g. "Naves" for "Shoot 'em up"). */
   readonly game_genre_aliases: DefaultAliases;
   readonly screen_genre: readonly DefaultEntry[];
+  /** Other names of default movie and series genres (e.g. "Noir" for "Cine negro"). */
+  readonly screen_genre_aliases: DefaultAliases;
   readonly region: readonly string[];
 }
 
@@ -257,12 +259,29 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       { name: 'Suspense' },
       { name: 'Terror' },
       { name: 'Western' },
+      { name: 'Cine negro' },
+      { name: 'Espionaje' },
+      { name: 'Catástrofes' },
+      { name: 'Artes marciales' },
+      { name: 'Deportes' },
+      { name: 'Religioso' },
+      { name: 'Found footage' },
+      { name: 'Falso documental' },
+      { name: 'Erótico' },
+      { name: 'Cine para adultos' },
       { name: 'Cortometraje', scope: 'movie' },
       { name: 'Sitcom', scope: 'series' },
       { name: 'Telenovela', scope: 'series' },
       { name: 'Reality', scope: 'series' },
       { name: 'Docuserie', scope: 'series' },
+      { name: 'Concurso', scope: 'series' },
     ],
+    screen_genre_aliases: {
+      'Cine negro': ['Noir'],
+      'Found footage': ['Metraje encontrado'],
+      'Falso documental': ['Mockumentary'],
+      'Cine para adultos': ['XXX', 'Pornográfico'],
+    },
     region: [
       'Japón',
       'Norteamérica',
@@ -349,12 +368,27 @@ export const DEFAULT_CATALOGS: Record<Language, DefaultCatalogs> = {
       { name: 'Thriller' },
       { name: 'Horror' },
       { name: 'Western' },
+      { name: 'Film noir' },
+      { name: 'Spy' },
+      { name: 'Disaster' },
+      { name: 'Martial arts' },
+      { name: 'Sports' },
+      { name: 'Religious' },
+      { name: 'Found footage' },
+      { name: 'Mockumentary' },
+      { name: 'Erotic' },
+      { name: 'Adult' },
       { name: 'Short film', scope: 'movie' },
       { name: 'Sitcom', scope: 'series' },
       { name: 'Soap opera', scope: 'series' },
       { name: 'Reality', scope: 'series' },
       { name: 'Docuseries', scope: 'series' },
+      { name: 'Game show', scope: 'series' },
     ],
+    screen_genre_aliases: {
+      Mockumentary: ['Fake documentary'],
+      Adult: ['XXX', 'Pornographic'],
+    },
     region: [
       'Japan',
       'North America',
@@ -390,27 +424,27 @@ export function seedDefaultCatalogs(db: SqliteDatabase, language: Language): voi
     const insertAlias = db.prepare(
       'INSERT INTO catalog_entry_alias (entry_id, name, name_key) VALUES (?, ?, ?)',
     );
-    const insertWithAliases = (catalog: Catalog, name: string, aliases: DefaultAliases) => {
-      const { changes, lastInsertRowid } = insert.run(
-        catalog,
-        name,
-        normalizeForSearch(name),
-        null,
-      );
+    const insertWithAliases = (
+      catalog: Catalog,
+      { name, scope }: DefaultEntry,
+      aliases: DefaultAliases,
+    ) => {
+      const result = insert.run(catalog, name, normalizeForSearch(name), scope ?? null);
       // An ignored (already existing) row leaves lastInsertRowid pointing at another value.
-      if (changes === 0) return;
+      if (result.changes === 0) return;
       for (const alias of aliases[name] ?? []) {
-        insertAlias.run(Number(lastInsertRowid), alias, normalizeForSearch(alias));
+        insertAlias.run(Number(result.lastInsertRowid), alias, normalizeForSearch(alias));
       }
     };
     const lists = DEFAULT_CATALOGS[language];
-    for (const name of lists.platform)
-      insertWithAliases('platform', name, DEFAULT_PLATFORM_ALIASES);
-    for (const name of lists.game_genre) {
-      insertWithAliases('game_genre', name, lists.game_genre_aliases);
+    for (const name of lists.platform) {
+      insertWithAliases('platform', { name }, DEFAULT_PLATFORM_ALIASES);
     }
-    for (const { name, scope } of lists.screen_genre) {
-      insert.run('screen_genre', name, normalizeForSearch(name), scope ?? null);
+    for (const name of lists.game_genre) {
+      insertWithAliases('game_genre', { name }, lists.game_genre_aliases);
+    }
+    for (const entry of lists.screen_genre) {
+      insertWithAliases('screen_genre', entry, lists.screen_genre_aliases);
     }
     for (const name of lists.region) insert.run('region', name, normalizeForSearch(name), null);
 

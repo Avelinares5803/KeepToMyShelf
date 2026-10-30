@@ -3,6 +3,10 @@ import type { SqliteDatabase } from './connection';
 /**
  * One forward-only schema change. `sql` must not contain BEGIN/COMMIT: each migration
  * runs inside its own transaction together with the version bump.
+ *
+ * Foreign keys are off while migrations run, so a table can be rebuilt (create a copy,
+ * move the rows, drop the old one, rename the copy) without the drop deleting the rows
+ * that point to it. Before each migration is committed, every reference is checked.
  */
 export interface Migration {
   readonly version: number;
@@ -86,16 +90,27 @@ export function migrate(
   }
 
   const applied: number[] = [];
-  for (const migration of pending) {
-    try {
-      db.transaction(() => {
-        db.exec(migration.sql);
-        db.pragma(`user_version = ${migration.version}`);
-      })();
-    } catch (error) {
-      throw new MigrationError(migration, error);
+  // Can only be changed outside a transaction, so it wraps all of them.
+  const foreignKeys = db.pragma('foreign_keys', { simple: true }) as number;
+  db.pragma('foreign_keys = OFF');
+  try {
+    for (const migration of pending) {
+      try {
+        db.transaction(() => {
+          db.exec(migration.sql);
+          const broken = db.pragma('foreign_key_check') as unknown[];
+          if (broken.length > 0) {
+            throw new Error(`${broken.length} broken references after the migration`);
+          }
+          db.pragma(`user_version = ${migration.version}`);
+        })();
+      } catch (error) {
+        throw new MigrationError(migration, error);
+      }
+      applied.push(migration.version);
     }
-    applied.push(migration.version);
+  } finally {
+    db.pragma(`foreign_keys = ${foreignKeys ? 'ON' : 'OFF'}`);
   }
 
   return { fromVersion, toVersion: latestVersion, applied };

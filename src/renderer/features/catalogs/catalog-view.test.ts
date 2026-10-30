@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Catalog } from '../../../core/catalogs/catalogs';
+import { CATALOGS, type Catalog } from '../../../core/catalogs/catalogs';
 import type { CatalogEntrySummary } from '../../../shared/catalogs';
 import { CATALOG_ORDER, initialCatalog, usageCount, visibleEntries } from './catalog-view';
 
@@ -24,7 +24,7 @@ const names = (entries: CatalogEntrySummary[]) => entries.map((e) => e.name);
 
 describe('catalog view', () => {
   it('lists every catalog once', () => {
-    expect(new Set(CATALOG_ORDER).size).toBe(8);
+    expect([...CATALOG_ORDER].sort()).toEqual([...CATALOGS].sort());
   });
 
   it('starts with platforms for video games and with genres for movies and series', () => {

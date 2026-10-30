@@ -20,6 +20,7 @@ describe('roles per kind', () => {
       'publisher',
       'developer',
       'composer',
+      'origin_country',
       'tag',
     ]);
     expect(rolesForKind('movie')).toEqual([
@@ -29,6 +30,7 @@ describe('roles per kind', () => {
       'director',
       'actor',
       'composer',
+      'origin_country',
       'tag',
     ]);
     expect(rolesForKind('series')).toEqual(rolesForKind('movie'));
@@ -36,6 +38,7 @@ describe('roles per kind', () => {
 
   it('maps each role to its catalog depending on the kind', () => {
     expect(catalogForRole('game', 'genre')).toBe('game_genre');
+    expect(catalogForRole('series', 'origin_country')).toBe('country');
     expect(catalogForRole('movie', 'genre')).toBe('screen_genre');
     expect(catalogForRole('game', 'developer')).toBe('company');
     expect(catalogForRole('series', 'producer')).toBe('company');

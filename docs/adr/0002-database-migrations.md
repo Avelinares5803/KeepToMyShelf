@@ -15,6 +15,7 @@ Cada perfil tiene su propia base de datos SQLite (`library.db`). El esquema evol
 - La versión actual se guarda en la propia base de datos (`PRAGMA user_version`).
 - Al abrir una base, se aplican en orden las migraciones pendientes. **Cada migración se ejecuta en una transacción junto con el cambio de versión**: o se aplica entera o no se aplica nada.
 - Los archivos SQL **no** deben contener `BEGIN`/`COMMIT`.
+- **Las claves foráneas se desactivan mientras se migra** y se comprueban (`PRAGMA foreign_key_check`) antes de confirmar cada migración; si queda alguna referencia rota, la migración se deshace. Así se puede rehacer una tabla a la que apuntan otras (crear una copia, pasar las filas, borrar la original y renombrar la copia), que es la única forma de cambiar un `CHECK` en SQLite, sin que el borrado elimine en cascada las filas que apuntan a ella.
 - Solo hacia delante: no hay migraciones «hacia atrás». Si la base procede de una versión más nueva de la app, se rechaza (`DatabaseTooNewError`) para no dañarla.
 - **Una migración publicada nunca se modifica ni se reordena.** Cualquier corrección se hace con una migración nueva.
 - Cada fase añade su propia migración con las tablas que necesita, en lugar de crear todo el esquema de una vez.

@@ -33,7 +33,7 @@ describe('library migration 1 → 2 (catalogs)', () => {
   it('upgrades the schema, keeps every item and backs up the old version first', () => {
     const db = openLibraryDatabase(dbPath);
     try {
-      expect(getSchemaVersion(db)).toBe(2);
+      expect(getSchemaVersion(db)).toBe(libraryMigrations.length);
       expect(db.prepare('SELECT title, notes FROM item').all()).toEqual([
         { title: 'Chrono Trigger', notes: 'Mis notas' },
       ]);

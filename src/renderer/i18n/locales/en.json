@@ -144,6 +144,7 @@
       "director": "Directors",
       "actor": "Cast",
       "composer": "Music",
+      "origin_country": "Countries of origin",
       "tag": "Tags"
     },
     "relations": {
@@ -197,7 +198,8 @@
       "company": "Companies",
       "person": "People",
       "tag": "Tags",
-      "region": "Regions"
+      "region": "Regions",
+      "country": "Countries"
     },
     "add": "Add",
     "edit": "Edit",

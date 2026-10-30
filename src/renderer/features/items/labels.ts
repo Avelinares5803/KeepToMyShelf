@@ -24,6 +24,6 @@ export const roleLabel = (t: TFunction, role: ItemRole) => t(`items.roles.${role
 /** Roles of the "Details" section, in the order the form and the detail view show them. */
 export function sheetRoles(kind: ItemKind): ItemRole[] {
   return kind === 'game'
-    ? ['released_on', 'genre', 'publisher', 'developer', 'composer']
-    : ['genre', 'producer', 'director', 'actor', 'composer'];
+    ? ['released_on', 'genre', 'publisher', 'developer', 'composer', 'origin_country']
+    : ['genre', 'producer', 'director', 'actor', 'composer', 'origin_country'];
 }

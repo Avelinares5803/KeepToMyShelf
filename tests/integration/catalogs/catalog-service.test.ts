@@ -73,6 +73,25 @@ describe('CatalogService', () => {
       expect(names('game_genre')).not.toContain('Terror');
     });
 
+    it('include countries, also for profiles that got the other lists before', () => {
+      expect(names('country')).toHaveLength(DEFAULT_CATALOGS.es.country.length);
+      expect(
+        fx.catalogs.list(token, 'country').find((e) => e.name === 'Estados Unidos')?.aliases,
+      ).toEqual(['EE. UU.', 'EEUU', 'USA']);
+
+      // A profile seeded before countries existed: the other lists are not loaded again.
+      const horror = fx.catalogs.list(token, 'game_genre').find((e) => e.name === 'Terror');
+      fx.catalogs.delete(token, horror!.id);
+      db().exec(
+        "DELETE FROM catalog_entry WHERE catalog = 'country'; DELETE FROM library_meta WHERE key = 'default_countries_seeded';",
+      );
+
+      token = fx.sessions.open(profileId).token;
+
+      expect(names('country')).toContain('Japón');
+      expect(names('game_genre')).not.toContain('Terror');
+    });
+
     it('are loaded on opening for profiles created before catalogs existed', () => {
       db().exec('DELETE FROM catalog_entry; DELETE FROM library_meta;');
       fx.settings.setForProfile(profileId, { key: 'language', value: 'en' });

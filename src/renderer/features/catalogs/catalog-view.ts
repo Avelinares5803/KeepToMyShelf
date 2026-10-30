@@ -11,12 +11,19 @@ export const CATALOG_ORDER: readonly Catalog[] = [
   'franchise',
   'company',
   'person',
+  'country',
   'tag',
   'region',
 ];
 
 /** Catalogs shared by every kind, which can show only the values used by one kind. */
-export const KIND_FILTERED_CATALOGS: readonly Catalog[] = ['franchise', 'company', 'person', 'tag'];
+export const KIND_FILTERED_CATALOGS: readonly Catalog[] = [
+  'franchise',
+  'company',
+  'person',
+  'country',
+  'tag',
+];
 
 /** The kind whose values are shown, or null for all values (used or not). */
 export type KindFilter = ItemKind | null;

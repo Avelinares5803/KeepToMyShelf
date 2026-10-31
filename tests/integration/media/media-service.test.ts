@@ -113,6 +113,14 @@ describe('MediaService', () => {
       expect(prepared.format).toBe('png');
     });
 
+    it.each(['avif', 'webp', 'jpeg'] as const)('reads %s images', async (format) => {
+      const bytes = await sharp(await pngImage(60, 30))
+        .toFormat(format)
+        .toBuffer();
+      const prepared = await prepare(`imagen.${format}`, bytes);
+      expect(prepared).toMatchObject({ format, width: 60, height: 30, isAnimated: false });
+    });
+
     it('applies the EXIF orientation to the reported size', async () => {
       const prepared = await prepare('girada.jpg', await rotatedJpeg(40, 20));
       expect(prepared).toMatchObject({ format: 'jpeg', width: 20, height: 40 });

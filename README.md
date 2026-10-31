@@ -2,7 +2,7 @@
 
 Aplicación de escritorio para organizar tu colección de **videojuegos, películas y series**: portadas, valoraciones, estados de seguimiento, filtros, colecciones y perfiles independientes. Funciona sin conexión y guarda todos los datos en tu equipo.
 
-> **Estado:** en desarrollo inicial (v0.x). Todavía no hay una versión utilizable.
+> **Estado:** en desarrollo (v0.x). Ya se pueden gestionar perfiles, elementos y catálogos en modo desarrollo; aún no hay versión publicada. Ver la [hoja de ruta](docs/ROADMAP.md).
 
 ## Requisitos para desarrollar
 
@@ -46,7 +46,7 @@ src/
 └─ renderer/   interfaz de usuario (React)
 ```
 
-Más detalles en [docs/](docs/): decisiones de arquitectura en [docs/adr/](docs/adr/) y flujo de trabajo en [docs/GIT-WORKFLOW.md](docs/GIT-WORKFLOW.md).
+Más detalles en [docs/](docs/): estado y planificación en [docs/ROADMAP.md](docs/ROADMAP.md), decisiones de arquitectura en [docs/adr/](docs/adr/) y flujo de trabajo en [docs/GIT-WORKFLOW.md](docs/GIT-WORKFLOW.md). Las instrucciones para trabajar con Claude Code están en [CLAUDE.md](CLAUDE.md).
 
 ## Solución de problemas
 

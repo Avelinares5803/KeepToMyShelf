@@ -305,6 +305,19 @@
       "too_many_releases": "You cannot add more than 100 release dates.",
       "release_date_required": "Enter at least the year of every release or premiere date."
     },
+    "media": {
+      "too_large": "The file is too large.",
+      "unsupported_format": "That file type is not supported. Use JPEG, PNG, WebP, AVIF or GIF images, or PDF documents.",
+      "unreadable": "The image could not be read. The file may be damaged.",
+      "source_unreadable": "The chosen file could not be opened.",
+      "animated_original_only": "Animated images can only be kept as the original.",
+      "choice_required": "Choose how to keep the image.",
+      "import_expired": "The import has expired. Choose the file again.",
+      "already_attached": "That file is already added to this item.",
+      "not_attached": "That file is no longer in this item.",
+      "cover_must_be_image": "Only an image can be the cover.",
+      "invalid_order": "The new order is not valid. Please try again."
+    },
     "profile": {
       "name_empty": "Enter a name.",
       "name_too_long": "The name cannot be longer than 40 characters.",

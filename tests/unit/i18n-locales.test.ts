@@ -27,7 +27,7 @@ function sourceFiles(dir: string): string[] {
  * (e.g. 'profile.name_empty'), found wherever they appear, even when passed in a variable.
  */
 function thrownErrorCodes(): string[] {
-  const pattern = /'((?:date|item|profile|session|settings|ipc)\.[a-z_]+)'/g;
+  const pattern = /'((?:catalog|date|item|media|profile|session|settings|ipc)\.[a-z_]+)'/g;
   const codes = new Set<string>();
   // Error codes originate outside the UI; renderer keys (t('settings.title')) look alike.
   const roots = ['core', 'main', 'shared'].map((dir) => join(__dirname, '../../src', dir));

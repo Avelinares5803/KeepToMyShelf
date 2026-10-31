@@ -52,7 +52,7 @@ describe('library migration 2 → 3 (countries of origin)', () => {
 
   it('keeps every value, other name, link and release date, with the same ids', () => {
     open((db) => {
-      expect(getSchemaVersion(db)).toBe(3);
+      expect(getSchemaVersion(db)).toBe(libraryMigrations.length);
       expect(
         db.prepare('SELECT id, catalog, name, scope FROM catalog_entry ORDER BY id').all(),
       ).toEqual([

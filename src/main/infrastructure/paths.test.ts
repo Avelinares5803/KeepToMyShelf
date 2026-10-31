@@ -11,6 +11,8 @@ describe('createDataPaths', () => {
     expect(paths.appDatabase).toBe(join(root, 'app.db'));
     expect(paths.profileDir(id)).toBe(join(root, 'profiles', id));
     expect(paths.libraryDatabase(id)).toBe(join(root, 'profiles', id, 'library.db'));
+    expect(paths.mediaDir(id)).toBe(join(root, 'profiles', id, 'media'));
+    expect(paths.cacheDir(id)).toBe(join(root, 'profiles', id, 'cache'));
     expect(paths.deletedProfileDir(id)).toBe(join(root, 'profiles', `.deleted-${id}`));
   });
 
@@ -19,6 +21,8 @@ describe('createDataPaths', () => {
     (badId) => {
       expect(() => paths.profileDir(badId)).toThrow(/Invalid profile id/);
       expect(() => paths.libraryDatabase(badId)).toThrow(/Invalid profile id/);
+      expect(() => paths.mediaDir(badId)).toThrow(/Invalid profile id/);
+      expect(() => paths.cacheDir(badId)).toThrow(/Invalid profile id/);
       expect(() => paths.deletedProfileDir(badId)).toThrow(/Invalid profile id/);
     },
   );

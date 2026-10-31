@@ -19,6 +19,8 @@ export interface SessionManagerDeps {
   readonly newId: () => string;
   /** Current language of a profile, used to load the default catalogs the first time. */
   readonly languageOf: (profileId: string) => Language;
+  /** Housekeeping once a profile is open (e.g. removing media files nothing uses). */
+  readonly onOpen: (session: ProfileSession) => void;
 }
 
 /**
@@ -46,8 +48,15 @@ export class SessionManager {
       .prepare('UPDATE profile SET last_opened_at = ? WHERE id = ?')
       .run(now().toISOString(), profileId);
 
-    this.current = { token: newId(), profileId, db };
-    return { token: this.current.token, profileId };
+    const session: ProfileSession = { token: newId(), profileId, db };
+    try {
+      this.deps.onOpen(session);
+    } catch (error) {
+      db.close();
+      throw error;
+    }
+    this.current = session;
+    return { token: session.token, profileId };
   }
 
   /** Throws if `token` does not belong to the open session. */
@@ -61,6 +70,14 @@ export class SessionManager {
   close(token: string): void {
     this.require(token);
     this.closeCurrent();
+  }
+
+  /**
+   * The open session, if any. Only for requests that carry no token, such as `ktms-media://`
+   * URLs: they can only ever reach the profile that is open.
+   */
+  currentSession(): ProfileSession | null {
+    return this.current;
   }
 
   isOpen(profileId: string): boolean {

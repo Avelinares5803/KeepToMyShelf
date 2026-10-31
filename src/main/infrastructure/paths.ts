@@ -5,6 +5,8 @@ import { join } from 'node:path';
  *
  *   app.db                      profile registry and preferences
  *   profiles/<id>/library.db    one library per profile
+ *   profiles/<id>/media/        imported images and documents
+ *   profiles/<id>/cache/        thumbnails, which can always be regenerated
  *   profiles/.deleted-<id>/     folder of a deleted profile awaiting removal
  */
 export interface DataPaths {
@@ -13,6 +15,8 @@ export interface DataPaths {
   readonly profilesDir: string;
   profileDir(profileId: string): string;
   libraryDatabase(profileId: string): string;
+  mediaDir(profileId: string): string;
+  cacheDir(profileId: string): string;
   deletedProfileDir(profileId: string): string;
 }
 
@@ -37,6 +41,8 @@ export function createDataPaths(root: string): DataPaths {
     profilesDir,
     profileDir,
     libraryDatabase: (profileId) => join(profileDir(profileId), 'library.db'),
+    mediaDir: (profileId) => join(profileDir(profileId), 'media'),
+    cacheDir: (profileId) => join(profileDir(profileId), 'cache'),
     deletedProfileDir: (profileId) =>
       join(profilesDir, `${DELETED_PROFILE_PREFIX}${assertProfileId(profileId)}`),
   };

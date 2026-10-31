@@ -305,6 +305,19 @@
       "too_many_releases": "No se pueden añadir más de 100 fechas de lanzamiento.",
       "release_date_required": "Indica al menos el año de cada fecha de lanzamiento o estreno."
     },
+    "media": {
+      "too_large": "El archivo es demasiado grande.",
+      "unsupported_format": "Ese tipo de archivo no se admite. Usa imágenes JPEG, PNG, WebP, AVIF o GIF, o documentos PDF.",
+      "unreadable": "No se ha podido leer la imagen. Puede que el archivo esté dañado.",
+      "source_unreadable": "No se ha podido abrir el archivo elegido.",
+      "animated_original_only": "Las imágenes animadas solo se pueden guardar como original.",
+      "choice_required": "Elige cómo guardar la imagen.",
+      "import_expired": "La importación ha caducado. Vuelve a elegir el archivo.",
+      "already_attached": "Ese archivo ya está añadido a este elemento.",
+      "not_attached": "Ese archivo ya no está en este elemento.",
+      "cover_must_be_image": "Solo una imagen puede ser la portada.",
+      "invalid_order": "El nuevo orden no es válido. Vuelve a intentarlo."
+    },
     "profile": {
       "name_empty": "Escribe un nombre.",
       "name_too_long": "El nombre no puede tener más de 40 caracteres.",

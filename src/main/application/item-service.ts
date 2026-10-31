@@ -15,12 +15,15 @@ import { normalizeForSearch } from '../../core/text/normalize';
 import type { ItemKind } from '../../shared/content';
 import type { EntryName, ItemDetails, ItemRelease, ItemSummary } from '../../shared/items';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
+import type { MediaCleanup } from './media-service';
 import type { SessionManager } from './session-manager';
 
 export interface ItemServiceDeps {
   readonly sessions: SessionManager;
   readonly now: () => Date;
   readonly newId: () => string;
+  /** Deleting items for good also deletes the files only they used. */
+  readonly media: MediaCleanup;
 }
 
 interface SummaryRow {
@@ -180,13 +183,16 @@ export class ItemService {
       throw new ConflictError('item.not_in_trash', `Item ${id} is not in the trash`);
     }
     db.prepare('DELETE FROM item WHERE id = ?').run(id);
+    this.deps.media.sweep(token);
   }
 
   /** Permanently deletes the trashed items of one kind, or all of them; returns how many. */
   emptyTrash(token: string, kind: ItemKind | null): number {
-    return this.db(token)
+    const deleted = this.db(token)
       .prepare('DELETE FROM item WHERE deleted_at IS NOT NULL AND (? IS NULL OR kind = ?)')
       .run(kind, kind).changes;
+    if (deleted > 0) this.deps.media.sweep(token);
+    return deleted;
   }
 
   private db(token: string): SqliteDatabase {

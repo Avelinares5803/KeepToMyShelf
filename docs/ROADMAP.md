@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-10-31, tras cerrar la F5.
+**Última actualización:** 2026-10-31, tras la F6-A.
 
 ---
 
@@ -39,7 +39,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F3 Estructura de la UI  | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                                          | ✅ Hecha                                       |
 | F4 Elementos            | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
 | F5 Catálogos            | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
-| **F6 Multimedia**       | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ⏳ **Siguiente**                               |
+| **F6 Multimedia**       | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ⏳ **En curso** (F6-A hecha)                   |
 | F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | Pendiente                                      |
 | F8 Películas y series   | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
@@ -116,12 +116,15 @@ Todo está en el [ADR 0004](adr/0004-catalogs.md). Resumen:
 - **Listas iniciales:** se copian una vez por perfil, en su idioma. Los valores que se añadan después a una lista ya existente no llegan a los perfiles que ya la recibieron; un catálogo nuevo necesita su propia marca de carga.
 - **Criterio para los géneros iniciales:** géneros amplios, sin subgéneros ni ambientaciones (Medieval, Cyberpunk, Cocina…), que se cubren con etiquetas. Los alias de la lista inicial no deben ser redundantes; una prueba lo impone.
 
-### 3.5 Multimedia (F6, siguiente)
+### 3.5 Multimedia (F6, en curso)
+
+El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el detalle técnico está en el [ADR 0005](adr/0005-media.md).
 
 **Acordado en la planificación inicial:**
 
 - **Almacenamiento gestionado:** los archivos se copian a la carpeta del perfil. Tu archivo original nunca se modifica.
 - **Sin duplicados:** se calcula el SHA-256 de cada archivo y, si ya existe, se reutiliza.
+- **Dos carpetas** (acordado el 2026-10-31), para que el usuario las encuentre con facilidad: `media\files\` (los archivos que usan los elementos) y `media\originals\` (los originales guardados con la opción 2). Los duplicados se evitan dentro de cada carpeta. Si los mismos bytes hacen falta en las dos (una imagen guardada sin optimizar que además es el original de otra copia), se hace una copia idéntica en cada una.
 - **Ventana al importar una imagen** (portada, galería **y también fondos**, en la F10). Tiene tres opciones:
   1. Guardar el original sin optimizar.
   2. Usar una copia optimizada y guardar el original en una carpeta aparte. La imagen conserva un enlace a su original, para poder «volver a usar el original» más adelante.
@@ -129,18 +132,29 @@ Todo está en el [ADR 0004](adr/0004-catalogs.md). Resumen:
 
   Tendrá una casilla «Recordar mi elección», y la opción por defecto se podrá cambiar en Ajustes. Si la imagen ya es más pequeña que el límite, la ventana lo indica, porque optimizar no aporta nada.
 
-- **Optimizar** significa reducir la imagen al tamaño máximo y recomprimirla:
+  **Cuando optimizar no reduce el archivo** (acordado el 2026-10-31): la ventana muestra el tamaño del original y el de la copia optimizada. Si la copia no ocupa menos, pregunta «La imagen no se puede optimizar más. ¿Hacer la copia igualmente?», con tres botones: «No, usar la original», «Sí, hacer la copia» y «Cancelar».
+
+- **Optimizar** significa reducir la imagen al tamaño máximo y recomprimirla en **WebP de alta calidad**:
   - **2000 px** de lado mayor para portadas y galería;
   - **3840 px** para fondos.
 
   Ambos valores serán ajustables.
 
+- **Tamaños máximos por defecto:** 50 MB por imagen y 200 MB por PDF.
+
 - **Miniaturas:** se generan siempre, sea cual sea la opción. Son WebP en dos tamaños (normal y HiDPI) y viven en una caché que se puede regenerar.
+  - Tamaños: **320 y 640 px de lado mayor**. El otro lado se calcula para **conservar la proporción** de la imagen: una portada de GBA queda en 320 × 320 y una de N64 en 320 × 230 aproximadamente. Nunca se deforma una imagen.
 - **Formatos:** se validan por contenido, no por extensión. Se admiten JPEG, PNG, WebP, AVIF y GIF.
   - Los GIF animados solo se pueden guardar como original, porque optimizarlos perdería la animación.
   - SVG se rechaza, porque puede contener scripts.
 - **Documentos:** solo PDF en la v1. Se guardan tal cual, sin optimizar, con un límite de tamaño configurable, y se abren con el visor del sistema.
-- **Para los tres tipos** de elemento. Papeles previstos: portada, imagen, arte, manual, guía y documento.
+- **Para los tres tipos** de elemento.
+- **Orden en lugar de etiquetas** (acordado el 2026-10-31; sustituye a los papeles previstos «portada, imagen, arte, manual, guía y documento»):
+  - Cada elemento tiene una lista de imágenes y otra de documentos, separadas y ordenables con botones ↑/↓ y con el teclado, como el reparto. En el esquema solo se distingue entre imagen y documento.
+  - **La primera imagen de la lista es la portada.** Un botón «Usar como portada» la mueve al primer puesto. Al principio, la portada es la primera imagen añadida.
+  - Los documentos no pueden ser portada. Se muestran con el nombre del archivo, que se puede editar.
+- **Presentación en la ficha** (acordada el 2026-10-31): una sola sección «Multimedia» con dos bloques, «Imágenes» (miniaturas que se amplían al hacer clic) y «Documentos» (lista que abre el visor del sistema). Un bloque vacío no se muestra. El formulario de edición sigue el mismo esquema.
+  - Si hay más de **10 imágenes**, se muestran las 10 primeras y un enlace «Ver todas (N)» que abre la galería completa. El número se revisará en la F6-B al ver el aspecto real.
 - **Integridad:**
   - La base de datos manda: primero se borra la fila y luego un barrido elimina los archivos huérfanos.
   - Un archivo que falte (borrado a mano) muestra un aviso discreto, sin que falle nada.
@@ -151,21 +165,15 @@ Todo está en el [ADR 0004](adr/0004-catalogs.md). Resumen:
   - Sin portada, solo el título, sin imagen ficticia.
   - Nunca se cargan los originales a máxima resolución en la cuadrícula.
 
-**Propuesta del 2026-10-30, pendiente de respuesta:**
+**Entregas (acordadas el 2026-10-31):**
 
-- División en tres entregas:
-  - F6-A: tabla, migración, servicio, miniaturas y protocolo.
-  - F6-B: imágenes en el formulario, la ficha y la biblioteca, y la preferencia en Ajustes.
-  - F6-C: documentos PDF.
-- La portada por defecto es la primera imagen añadida. El resto forman la galería, ordenable.
+- F6-A: tabla, migración 0004, servicio, miniaturas y protocolo. ✅ Hecha.
+- F6-B: imágenes en el formulario, la ficha y la biblioteca, y la preferencia en Ajustes.
+- F6-C: documentos PDF, con el visor del sistema; el visor integrado sigue anotado como mejora futura.
 
-**Decisiones abiertas, a confirmar al planificar la F6:**
+Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto con la pantalla que los usa. **Para la F6-B:** el selector de archivos debe abrirse en el proceso principal (`dialog.showOpenDialog`), que pasa la ruta elegida a `MediaService.prepareImport`. La interfaz nunca debe enviar rutas del disco por IPC.
 
-1. Formato de la copia optimizada. Se propuso WebP de alta calidad. En esa propuesta se habló de 2560 px por error: **lo acordado es 2000 px y 3840 px**.
-2. Tamaños máximos. Se propusieron 50 MB por imagen y 200 MB por PDF.
-3. ¿Solo «portada + galería», o una etiqueta opcional por imagen (Contraportada, Disco/Cartucho, Captura, Arte conceptual, Otro)?
-4. PDF con el visor del sistema (lo acordado en la planificación) o integrado (mucho más trabajo; anotado como mejora futura).
-5. Permiso para el cambio de esquema (migración 0004).
+**Portadas con proporciones distintas en la cuadrícula** (acordado el 2026-10-31): cada portada conserva su proporción (tarjetas de altura variable). No se deforma, no se recorta y no hay una proporción común: quien quiera uniformidad puede preparar sus imágenes con la misma proporción.
 
 ### 3.6 Búsqueda, filtros y ordenación (F7)
 
@@ -241,8 +249,9 @@ Todo está en el [ADR 0004](adr/0004-catalogs.md). Resumen:
 └─ profiles\<uuid>\
    ├─ library.db                biblioteca del perfil               (implementado)
    ├─ backups\                  copias antes de migrar              (implementado)
-   ├─ media\                    archivos importados                 (F6)
-   └─ cache\                    miniaturas regenerables             (F6)
+   ├─ media\files\              archivos que usan los elementos     (implementado)
+   ├─ media\originals\          originales junto a una copia optimizada (implementado)
+   └─ cache\thumbs\             miniaturas regenerables             (implementado)
 ```
 
 Las pruebas automáticas usan siempre una carpeta temporal (`KTMS_USER_DATA_DIR`). Los datos reales del usuario nunca se tocan.

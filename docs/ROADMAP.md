@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-10-31, tras la F6-A.
+**Última actualización:** 2026-11-01, tras la F6-B1.
 
 ---
 
@@ -39,7 +39,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F3 Estructura de la UI  | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                                          | ✅ Hecha                                       |
 | F4 Elementos            | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
 | F5 Catálogos            | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
-| **F6 Multimedia**       | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ⏳ **En curso** (F6-A hecha)                   |
+| **F6 Multimedia**       | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ⏳ **En curso** (F6-A y F6-B1 hechas)          |
 | F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | Pendiente                                      |
 | F8 Películas y series   | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
@@ -169,7 +169,7 @@ El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el
 
 - F6-A: tabla, migración 0004, servicio, miniaturas y protocolo. ✅ Hecha.
 - F6-B: imágenes en la interfaz, dividida en dos entregas (acordado el 2026-11-01):
-  - **F6-B1**: canales IPC, selector de archivos, ventana de importación, bloque «Imágenes» del formulario (ordenar, «Usar como portada», «Quitar», «Usar el original»), y en Ajustes la opción por defecto y el tamaño máximo de la copia optimizada (2000 px).
+  - **F6-B1**: canales IPC, selector de archivos, ventana de importación, bloque «Imágenes» del formulario (ordenar, «Usar como portada», «Quitar», «Usar el original»), y en Ajustes la opción por defecto y el tamaño máximo de la copia optimizada (2000 px). ✅ Hecha.
   - **F6-B2**: sección «Multimedia» de la ficha, visor ampliado, «Ver todas (N)», portadas en la biblioteca y aviso de archivo perdido.
 - F6-C: documentos PDF, con el visor del sistema; el visor integrado sigue anotado como mejora futura.
 

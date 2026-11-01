@@ -9,6 +9,7 @@ import { PDF_BYTES, pngImage, writeFile } from '../../support/media-files';
 import { createProfileFixture, type ProfileFixture } from '../../support/profile-fixture';
 
 const SHA = 'ab'.repeat(32);
+const PREPARED = '3f2b8c1e-5d4a-4b6f-9e8d-7c6b5a493827';
 
 describe('parseMediaUrl', () => {
   it('reads files and thumbnails', () => {
@@ -19,9 +20,17 @@ describe('parseMediaUrl', () => {
       size: 320,
     });
     expect(parseMediaUrl(`ktms-media://thumb/${SHA}/640`)).toMatchObject({ size: 640 });
+    expect(parseMediaUrl(`ktms-media://prepared/${PREPARED}/320`)).toEqual({
+      type: 'prepared',
+      id: PREPARED,
+      size: 320,
+    });
   });
 
   it.each([
+    ['a prepared import that is not a UUID', 'ktms-media://prepared/..%2F..%2Flibrary.db/320'],
+    ['a prepared import named by a hash', `ktms-media://prepared/${SHA}/320`],
+    ['a prepared import without a size', `ktms-media://prepared/${PREPARED}`],
     ['another scheme', `file:///C:/Windows/${SHA}`],
     ['an https URL', `https://file/${SHA}`],
     ['an unknown kind', `ktms-media://original/${SHA}`],
@@ -154,6 +163,22 @@ describe('ktms-media:// handler', () => {
 
     fx.sessions.closeCurrent();
     expect((await get(`ktms-media://file/${image.sha256}`)).status).toBe(404);
+  });
+
+  it('serves the thumbnail of an import not saved yet, until it is discarded', async () => {
+    const preparation = await fx.media.prepareImport(
+      token,
+      writeFile(fx.scratchDir, 'nueva.png', await pngImage(400, 100)),
+    );
+    const url = `ktms-media://prepared/${preparation.id}/320`;
+
+    const response = await get(url);
+    expect(response.status).toBe(200);
+    const metadata = await sharp(Buffer.from(await response.arrayBuffer())).metadata();
+    expect(metadata).toMatchObject({ format: 'webp', width: 320, height: 80 });
+
+    fx.media.discardImports(token, [preparation.id]);
+    expect((await get(url)).status).toBe(404);
   });
 
   it('answers 400 for malformed URLs and 405 for anything but GET', async () => {

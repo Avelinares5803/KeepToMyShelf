@@ -1,0 +1,104 @@
+import type { ImageStorageChoice } from '../../../core/media/import-rules';
+import type { ImagePlanEntry, MediaAttachment, PreparedImport } from '../../../shared/media';
+
+/**
+ * One image in the edit form: one the item already has (possibly to be replaced by its
+ * kept original) or an import prepared but not saved yet. Nothing is saved until the item is.
+ */
+export type FormImage =
+  | {
+      readonly key: string;
+      readonly source: 'existing';
+      readonly media: MediaAttachment;
+      readonly useOriginal: boolean;
+    }
+  | {
+      readonly key: string;
+      readonly source: 'prepared';
+      readonly prepared: PreparedImport;
+      readonly choice: ImageStorageChoice;
+    };
+
+export const fromAttachments = (images: readonly MediaAttachment[]): FormImage[] =>
+  images.map((media) => ({
+    key: `media:${media.mediaId}`,
+    source: 'existing',
+    media,
+    useOriginal: false,
+  }));
+
+export const preparedImage = (prepared: PreparedImport, choice: ImageStorageChoice): FormImage => ({
+  key: `prepared:${prepared.id}`,
+  source: 'prepared',
+  prepared,
+  choice,
+});
+
+export function moveImage(
+  images: readonly FormImage[],
+  index: number,
+  offset: -1 | 1,
+): FormImage[] {
+  const target = index + offset;
+  if (target < 0 || target >= images.length) return [...images];
+  const moved = [...images];
+  [moved[index], moved[target]] = [moved[target]!, moved[index]!];
+  return moved;
+}
+
+/** "Use as cover": the first image is the cover. */
+export function makeCover(images: readonly FormImage[], index: number): FormImage[] {
+  const image = images[index];
+  if (image === undefined) return [...images];
+  return [image, ...images.filter((_, i) => i !== index)];
+}
+
+/** Switches between an optimized image and its kept original. */
+export function toggleOriginal(images: readonly FormImage[], index: number): FormImage[] {
+  return images.map((image, i) =>
+    i === index && image.source === 'existing' && image.media.hasOriginal
+      ? { ...image, useOriginal: !image.useOriginal }
+      : image,
+  );
+}
+
+/** The list sent with the item when it is saved. */
+export function toImagePlan(images: readonly FormImage[]): ImagePlanEntry[] {
+  return images.map((image) => {
+    if (image.source === 'prepared') {
+      return { kind: 'prepared', preparedId: image.prepared.id, choice: image.choice };
+    }
+    return image.useOriginal
+      ? { kind: 'use_original', mediaId: image.media.mediaId }
+      : { kind: 'existing', mediaId: image.media.mediaId };
+  });
+}
+
+export const imagesChanged = (saved: readonly FormImage[], current: readonly FormImage[]) =>
+  JSON.stringify(toImagePlan(saved)) !== JSON.stringify(toImagePlan(current));
+
+export const preparedIds = (images: readonly FormImage[]): string[] =>
+  images.flatMap((image) => (image.source === 'prepared' ? [image.prepared.id] : []));
+
+/** Animated images can only be kept as they are. */
+export const choicesFor = (prepared: PreparedImport): readonly ImageStorageChoice[] =>
+  prepared.optimized === null
+    ? ['original']
+    : ['original', 'optimized_with_original', 'optimized_only'];
+
+/** True when the optimized copy would not take less space than the original. */
+export const optimizingSavesNothing = (prepared: PreparedImport): boolean =>
+  prepared.optimized !== null && prepared.optimized.byteSize >= prepared.byteSize;
+
+/**
+ * How to keep an image without asking, following a remembered (or "apply to the rest")
+ * choice: an optimized copy that would not be smaller, or of an animated image, is pointless,
+ * so the original is kept instead.
+ */
+export function automaticChoice(
+  prepared: PreparedImport,
+  choice: ImageStorageChoice,
+): ImageStorageChoice {
+  if (choice === 'original' || !choicesFor(prepared).includes(choice)) return 'original';
+  return optimizingSavesNothing(prepared) ? 'original' : choice;
+}

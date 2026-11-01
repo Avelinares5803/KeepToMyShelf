@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import { CATALOGS, ITEM_ROLES } from '../core/catalogs/catalogs';
 import { ITEM_STATUSES } from '../core/items/item-draft';
+import { IMAGE_STORAGE_CHOICES } from '../core/media/import-rules';
 import { ITEM_KINDS } from './content';
 import { languageSchema, settingUpdateSchema, themeSchema } from './settings';
 
@@ -66,6 +67,23 @@ const itemDraftSchema = z.object({
   releases: z.array(releaseSchema).max(1_000).readonly(),
 });
 
+const preparedIdSchema = z.uuid();
+const mediaIdSchema = z.number().int().positive();
+const imagePlanSchema = z
+  .array(
+    z.discriminatedUnion('kind', [
+      z.object({ kind: z.literal('existing'), mediaId: mediaIdSchema }),
+      z.object({
+        kind: z.literal('prepared'),
+        preparedId: preparedIdSchema,
+        choice: z.enum(IMAGE_STORAGE_CHOICES),
+      }),
+      z.object({ kind: z.literal('use_original'), mediaId: mediaIdSchema }),
+    ]),
+  )
+  .max(1_000)
+  .readonly();
+
 export const ipcInputSchemas = {
   getAppInfo: z.undefined(),
   listProfiles: z.undefined(),
@@ -83,8 +101,19 @@ export const ipcInputSchemas = {
   listItems: z.object({ token: sessionTokenSchema, kind: itemKindSchema }),
   listTrash: z.object({ token: sessionTokenSchema, kind: itemKindSchema.nullable() }),
   getItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
-  createItem: z.object({ token: sessionTokenSchema, kind: itemKindSchema, draft: itemDraftSchema }),
-  updateItem: z.object({ token: sessionTokenSchema, id: itemIdSchema, draft: itemDraftSchema }),
+  // `images` is the item's whole list of images; left out, they do not change.
+  createItem: z.object({
+    token: sessionTokenSchema,
+    kind: itemKindSchema,
+    draft: itemDraftSchema,
+    images: imagePlanSchema.optional(),
+  }),
+  updateItem: z.object({
+    token: sessionTokenSchema,
+    id: itemIdSchema,
+    draft: itemDraftSchema,
+    images: imagePlanSchema.optional(),
+  }),
   moveItemToTrash: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   restoreItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   deleteItemPermanently: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
@@ -102,6 +131,13 @@ export const ipcInputSchemas = {
   }),
   deleteCatalogEntry: z.object({ token: sessionTokenSchema, id: catalogEntryIdSchema }),
   deleteUnusedCatalogEntries: z.object({ token: sessionTokenSchema, catalog: catalogSchema }),
+  // The dialog's file-type filter is named in the UI language, which only the UI knows.
+  pickImages: z.object({ token: sessionTokenSchema, filterName: z.string().min(1).max(100) }),
+  discardImports: z.object({
+    token: sessionTokenSchema,
+    preparedIds: z.array(preparedIdSchema).max(1_000).readonly(),
+  }),
+  listItemMedia: z.object({ token: sessionTokenSchema, itemId: itemIdSchema }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

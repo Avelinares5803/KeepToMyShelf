@@ -131,7 +131,8 @@
       "identity": "Identification",
       "tracking": "My tracking",
       "sheet": "Details",
-      "tags": "Tags"
+      "tags": "Tags",
+      "media": "Media"
     },
     "roles": {
       "franchise": "Franchises",
@@ -261,7 +262,63 @@
     "applyToAll": "Apply to all profiles",
     "applyLanguageToAll": "Apply this language to all profiles",
     "applyThemeToAll": "Apply this theme to all profiles",
-    "appliedToAll": "Applied to all profiles."
+    "appliedToAll": "Applied to all profiles.",
+    "imageImport": {
+      "label": "When importing images",
+      "applyToAll": "Apply this import option to all profiles",
+      "ask": "Always ask",
+      "original": "Keep the original",
+      "optimized_with_original": "Use an optimized copy and keep the original",
+      "optimized_only": "Use only the optimized copy"
+    },
+    "optimizedMaxSide": {
+      "label": "Longest side of optimized copies",
+      "applyToAll": "Apply this maximum size to all profiles",
+      "value": "{{pixels}} px"
+    }
+  },
+  "media": {
+    "images": {
+      "title": "Images",
+      "add": "Add images",
+      "preparing": "Preparing the images…",
+      "fileType": "Images",
+      "image": "Image {{number}}",
+      "cover": "Cover",
+      "new": "New",
+      "moveEarlier": "Move image {{number}} earlier",
+      "moveLater": "Move image {{number}} later",
+      "makeCover": "Use as cover",
+      "makeCoverLabel": "Use image {{number}} as the cover",
+      "useOriginal": "Use the original",
+      "useOriginalLabel": "Use the original of image {{number}}",
+      "keepOptimized": "Keep the optimized copy",
+      "keepOptimizedLabel": "Keep the optimized copy of image {{number}}",
+      "willUseOriginal": "The original will be used",
+      "remove": "Remove",
+      "removeLabel": "Remove image {{number}}",
+      "rejected": "“{{name}}” could not be added: {{reason}}"
+    },
+    "import": {
+      "title": "Add “{{name}}”",
+      "choice": "How to keep it",
+      "original": "Keep the original",
+      "optimized_with_original": "Use an optimized copy and keep the original apart",
+      "optimized_only": "Use only the optimized copy",
+      "originalSize": "Original: {{size}} · {{width}} × {{height}} px",
+      "optimizedSize": "Optimized copy: {{size}} · {{width}} × {{height}} px",
+      "fits": "The image is already at most {{pixels}} px on its longest side: optimizing it only recompresses it.",
+      "animated": "This is an animated image: it can only be kept as the original, so the animation is not lost.",
+      "remember": "Remember my choice",
+      "rememberHint": "You can change this choice in Settings.",
+      "applyToRest_one": "Use this choice for the other image",
+      "applyToRest_other": "Use this choice for the other {{count}} images",
+      "add": "Add",
+      "notSmallerTitle": "The image cannot be optimized further",
+      "notSmallerQuestion": "The optimized copy does not take less space than the original. Make the copy anyway?",
+      "useOriginal": "No, use the original",
+      "makeCopy": "Yes, make the copy"
+    }
   },
   "errors": {
     "catalog": {
@@ -316,7 +373,10 @@
       "already_attached": "That file is already added to this item.",
       "not_attached": "That file is no longer in this item.",
       "cover_must_be_image": "Only an image can be the cover.",
-      "invalid_order": "The new order is not valid. Please try again."
+      "invalid_order": "The new order is not valid. Please try again.",
+      "not_an_image": "That file is not an image.",
+      "no_original": "That image does not keep its original.",
+      "original_missing": "The original of that image is not in the originals folder."
     },
     "profile": {
       "name_empty": "Enter a name.",

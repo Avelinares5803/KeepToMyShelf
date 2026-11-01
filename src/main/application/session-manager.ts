@@ -21,6 +21,8 @@ export interface SessionManagerDeps {
   readonly languageOf: (profileId: string) => Language;
   /** Housekeeping once a profile is open (e.g. removing media files nothing uses). */
   readonly onOpen: (session: ProfileSession) => void;
+  /** Housekeeping before a profile closes (e.g. dropping imports that were not saved). */
+  readonly onClose: (session: ProfileSession) => void;
 }
 
 /**
@@ -86,7 +88,14 @@ export class SessionManager {
 
   /** Closes the open profile, if any (e.g. when the app quits). */
   closeCurrent(): void {
-    this.current?.db.close();
+    const session = this.current;
+    if (session === null) return;
     this.current = null;
+    try {
+      this.deps.onClose(session);
+    } finally {
+      // The database is closed even if the housekeeping failed.
+      session.db.close();
+    }
   }
 }

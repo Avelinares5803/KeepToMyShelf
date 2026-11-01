@@ -3,10 +3,12 @@ import { IpcChannels } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
 import type { CatalogService } from '../application/catalog-service';
 import type { ItemService } from '../application/item-service';
+import type { MediaService } from '../application/media-service';
 import type { ProfileService } from '../application/profile-service';
 import type { SessionManager } from '../application/session-manager';
 import type { SettingsService } from '../application/settings-service';
-import { createHandler } from './create-handler';
+import { chooseImageFiles } from '../file-dialogs';
+import { createAsyncHandler, createHandler } from './create-handler';
 
 export interface Services {
   readonly profiles: ProfileService;
@@ -14,6 +16,7 @@ export interface Services {
   readonly settings: SettingsService;
   readonly items: ItemService;
   readonly catalogs: CatalogService;
+  readonly media: MediaService;
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
@@ -23,6 +26,7 @@ export function registerIpcHandlers({
   settings,
   items,
   catalogs,
+  media,
 }: Services): void {
   const handlers: Record<keyof typeof IpcChannels, (input: unknown) => unknown> = {
     getAppInfo: createHandler(ipcInputSchemas.getAppInfo, () => ({
@@ -66,11 +70,11 @@ export function registerIpcHandlers({
       items.listTrash(token, kind),
     ),
     getItem: createHandler(ipcInputSchemas.getItem, ({ token, id }) => items.get(token, id)),
-    createItem: createHandler(ipcInputSchemas.createItem, ({ token, kind, draft }) =>
-      items.create(token, kind, draft),
+    createItem: createHandler(ipcInputSchemas.createItem, ({ token, kind, draft, images }) =>
+      items.create(token, kind, draft, images),
     ),
-    updateItem: createHandler(ipcInputSchemas.updateItem, ({ token, id, draft }) =>
-      items.update(token, id, draft),
+    updateItem: createHandler(ipcInputSchemas.updateItem, ({ token, id, draft, images }) =>
+      items.update(token, id, draft, images),
     ),
     moveItemToTrash: createHandler(ipcInputSchemas.moveItemToTrash, ({ token, id }) =>
       items.moveToTrash(token, id),
@@ -100,6 +104,18 @@ export function registerIpcHandlers({
     deleteUnusedCatalogEntries: createHandler(
       ipcInputSchemas.deleteUnusedCatalogEntries,
       ({ token, catalog }) => catalogs.deleteUnused(token, catalog),
+    ),
+    pickImages: createAsyncHandler(ipcInputSchemas.pickImages, async ({ token, filterName }) => {
+      // A stale session is reported before the dialog opens, not after the user chose.
+      sessions.require(token);
+      const paths = await chooseImageFiles(filterName);
+      return paths === null ? null : media.prepareMany(token, paths);
+    }),
+    discardImports: createHandler(ipcInputSchemas.discardImports, ({ token, preparedIds }) =>
+      media.discardImports(token, preparedIds),
+    ),
+    listItemMedia: createHandler(ipcInputSchemas.listItemMedia, ({ token, itemId }) =>
+      media.list(token, itemId),
     ),
   };
 

@@ -131,7 +131,8 @@
       "identity": "Identificación",
       "tracking": "Mi seguimiento",
       "sheet": "Ficha",
-      "tags": "Etiquetas"
+      "tags": "Etiquetas",
+      "media": "Multimedia"
     },
     "roles": {
       "franchise": "Sagas",
@@ -261,7 +262,63 @@
     "applyToAll": "Aplicar a todos los perfiles",
     "applyLanguageToAll": "Aplicar este idioma a todos los perfiles",
     "applyThemeToAll": "Aplicar este tema a todos los perfiles",
-    "appliedToAll": "Aplicado a todos los perfiles."
+    "appliedToAll": "Aplicado a todos los perfiles.",
+    "imageImport": {
+      "label": "Al importar imágenes",
+      "applyToAll": "Aplicar esta opción de importación a todos los perfiles",
+      "ask": "Preguntar siempre",
+      "original": "Guardar el original",
+      "optimized_with_original": "Usar una copia optimizada y guardar el original",
+      "optimized_only": "Usar solo la copia optimizada"
+    },
+    "optimizedMaxSide": {
+      "label": "Lado mayor de las copias optimizadas",
+      "applyToAll": "Aplicar este tamaño máximo a todos los perfiles",
+      "value": "{{pixels}} px"
+    }
+  },
+  "media": {
+    "images": {
+      "title": "Imágenes",
+      "add": "Añadir imágenes",
+      "preparing": "Preparando las imágenes…",
+      "fileType": "Imágenes",
+      "image": "Imagen {{number}}",
+      "cover": "Portada",
+      "new": "Nueva",
+      "moveEarlier": "Mover antes la imagen {{number}}",
+      "moveLater": "Mover después la imagen {{number}}",
+      "makeCover": "Usar como portada",
+      "makeCoverLabel": "Usar la imagen {{number}} como portada",
+      "useOriginal": "Usar el original",
+      "useOriginalLabel": "Usar el original de la imagen {{number}}",
+      "keepOptimized": "Seguir con la optimizada",
+      "keepOptimizedLabel": "Seguir con la copia optimizada de la imagen {{number}}",
+      "willUseOriginal": "Se usará el original",
+      "remove": "Quitar",
+      "removeLabel": "Quitar la imagen {{number}}",
+      "rejected": "No se ha podido añadir «{{name}}»: {{reason}}"
+    },
+    "import": {
+      "title": "Añadir «{{name}}»",
+      "choice": "Cómo guardarla",
+      "original": "Guardar el original",
+      "optimized_with_original": "Usar una copia optimizada y guardar el original aparte",
+      "optimized_only": "Usar solo la copia optimizada",
+      "originalSize": "Original: {{size}} · {{width}} × {{height}} px",
+      "optimizedSize": "Copia optimizada: {{size}} · {{width}} × {{height}} px",
+      "fits": "La imagen ya mide como mucho {{pixels}} px de lado mayor: optimizarla solo la recomprime.",
+      "animated": "Es una imagen animada: solo se puede guardar como original, para no perder la animación.",
+      "remember": "Recordar mi elección",
+      "rememberHint": "Puedes cambiar esta elección en Ajustes.",
+      "applyToRest_one": "Usar esta elección para la otra imagen",
+      "applyToRest_other": "Usar esta elección para las otras {{count}} imágenes",
+      "add": "Añadir",
+      "notSmallerTitle": "La imagen no se puede optimizar más",
+      "notSmallerQuestion": "La copia optimizada no ocupa menos que el original. ¿Hacer la copia igualmente?",
+      "useOriginal": "No, usar la original",
+      "makeCopy": "Sí, hacer la copia"
+    }
   },
   "errors": {
     "catalog": {
@@ -316,7 +373,10 @@
       "already_attached": "Ese archivo ya está añadido a este elemento.",
       "not_attached": "Ese archivo ya no está en este elemento.",
       "cover_must_be_image": "Solo una imagen puede ser la portada.",
-      "invalid_order": "El nuevo orden no es válido. Vuelve a intentarlo."
+      "invalid_order": "El nuevo orden no es válido. Vuelve a intentarlo.",
+      "not_an_image": "Ese archivo no es una imagen.",
+      "no_original": "Esa imagen no conserva su original.",
+      "original_missing": "No se encuentra el original de esa imagen en la carpeta de originales."
     },
     "profile": {
       "name_empty": "Escribe un nombre.",

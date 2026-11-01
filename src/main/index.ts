@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { app, BrowserWindow, dialog, Menu, protocol } from 'electron';
-import type { AppSettings } from '../shared/settings';
+import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
+import { MEDIA_SETTING_DEFAULTS, type AppSettings } from '../shared/settings';
 import { CatalogService } from './application/catalog-service';
 import { ItemService } from './application/item-service';
 import { MediaService } from './application/media-service';
@@ -22,6 +23,7 @@ function startApp(): void {
   const defaults: AppSettings = {
     language: app.getLocale().startsWith('es') ? 'es' : 'en',
     theme: 'system',
+    ...MEDIA_SETTING_DEFAULTS,
   };
   const now = () => new Date();
   const settings = new SettingsService(appDb, defaults);
@@ -32,15 +34,24 @@ function startApp(): void {
     newId: randomUUID,
     languageOf: (profileId) => settings.getForProfile(profileId).language,
     onOpen: (session) => media.onSessionOpened(session),
+    onClose: (session) => media.onSessionClosing(session),
   });
   const profiles = new ProfileService({ appDb, paths, sessions, settings, now, newId: randomUUID });
 
-  const media = new MediaService({ sessions, paths, now });
+  const media = new MediaService({
+    sessions,
+    paths,
+    now,
+    limitsFor: (profileId) => ({
+      ...DEFAULT_MEDIA_LIMITS,
+      optimizedMaxSide: settings.getForProfile(profileId).optimizedMaxSide,
+    }),
+  });
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
 
   profiles.removeDeletedProfileFolders();
-  registerIpcHandlers({ profiles, sessions, settings, items, catalogs });
+  registerIpcHandlers({ profiles, sessions, settings, items, catalogs, media });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
   protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media));
 

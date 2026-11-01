@@ -1,10 +1,14 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  IMAGE_IMPORT_CHOICES,
   LANGUAGES,
+  OPTIMIZED_MAX_SIDES,
   THEMES,
   type AppSettings,
+  type ImageImportChoice,
   type Language,
+  type OptimizedMaxSide,
   type SettingUpdate,
   type Theme,
 } from '../../shared/settings';
@@ -23,6 +27,8 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
   const { t } = useTranslation();
   const languageId = useId();
   const themeId = useId();
+  const imageImportId = useId();
+  const maxSideId = useId();
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
 
@@ -93,6 +99,70 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
             className="button button--ghost"
             aria-label={t('settings.applyThemeToAll')}
             onClick={() => void applyToAll({ key: 'theme', value: settings.theme })}
+          >
+            {t('settings.applyToAll')}
+          </button>
+        </div>
+
+        <div className="setting-row">
+          <div className="field">
+            <label htmlFor={imageImportId}>{t('settings.imageImport.label')}</label>
+            <select
+              id={imageImportId}
+              value={settings.imageImportChoice}
+              onChange={(event) =>
+                onChange({
+                  key: 'imageImportChoice',
+                  value: event.target.value as ImageImportChoice,
+                })
+              }
+            >
+              {IMAGE_IMPORT_CHOICES.map((choice) => (
+                <option key={choice} value={choice}>
+                  {t(`settings.imageImport.${choice}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            className="button button--ghost"
+            aria-label={t('settings.imageImport.applyToAll')}
+            onClick={() =>
+              void applyToAll({ key: 'imageImportChoice', value: settings.imageImportChoice })
+            }
+          >
+            {t('settings.applyToAll')}
+          </button>
+        </div>
+
+        <div className="setting-row">
+          <div className="field">
+            <label htmlFor={maxSideId}>{t('settings.optimizedMaxSide.label')}</label>
+            <select
+              id={maxSideId}
+              value={settings.optimizedMaxSide}
+              onChange={(event) =>
+                onChange({
+                  key: 'optimizedMaxSide',
+                  value: Number(event.target.value) as OptimizedMaxSide,
+                })
+              }
+            >
+              {OPTIMIZED_MAX_SIDES.map((pixels) => (
+                <option key={pixels} value={pixels}>
+                  {t('settings.optimizedMaxSide.value', { pixels })}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            className="button button--ghost"
+            aria-label={t('settings.optimizedMaxSide.applyToAll')}
+            onClick={() =>
+              void applyToAll({ key: 'optimizedMaxSide', value: settings.optimizedMaxSide })
+            }
           >
             {t('settings.applyToAll')}
           </button>

@@ -398,6 +398,17 @@ h1 {
 
 .setting-row .field {
   flex: 1;
+  /* A select is as wide as its longest option; it must shrink to fit the dialog instead. */
+  min-width: 0;
+}
+
+.setting-row select {
+  width: 100%;
+  min-width: 0;
+}
+
+.setting-row .button {
+  white-space: nowrap;
 }
 
 /* Content modes */
@@ -926,4 +937,81 @@ h1 {
 .field__hint {
   margin: 0;
   font-size: 0.85rem;
+}
+
+.badge--accent {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Images of an item: each keeps its own proportions, never stretched or cropped. */
+.images-field {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.image-list__item {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+}
+
+.image-tile {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.image-tile__image {
+  display: block;
+  max-width: 10rem;
+  max-height: 10rem;
+  border-radius: calc(var(--radius) / 2);
+  background: var(--color-bg);
+}
+
+.image-tile__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 1.4rem;
+}
+
+.image-tile__badges .badge {
+  margin: 0;
+}
+
+.image-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  max-width: 12rem;
+}
+
+.image-import__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.image-import__preview {
+  max-width: 10rem;
+  max-height: 10rem;
+  border-radius: calc(var(--radius) / 2);
+}
+
+.image-import__sizes p {
+  margin: 0 0 0.35rem;
 }

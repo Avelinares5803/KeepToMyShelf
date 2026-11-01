@@ -6,9 +6,20 @@ import type { OwnershipFormat } from '../../../core/items/ownership';
 import type { CatalogEntrySummary } from '../../../shared/catalogs';
 import type { ItemKind } from '../../../shared/content';
 import type { IpcResult } from '../../../shared/ipc';
+import type { ImageStorageChoice } from '../../../core/media/import-rules';
 import type { ItemDetails } from '../../../shared/items';
+import type { MediaAttachment } from '../../../shared/media';
+import type { ImageImportChoice } from '../../../shared/settings';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
+import { ImagesField } from '../media/ImagesField';
+import {
+  fromAttachments,
+  imagesChanged,
+  preparedIds,
+  toImagePlan,
+  type FormImage,
+} from '../media/media-form';
 import { EntryPicker } from './EntryPicker';
 import { hasChanges, toFormState, toItemDraft, type ItemFormState } from './item-form';
 import {
@@ -36,6 +47,12 @@ interface ItemEditScreenProps {
   kind: ItemKind;
   /** Null to create a new item. */
   itemId: number | null;
+  /** Image import preferences of the open profile. */
+  imageImport: {
+    choice: ImageImportChoice;
+    optimizedMaxSide: number;
+    onRemember: (choice: ImageStorageChoice) => void;
+  };
   registerGuard: (guard: EditorGuard | null) => void;
   onSaved: (item: ItemDetails) => void;
   onCancel: () => void;
@@ -69,8 +86,15 @@ export function ItemEditScreen({ token, kind, itemId, ...rest }: ItemEditScreenP
     [token, itemId],
   );
   const catalogs = useLoad(() => loadCatalogs(token, kind), [token, kind]);
+  const media = useLoad(
+    () =>
+      itemId === null
+        ? Promise.resolve({ ok: true as const, value: null })
+        : window.api.media.list({ token, itemId }),
+    [token, itemId],
+  );
 
-  const error = loaded.error ?? catalogs.error;
+  const error = loaded.error ?? catalogs.error ?? media.error;
   if (error !== null) {
     return (
       <p className="banner banner--error" role="alert">
@@ -79,14 +103,27 @@ export function ItemEditScreen({ token, kind, itemId, ...rest }: ItemEditScreenP
     );
   }
   // For a new item `data` is null as soon as loading finishes; wait for an existing one.
-  if ((itemId !== null && loaded.data === null) || catalogs.data === null) return null;
+  if (
+    (itemId !== null && (loaded.data === null || media.data === null)) ||
+    catalogs.data === null
+  ) {
+    return null;
+  }
   return (
-    <ItemForm token={token} kind={kind} item={loaded.data} catalogs={catalogs.data} {...rest} />
+    <ItemForm
+      token={token}
+      kind={kind}
+      item={loaded.data}
+      images={media.data?.images ?? []}
+      catalogs={catalogs.data}
+      {...rest}
+    />
   );
 }
 
 type ItemFormProps = Omit<ItemEditScreenProps, 'itemId'> & {
   item: ItemDetails | null;
+  images: readonly MediaAttachment[];
   catalogs: CatalogLists;
 };
 
@@ -96,7 +133,9 @@ function ItemForm({
   token,
   kind,
   item,
+  images: initialImages,
   catalogs,
+  imageImport,
   registerGuard,
   onSaved,
   onCancel,
@@ -106,6 +145,10 @@ function ItemForm({
   const id = useId();
   const [saved, setSaved] = useState(() => toFormState(item));
   const [form, setForm] = useState(saved);
+  const [savedImages, setSavedImages] = useState<readonly FormImage[]>(() =>
+    fromAttachments(initialImages),
+  );
+  const [images, setImages] = useState<readonly FormImage[]>(savedImages);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const set = (changes: Partial<ItemFormState>) =>
@@ -115,12 +158,15 @@ function ItemForm({
     setError(null);
     try {
       const draft = toItemDraft(kind, form);
+      // The images are sent only when they changed; the item and its images are saved together.
+      const plan = imagesChanged(savedImages, images) ? toImagePlan(images) : undefined;
       const result = unwrap(
         item
-          ? await window.api.items.update({ token, id: item.id, draft })
-          : await window.api.items.create({ token, kind, draft }),
+          ? await window.api.items.update({ token, id: item.id, draft, images: plan })
+          : await window.api.items.create({ token, kind, draft, images: plan }),
       );
       setSaved(form);
+      setSavedImages(images);
       return result;
     } catch (caught) {
       setError(caught);
@@ -129,17 +175,28 @@ function ItemForm({
   }
 
   // The guard always sees the latest form and save function.
-  const latest = useRef({ form, saved, save });
+  const latest = useRef({ form, saved, images, savedImages, save });
   useEffect(() => {
-    latest.current = { form, saved, save };
+    latest.current = { form, saved, images, savedImages, save };
   });
   useEffect(() => {
     registerGuard({
-      isDirty: () => hasChanges(latest.current.form, latest.current.saved),
+      isDirty: () =>
+        hasChanges(latest.current.form, latest.current.saved) ||
+        imagesChanged(latest.current.savedImages, latest.current.images),
       save: async () => (await latest.current.save()) !== null,
     });
     return () => registerGuard(null);
   }, [registerGuard]);
+
+  // Leaving the editor drops the imports that were not saved (saved ones are already used up).
+  useEffect(
+    () => () => {
+      const ids = preparedIds(latest.current.images);
+      if (ids.length > 0) void window.api.media.discardImports({ token, preparedIds: ids });
+    },
+    [token],
+  );
 
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -361,6 +418,20 @@ function ItemForm({
 
         <FormSection title={t('items.sections.tags')}>
           {picker('tag', { hideLabel: true })}
+        </FormSection>
+
+        <FormSection title={t('items.sections.media')}>
+          <fieldset className="fieldset">
+            <legend>{t('media.images.title')}</legend>
+            <ImagesField
+              token={token}
+              images={images}
+              onChange={setImages}
+              importChoice={imageImport.choice}
+              optimizedMaxSide={imageImport.optimizedMaxSide}
+              onRememberChoice={imageImport.onRemember}
+            />
+          </fieldset>
         </FormSection>
 
         {error !== null && (

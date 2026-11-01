@@ -198,6 +198,12 @@ export function App({ initialSettings }: AppProps) {
             token={token}
             kind={screen.kind}
             itemId={screen.itemId}
+            imageImport={{
+              choice: settings.imageImportChoice,
+              optimizedMaxSide: settings.optimizedMaxSide,
+              onRemember: (choice) =>
+                void updateSetting({ key: 'imageImportChoice', value: choice }),
+            }}
             registerGuard={registerGuard}
             onCancel={goBack}
             onSaved={(item) =>

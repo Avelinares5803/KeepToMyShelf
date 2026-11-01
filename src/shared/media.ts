@@ -52,3 +52,23 @@ export interface ItemMedia {
   readonly images: readonly MediaAttachment[];
   readonly documents: readonly MediaAttachment[];
 }
+
+/** The files chosen in the file dialog: those ready to import and those refused, with why. */
+export interface PickedImports {
+  readonly prepared: readonly PreparedImport[];
+  readonly rejected: readonly { readonly fileName: string; readonly code: string }[];
+}
+
+/**
+ * One image of the list an item is saved with, in order (the first one is the cover):
+ * an image it already has, a prepared import and how to keep it, or an image it already has
+ * to be replaced by its kept original.
+ */
+export type ImagePlanEntry =
+  | { readonly kind: 'existing'; readonly mediaId: number }
+  | {
+      readonly kind: 'prepared';
+      readonly preparedId: string;
+      readonly choice: ImageStorageChoice;
+    }
+  | { readonly kind: 'use_original'; readonly mediaId: number };

@@ -55,9 +55,38 @@ describe('SettingsService', () => {
 
     fx.settings.applyToAllProfiles({ key: 'language', value: 'es' });
 
-    expect(fx.settings.getForProfile(anaId)).toEqual({ language: 'es', theme: 'light' });
+    expect(fx.settings.getForProfile(anaId)).toEqual({
+      ...DEFAULT_SETTINGS,
+      language: 'es',
+      theme: 'light',
+    });
     expect(fx.settings.getForProfile(beaId).language).toBe('es');
     expect(fx.settings.getGlobal().language).toBe('es');
+  });
+
+  it('stores the image import preferences, by default asking and optimizing to 2000 px', () => {
+    expect(fx.settings.getGlobal()).toMatchObject({
+      imageImportChoice: 'ask',
+      optimizedMaxSide: 2000,
+    });
+    fx.settings.setForProfile(anaId, { key: 'imageImportChoice', value: 'optimized_only' });
+    fx.settings.setForProfile(anaId, { key: 'optimizedMaxSide', value: 2560 });
+
+    expect(fx.settings.getForProfile(anaId)).toMatchObject({
+      imageImportChoice: 'optimized_only',
+      optimizedMaxSide: 2560,
+    });
+    expect(fx.settings.getForProfile(beaId).imageImportChoice).toBe('ask');
+  });
+
+  it.each([
+    { key: 'imageImportChoice', value: 'always' },
+    { key: 'optimizedMaxSide', value: 2001 },
+    { key: 'optimizedMaxSide', value: '2000' },
+  ])('rejects the invalid value %j', (update) => {
+    expect(() => fx.settings.setGlobal(update as unknown as SettingUpdate)).toThrow(
+      ValidationError,
+    );
   });
 
   it('rejects invalid values', () => {

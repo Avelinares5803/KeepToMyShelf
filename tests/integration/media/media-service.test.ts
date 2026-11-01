@@ -173,7 +173,7 @@ describe('MediaService', () => {
         sessions: fx.sessions,
         paths: fx.paths,
         now: () => new Date(),
-        limits: { ...DEFAULT_MEDIA_LIMITS, maxImageBytes: 100, maxDocumentBytes: 1000 },
+        limitsFor: () => ({ ...DEFAULT_MEDIA_LIMITS, maxImageBytes: 100, maxDocumentBytes: 1000 }),
       });
       const image = writeFile(fx.scratchDir, 'grande.png', await pngImage(20, 20));
       const pdf = writeFile(fx.scratchDir, 'pequeño.pdf', PDF_BYTES);

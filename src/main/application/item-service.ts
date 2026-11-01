@@ -15,15 +15,16 @@ import { normalizeForSearch } from '../../core/text/normalize';
 import type { ItemKind } from '../../shared/content';
 import type { EntryName, ItemDetails, ItemRelease, ItemSummary } from '../../shared/items';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
-import type { MediaCleanup } from './media-service';
+import type { ImagePlanEntry } from '../../shared/media';
+import type { MediaForItems, StagedImages } from './media-service';
 import type { SessionManager } from './session-manager';
 
 export interface ItemServiceDeps {
   readonly sessions: SessionManager;
   readonly now: () => Date;
   readonly newId: () => string;
-  /** Deleting items for good also deletes the files only they used. */
-  readonly media: MediaCleanup;
+  /** Saves an item's images with it; deleting items for good deletes the files only they used. */
+  readonly media: MediaForItems;
 }
 
 interface SummaryRow {
@@ -102,31 +103,43 @@ export class ItemService {
     return this.read(this.db(token), id);
   }
 
-  create(token: string, kind: ItemKind, draft: ItemDraft): ItemDetails {
+  /**
+   * Creates an item. `images`, when given, is its list of images, saved in the same
+   * transaction: either everything is saved or nothing is.
+   */
+  create(
+    token: string,
+    kind: ItemKind,
+    draft: ItemDraft,
+    images?: readonly ImagePlanEntry[],
+  ): ItemDetails {
     const db = this.db(token);
     const valid = validateItemDraft(kind, draft);
     const timestamp = this.deps.now().toISOString();
 
-    const id = db.transaction(() => {
-      const placeholder = valid.title === null ? this.freePlaceholderNumber(db, kind) : null;
-      const result = db
-        .prepare(
-          `INSERT INTO item (uuid, kind, title, title_norm, placeholder_no, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .run(
-          this.deps.newId(),
-          kind,
-          valid.title,
-          valid.title === null ? null : normalizeForSearch(valid.title),
-          placeholder,
-          timestamp,
-          timestamp,
-        );
-      const newId = Number(result.lastInsertRowid);
-      this.writeAttributes(db, newId, kind, valid, timestamp);
-      return newId;
-    })();
+    const id = this.withImages(token, images, (staged) =>
+      db.transaction(() => {
+        const placeholder = valid.title === null ? this.freePlaceholderNumber(db, kind) : null;
+        const result = db
+          .prepare(
+            `INSERT INTO item (uuid, kind, title, title_norm, placeholder_no, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .run(
+            this.deps.newId(),
+            kind,
+            valid.title,
+            valid.title === null ? null : normalizeForSearch(valid.title),
+            placeholder,
+            timestamp,
+            timestamp,
+          );
+        const newId = Number(result.lastInsertRowid);
+        this.writeAttributes(db, newId, kind, valid, timestamp);
+        staged?.write(db, newId);
+        return newId;
+      })(),
+    );
 
     return this.read(db, id);
   }
@@ -134,8 +147,15 @@ export class ItemService {
   /**
    * Replaces all editable attributes. An untitled item keeps its placeholder number; an item
    * whose title is removed gets the lowest free number; giving it a title frees its number.
+   * `images`, when given, replaces its list of images in the same transaction; when left
+   * out, its images do not change.
    */
-  update(token: string, id: number, draft: ItemDraft): ItemDetails {
+  update(
+    token: string,
+    id: number,
+    draft: ItemDraft,
+    images?: readonly ImagePlanEntry[],
+  ): ItemDetails {
     const db = this.db(token);
     const current = this.read(db, id);
     if (current.deletedAt !== null) {
@@ -144,21 +164,47 @@ export class ItemService {
     const valid = validateItemDraft(current.kind, draft);
     const timestamp = this.deps.now().toISOString();
 
-    db.transaction(() => {
-      const placeholder =
-        valid.title !== null
-          ? null
-          : (current.placeholderNumber ?? this.freePlaceholderNumber(db, current.kind));
-      db.prepare('UPDATE item SET title = ?, title_norm = ?, placeholder_no = ? WHERE id = ?').run(
-        valid.title,
-        valid.title === null ? null : normalizeForSearch(valid.title),
-        placeholder,
-        id,
-      );
-      this.writeAttributes(db, id, current.kind, valid, timestamp);
-    })();
+    this.withImages(token, images, (staged) =>
+      db.transaction(() => {
+        const placeholder =
+          valid.title !== null
+            ? null
+            : (current.placeholderNumber ?? this.freePlaceholderNumber(db, current.kind));
+        db.prepare(
+          'UPDATE item SET title = ?, title_norm = ?, placeholder_no = ? WHERE id = ?',
+        ).run(
+          valid.title,
+          valid.title === null ? null : normalizeForSearch(valid.title),
+          placeholder,
+          id,
+        );
+        this.writeAttributes(db, id, current.kind, valid, timestamp);
+        staged?.write(db, id);
+      })(),
+    );
 
     return this.read(db, id);
+  }
+
+  /**
+   * Runs a save with the item's new images already in place: if the save fails, the files
+   * copied for it are removed; if it succeeds, the imports it used are released.
+   */
+  private withImages<T>(
+    token: string,
+    images: readonly ImagePlanEntry[] | undefined,
+    save: (staged: StagedImages | null) => T,
+  ): T {
+    const staged = images === undefined ? null : this.deps.media.stageImages(token, images);
+    let result: T;
+    try {
+      result = save(staged);
+    } catch (error) {
+      staged?.abort();
+      throw error;
+    }
+    staged?.finish();
+    return result;
   }
 
   moveToTrash(token: string, id: number): void {

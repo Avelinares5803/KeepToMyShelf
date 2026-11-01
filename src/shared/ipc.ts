@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import type { CatalogEntrySummary } from './catalogs';
 import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemSummary } from './items';
+import type { ItemMedia, PickedImports } from './media';
 import type { AppSettings } from './settings';
 
 export const IpcChannels = {
@@ -39,6 +40,9 @@ export const IpcChannels = {
   updateCatalogEntry: 'catalogs:update',
   deleteCatalogEntry: 'catalogs:delete',
   deleteUnusedCatalogEntries: 'catalogs:delete-unused',
+  pickImages: 'media:pick-images',
+  discardImports: 'media:discard-imports',
+  listItemMedia: 'media:list',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -118,5 +122,14 @@ export interface KeepToMyShelfApi {
     delete(input: IpcInput<'deleteCatalogEntry'>): Promise<IpcResult<void>>;
     /** Resolves to the number of values deleted. */
     deleteUnused(input: IpcInput<'deleteUnusedCatalogEntries'>): Promise<IpcResult<number>>;
+  };
+  media: {
+    /**
+     * Opens the file dialog and prepares the chosen images; null if the dialog was cancelled.
+     * The UI never handles file paths: it gets prepared imports and refers to them by id.
+     */
+    pickImages(input: IpcInput<'pickImages'>): Promise<IpcResult<PickedImports | null>>;
+    discardImports(input: IpcInput<'discardImports'>): Promise<IpcResult<void>>;
+    list(input: IpcInput<'listItemMedia'>): Promise<IpcResult<ItemMedia>>;
   };
 }

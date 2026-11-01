@@ -168,10 +168,19 @@ El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el
 **Entregas (acordadas el 2026-10-31):**
 
 - F6-A: tabla, migración 0004, servicio, miniaturas y protocolo. ✅ Hecha.
-- F6-B: imágenes en el formulario, la ficha y la biblioteca, y la preferencia en Ajustes.
+- F6-B: imágenes en la interfaz, dividida en dos entregas (acordado el 2026-11-01):
+  - **F6-B1**: canales IPC, selector de archivos, ventana de importación, bloque «Imágenes» del formulario (ordenar, «Usar como portada», «Quitar», «Usar el original»), y en Ajustes la opción por defecto y el tamaño máximo de la copia optimizada (2000 px).
+  - **F6-B2**: sección «Multimedia» de la ficha, visor ampliado, «Ver todas (N)», portadas en la biblioteca y aviso de archivo perdido.
 - F6-C: documentos PDF, con el visor del sistema; el visor integrado sigue anotado como mejora futura.
 
 Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto con la pantalla que los usa. **Para la F6-B:** el selector de archivos debe abrirse en el proceso principal (`dialog.showOpenDialog`), que pasa la ruta elegida a `MediaService.prepareImport`. La interfaz nunca debe enviar rutas del disco por IPC.
+
+**Acordado para la F6-B (2026-11-01):**
+
+- **Las imágenes forman parte del borrador.** Añadir una imagen solo la prepara; ordenar, quitar o cambiar la portada solo modifica el borrador. «Guardar» aplica todo en una sola transacción, junto con los datos del elemento. «Cancelar» o «Descartar cambios» descartan las preparaciones, y el aviso de cambios sin guardar también tiene en cuenta las imágenes.
+- **Elección recordada:** si la opción recordada es optimizada y la copia no ocupa menos, se usa el original sin preguntar. «Recordar mi elección» se deshace en Ajustes, con «Al importar imágenes» → «Preguntar siempre». Al marcar la casilla, la ventana de importación indica «Puedes cambiar esta elección en Ajustes». No se avisa en ningún otro sitio.
+- **Limpieza de temporales:** las importaciones preparadas se descartan al guardar, al cancelar, al cerrar el perfil (cambiar de perfil o salir de la app) y, tras un cierre inesperado, al volver a abrirlo.
+- **Límites ajustables:** el tamaño máximo de la copia optimizada (2000 px) se ajusta en Ajustes desde la F6-B1; el límite de los PDF, en la F6-C; los 3840 px de los fondos, en la F10. Los 50 MB por imagen son fijos.
 
 **Portadas con proporciones distintas en la cuadrícula** (acordado el 2026-10-31): cada portada conserva su proporción (tarjetas de altura variable). No se deforma, no se recorta y no hay una proporción común: quien quiera uniformidad puede preparar sus imágenes con la misma proporción.
 
@@ -281,6 +290,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - Ejecutar las E2E también en Linux (con xvfb) y medir la cobertura (objetivos: `core/` ≥ 90 %, `application/` e `infrastructure/` ≥ 80 %).
 - Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
 - Visor de PDF integrado (pdf.js).
+- Añadir imágenes y documentos arrastrándolos a la ventana. Necesita `webUtils.getPathForFile` en el preload para obtener la ruta del archivo soltado.
 - Exportar e importar bibliotecas (JSON/CSV) y copias programadas.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.
 - Integración opcional con APIs (IGDB, TMDB) e importación masiva.

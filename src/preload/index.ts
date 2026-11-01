@@ -50,6 +50,11 @@ const api: KeepToMyShelfApi = {
     delete: invoke(IpcChannels.deleteCatalogEntry),
     deleteUnused: invoke(IpcChannels.deleteUnusedCatalogEntries),
   },
+  media: {
+    pickImages: invoke(IpcChannels.pickImages),
+    discardImports: invoke(IpcChannels.discardImports),
+    list: invoke(IpcChannels.listItemMedia),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

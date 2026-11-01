@@ -1,5 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { ThumbnailSize } from '../../../core/media/import-rules';
 import { fileExtensionOf, isSha256Hex, type MediaFormat } from '../../../core/media/media-format';
@@ -69,6 +77,20 @@ export class MediaStore {
     if (existsSync(target)) return false;
     mkdirSync(dirname(target), { recursive: true });
     renameSync(preparedFile, target);
+    return true;
+  }
+
+  /**
+   * Copies a file to its final place, leaving the source where it is. Returns false when
+   * the same file was already stored. Copied apart and renamed, so no half file is ever seen
+   * under the final name.
+   */
+  copyIn(source: string, target: string): boolean {
+    if (existsSync(target)) return false;
+    mkdirSync(dirname(target), { recursive: true });
+    const partial = `${target}.${randomUUID()}.partial`;
+    copyFileSync(source, partial);
+    renameSync(partial, target);
     return true;
   }
 

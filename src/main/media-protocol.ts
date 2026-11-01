@@ -8,12 +8,22 @@ import type { MediaService } from './application/media-service';
  *
  *   ktms-media://file/<sha256>           a file items use
  *   ktms-media://thumb/<sha256>/<size>   its thumbnail (320 or 640 px on the longest side)
+ *   ktms-media://prepared/<id>/<size>    the thumbnail of an import not saved yet
  */
 export const MEDIA_SCHEME = 'ktms-media';
 
 export type MediaRequest =
   | { readonly type: 'file'; readonly sha256: string }
-  | { readonly type: 'thumb'; readonly sha256: string; readonly size: ThumbnailSize };
+  | { readonly type: 'thumb'; readonly sha256: string; readonly size: ThumbnailSize }
+  | { readonly type: 'prepared'; readonly id: string; readonly size: ThumbnailSize };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+const thumbnailSize = (text: string | undefined): ThumbnailSize | null => {
+  if (text === undefined || !/^\d+$/.test(text)) return null;
+  const value = Number(text);
+  return isThumbnailSize(value) ? value : null;
+};
 
 /** Parses a media URL strictly; anything unexpected (extra parts, "..", queries) is null. */
 export function parseMediaUrl(url: string): MediaRequest | null {
@@ -28,15 +38,20 @@ export function parseMediaUrl(url: string): MediaRequest | null {
   }
   if (parsed.username !== '' || parsed.password !== '' || parsed.port !== '') return null;
   const parts = parsed.pathname.split('/').slice(1);
-  const [sha256, size] = parts;
-  if (sha256 === undefined || !isSha256Hex(sha256)) return null;
+  const [id, sizeText] = parts;
+  if (id === undefined) return null;
+  const size = parts.length === 2 ? thumbnailSize(sizeText) : null;
 
-  if (parsed.hostname === 'file' && parts.length === 1) return { type: 'file', sha256 };
-  if (parsed.hostname === 'thumb' && parts.length === 2 && /^\d+$/.test(size!)) {
-    const value = Number(size);
-    if (isThumbnailSize(value)) return { type: 'thumb', sha256, size: value };
+  switch (parsed.hostname) {
+    case 'file':
+      return parts.length === 1 && isSha256Hex(id) ? { type: 'file', sha256: id } : null;
+    case 'thumb':
+      return size !== null && isSha256Hex(id) ? { type: 'thumb', sha256: id, size } : null;
+    case 'prepared':
+      return size !== null && UUID.test(id) ? { type: 'prepared', id, size } : null;
+    default:
+      return null;
   }
-  return null;
 }
 
 /**
@@ -44,17 +59,17 @@ export function parseMediaUrl(url: string): MediaRequest | null {
  * runs (and is tested) without Electron; main/index.ts registers it with `protocol.handle`.
  */
 export function createMediaProtocolHandler(
-  media: Pick<MediaService, 'readForProtocol'>,
+  media: Pick<MediaService, 'readForProtocol' | 'readPreparedThumbnail'>,
 ): (request: Request) => Promise<Response> {
   return async (request) => {
     if (request.method !== 'GET') return new Response(null, { status: 405 });
     const target = parseMediaUrl(request.url);
     if (target === null) return new Response(null, { status: 400 });
 
-    const found = await media.readForProtocol(
-      target.sha256,
-      target.type === 'thumb' ? target.size : null,
-    );
+    const found =
+      target.type === 'prepared'
+        ? await media.readPreparedThumbnail(target.id, target.size)
+        : await media.readForProtocol(target.sha256, target.type === 'thumb' ? target.size : null);
     if (found === null) return new Response(null, { status: 404 });
     return new Response(new Uint8Array(found.bytes), {
       status: 200,

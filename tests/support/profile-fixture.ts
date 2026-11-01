@@ -3,6 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { CatalogService } from '../../src/main/application/catalog-service';
 import { ItemService } from '../../src/main/application/item-service';
+import { DEFAULT_MEDIA_LIMITS } from '../../src/core/media/import-rules';
 import { MediaService } from '../../src/main/application/media-service';
 import { ProfileService } from '../../src/main/application/profile-service';
 import { SessionManager } from '../../src/main/application/session-manager';
@@ -10,10 +11,14 @@ import { SettingsService } from '../../src/main/application/settings-service';
 import { openAppDatabase } from '../../src/main/infrastructure/db/app-database';
 import type { SqliteDatabase } from '../../src/main/infrastructure/db/connection';
 import { createDataPaths, type DataPaths } from '../../src/main/infrastructure/paths';
-import type { AppSettings } from '../../src/shared/settings';
+import { MEDIA_SETTING_DEFAULTS, type AppSettings } from '../../src/shared/settings';
 import { createTempDir } from './temp-dir';
 
-export const DEFAULT_SETTINGS: AppSettings = { language: 'es', theme: 'system' };
+export const DEFAULT_SETTINGS: AppSettings = {
+  language: 'es',
+  theme: 'system',
+  ...MEDIA_SETTING_DEFAULTS,
+};
 
 export interface ProfileFixture {
   readonly paths: DataPaths;
@@ -50,9 +55,19 @@ export function createProfileFixture(): ProfileFixture {
     newId: randomUUID,
     languageOf: (profileId) => settings.getForProfile(profileId).language,
     onOpen: (session) => media.onSessionOpened(session),
+    onClose: (session) => media.onSessionClosing(session),
   });
   const profiles = new ProfileService({ appDb, paths, sessions, settings, now, newId: randomUUID });
-  const media = new MediaService({ sessions, paths, now });
+  // Wired like the app: the optimized size is the profile's preference.
+  const media = new MediaService({
+    sessions,
+    paths,
+    now,
+    limitsFor: (profileId) => ({
+      ...DEFAULT_MEDIA_LIMITS,
+      optimizedMaxSide: settings.getForProfile(profileId).optimizedMaxSide,
+    }),
+  });
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
 

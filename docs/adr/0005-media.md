@@ -1,7 +1,7 @@
 # ADR 0005: Almacenamiento de imágenes y documentos
 
-- **Estado:** aceptada; implementadas la F6-A (almacenamiento, miniaturas y protocolo) y la F6-B1 (guardado con el elemento, selector de archivos y ventana de importación)
-- **Fecha:** 2026-10-31 (ampliada el 2026-11-01 con la F6-B1)
+- **Estado:** aceptada; implementadas la F6-A (almacenamiento, miniaturas y protocolo), la F6-B1 (guardado con el elemento, selector de archivos y ventana de importación) y la F6-B2 (portadas, ficha y visor)
+- **Fecha:** 2026-10-31 (ampliada el 2026-11-01 con la F6-B1 y el 2026-11-02 con la F6-B2)
 
 ## Contexto
 
@@ -54,6 +54,13 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 - **Selector de archivos:** `media:pick-images` abre el diálogo del sistema en el proceso principal y prepara los archivos elegidos uno tras otro. Los rechazados se devuelven con su código. **La interfaz nunca recibe ni envía rutas del disco**, solo identificadores de importación.
 - `ktms-media://prepared/<id>/<320|640>` sirve las miniaturas de las importaciones aún no guardadas, solo a la sesión que las preparó.
 - La elección de la ventana de importación puede recordarse como preferencia del perfil (`imageImportChoice`). Con una elección recordada, si la copia optimizada no ocupa menos (o la imagen es animada) se usa el original sin preguntar.
+
+### Mostrar las imágenes (F6-B2)
+
+- **Portadas en las listas:** `ItemSummary.cover` es la primera imagen de cada elemento, con su hash y su tamaño. Sale de una sola consulta con `ROW_NUMBER()` (no una por elemento), en la biblioteca y en la papelera. Los documentos nunca son portada.
+- **Miniaturas en pantalla:** `<img>` con `srcset` (320 px, o 640 px en HiDPI), `loading="lazy"` y su ancho y alto guardados, para que el hueco esté reservado antes de cargar.
+- **Visor:** muestra el archivo completo (`ktms-media://file/…`), nunca en la cuadrícula ni en la ficha.
+- **Archivo borrado a mano:** `media.list` lo marca con `isMissing` (la ficha muestra «Archivo no encontrado»), y el protocolo deja de servir sus miniaturas aunque sigan en la caché, para que el aviso sea el mismo en todas partes. En la biblioteca, una portada que no se puede cargar deja la tarjeta solo con el título.
 
 ### La base de datos manda
 

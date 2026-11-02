@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
+import { Thumbnail } from '../media/Thumbnail';
 
 type Selection = ItemKind | 'all';
 
@@ -86,18 +87,30 @@ export function TrashScreen({ token, initialKind }: TrashScreenProps) {
         <ul className="trash-list">
           {items.map((item) => (
             <li key={item.id} className="trash-list__row">
-              <div>
-                <span className="trash-list__title">{displayTitle(item)}</span>
-                <span className="muted trash-list__meta">
-                  {selection === 'all' && `${t(`items.kind.${item.kind}`)} · `}
-                  {item.deletedAt &&
-                    t('trash.deletedOn', {
-                      date: formatPartialDate(
-                        localDayOf(new Date(item.deletedAt)),
-                        i18n.language as Language,
-                      ),
-                    })}
-                </span>
+              <div className="trash-list__item">
+                {item.cover && (
+                  <Thumbnail
+                    className="trash-list__cover"
+                    sha256={item.cover.sha256}
+                    width={item.cover.width}
+                    height={item.cover.height}
+                    alt=""
+                    whenMissing="nothing"
+                  />
+                )}
+                <div>
+                  <span className="trash-list__title">{displayTitle(item)}</span>
+                  <span className="muted trash-list__meta">
+                    {selection === 'all' && `${t(`items.kind.${item.kind}`)} · `}
+                    {item.deletedAt &&
+                      t('trash.deletedOn', {
+                        date: formatPartialDate(
+                          localDayOf(new Date(item.deletedAt)),
+                          i18n.language as Language,
+                        ),
+                      })}
+                  </span>
+                </div>
               </div>
               <div className="trash-list__actions">
                 <button

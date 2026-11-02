@@ -12,6 +12,9 @@ export const thumbnailSource = (sha256: string): ImageSource => ({
   srcSet: `ktms-media://thumb/${sha256}/320 1x, ktms-media://thumb/${sha256}/640 2x`,
 });
 
+/** The stored file itself, at full quality: only for the full-screen viewer. */
+export const fullImageSource = (sha256: string): string => `ktms-media://file/${sha256}`;
+
 /** Thumbnail of an import that is not saved yet. */
 export const preparedThumbnailSource = (preparedId: string): ImageSource => ({
   src: `ktms-media://prepared/${preparedId}/320`,

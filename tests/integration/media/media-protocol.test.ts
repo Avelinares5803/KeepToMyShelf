@@ -154,6 +154,9 @@ describe('ktms-media:// handler', () => {
     rmSync(thumbnailPath(image.sha256, 640));
     expect((await get(`ktms-media://file/${image.sha256}`)).status).toBe(404);
     expect((await get(`ktms-media://thumb/${image.sha256}/640`)).status).toBe(404);
+    // Its 320 px thumbnail is still cached, but the image is missing everywhere alike.
+    expect(existsSync(thumbnailPath(image.sha256, 320))).toBe(true);
+    expect((await get(`ktms-media://thumb/${image.sha256}/320`)).status).toBe(404);
   });
 
   it('only serves files of the open profile', async () => {

@@ -546,6 +546,8 @@ export class MediaService implements MediaForItems {
       return bytes && { bytes, mimeType: mimeTypeOf(row.format) };
     }
     if (row.kind !== 'image') return null;
+    // A file deleted by hand shows as missing everywhere, even while its thumbnail is cached.
+    if (!existsSync(filePath)) return null;
 
     const thumbnailPath = store.thumbnailPath(sha256, thumbnailSize);
     const cached = await readIfExists(thumbnailPath);

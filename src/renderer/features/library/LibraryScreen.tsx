@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
@@ -5,6 +6,7 @@ import { HeartIcon, ListIcon, PlusIcon, TrashIcon } from '../../components/icons
 import { errorMessage } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
+import { Thumbnail } from '../media/Thumbnail';
 
 interface LibraryScreenProps {
   token: string;
@@ -15,7 +17,7 @@ interface LibraryScreenProps {
   onOpenCatalogs: () => void;
 }
 
-/** Grid of the items of one kind. Covers replace the title tiles in phase F6. */
+/** Grid of the items of one kind, bottom-aligned like books on a shelf. */
 export function LibraryScreen({
   token,
   kind,
@@ -61,18 +63,57 @@ export function LibraryScreen({
         <ul className="item-grid">
           {items.data.map((item) => (
             <li key={item.id}>
-              <button type="button" className="item-card" onClick={() => onOpenItem(item)}>
-                <span className="item-card__title">{displayTitle(item)}</span>
-                {item.isFavorite && (
-                  <span className="item-card__favorite" aria-label={t('items.fields.favorite')}>
-                    <HeartIcon filled />
-                  </span>
-                )}
-              </button>
+              <ItemCard item={item} title={displayTitle(item)} onOpen={() => onOpenItem(item)} />
             </li>
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+/**
+ * An item in the grid: its cover, with its own proportions, and the title below; or just
+ * the title when it has no cover (or the cover's file is missing). The cover is decorative:
+ * the card's name is the title.
+ */
+function ItemCard({
+  item,
+  title,
+  onOpen,
+}: {
+  item: ItemSummary;
+  title: string;
+  onOpen: () => void;
+}) {
+  const { t } = useTranslation();
+  const [coverMissing, setCoverMissing] = useState(false);
+  const cover = coverMissing ? null : item.cover;
+
+  return (
+    <button
+      type="button"
+      className={`item-card${cover ? ' item-card--cover' : ''}`}
+      onClick={onOpen}
+    >
+      {cover && (
+        <span className="item-card__image">
+          <Thumbnail
+            sha256={cover.sha256}
+            width={cover.width}
+            height={cover.height}
+            alt=""
+            whenMissing="nothing"
+            onMissing={() => setCoverMissing(true)}
+          />
+        </span>
+      )}
+      <span className="item-card__title">{title}</span>
+      {item.isFavorite && (
+        <span className="item-card__favorite" aria-label={t('items.fields.favorite')}>
+          <HeartIcon filled />
+        </span>
+      )}
+    </button>
   );
 }

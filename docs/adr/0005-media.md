@@ -1,7 +1,7 @@
 # ADR 0005: Almacenamiento de imágenes y documentos
 
-- **Estado:** aceptada; implementadas la F6-A (almacenamiento, miniaturas y protocolo), la F6-B1 (guardado con el elemento, selector de archivos y ventana de importación) y la F6-B2 (portadas, ficha y visor)
-- **Fecha:** 2026-10-31 (ampliada el 2026-11-01 con la F6-B1 y el 2026-11-02 con la F6-B2)
+- **Estado:** aceptada; implementadas la F6-A (almacenamiento, miniaturas y protocolo), la F6-B1 (guardado con el elemento, selector de archivos y ventana de importación), la F6-B2 (portadas, ficha y visor) y la F6-B3 (portada independiente de la galería)
+- **Fecha:** 2026-10-31 (ampliada el 2026-11-01 con la F6-B1 y el 2026-11-02 con la F6-B2 y la F6-B3)
 
 ## Contexto
 
@@ -25,7 +25,8 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 ### Modelo de datos (migración 0004)
 
 - `media_file`: un archivo guardado (`sha256`, `store`, formato, tamaño, dimensiones ya orientadas, animado). `UNIQUE (sha256, store)`. Una copia optimizada apunta a su original con `original_id` (`ON DELETE SET NULL`).
-- `item_media`: qué archivos tiene cada elemento y en qué orden (`sort_order`), con `label` para el nombre visible de los documentos. Imágenes y documentos son dos listas; **la primera imagen es la portada**, sin columna aparte. `media_id` es `ON DELETE RESTRICT`: la base de datos no deja borrar un archivo en uso.
+- `item_media`: qué archivos tiene cada elemento y en qué orden (`sort_order`), con `label` para el nombre visible de los documentos. Imágenes (la galería) y documentos son dos listas. `media_id` es `ON DELETE RESTRICT`: la base de datos no deja borrar un archivo en uso.
+- `item.cover_media_id` (migración 0005, F6-B3): la portada, aparte de la galería. También es `ON DELETE RESTRICT`. Unos triggers impiden que sea un documento o un original guardado, porque un `CHECK` no puede consultar otra tabla. Hasta la F6-B3, la portada era la primera imagen de la galería; al migrar, esa imagen pasó a ser la portada y siguió en la galería.
 - Las reglas se duplican como `CHECK` (un documento siempre es PDF y nunca va a `originals`, una imagen tiene dimensiones, un original no apunta a otro…).
 
 ### Importación en dos pasos
@@ -40,14 +41,15 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 
 ### Las imágenes se guardan con el elemento (F6-B1)
 
-- En el formulario, las imágenes forman parte del borrador. `items.create` e `items.update` reciben la **lista completa de imágenes** en su orden, y cada entrada es una de estas:
-  - una imagen que ya tiene;
+- En el formulario, las imágenes forman parte del borrador. `items.create` e `items.update` reciben la **galería completa** en su orden (`images`) y, desde la F6-B3, la **portada** (`cover`, o `null` para quitarla). Cada entrada es una de estas:
+  - una imagen que ya tiene (su portada o una de su galería);
   - una importación preparada con su elección;
   - «usar el original» de una imagen que ya tiene.
 
-  Si no se envía la lista, las imágenes no cambian.
+  Si no se envía la galería o la portada, no cambian.
 
-- `MediaService.stageImages` lo comprueba todo y **copia** (no mueve) los archivos a su sitio antes de la transacción. `ItemService` escribe el elemento y la lista en **una sola transacción**.
+- `MediaService.stageMedia` lo comprueba todo y **copia** (no mueve) los archivos a su sitio antes de la transacción. `ItemService` escribe el elemento, la portada y la galería en **una sola transacción**.
+- **La misma imagen como portada y en la galería** («Usar como portada»): es un solo archivo, al que apuntan `item.cover_media_id` y una fila de `item_media`. Si es una importación aún no guardada, la misma preparación aparece en las dos listas y se guarda una vez.
   - Si falla, el barrido borra lo copiado y las importaciones siguen disponibles para reintentar.
   - Si tiene éxito, se liberan las importaciones usadas y, si se quitó alguna imagen, se barre.
 - **«Usar el original»** copia el original de `originals` a `files`. La copia optimizada y el original dejan de usarse y el barrido los elimina.
@@ -57,14 +59,15 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 
 ### Mostrar las imágenes (F6-B2)
 
-- **Portadas en las listas:** `ItemSummary.cover` es la primera imagen de cada elemento, con su hash y su tamaño. Sale de una sola consulta con `ROW_NUMBER()` (no una por elemento), en la biblioteca y en la papelera. Los documentos nunca son portada.
+- **Portadas en las listas:** `ItemSummary.cover` es la portada de cada elemento, con su hash y su tamaño. Sale de un `LEFT JOIN` sobre `item.cover_media_id` en la misma consulta de la lista, en la biblioteca y en la papelera (en la F6-B2 era un `ROW_NUMBER()` sobre la galería).
+- **Visor:** la portada se abre sola; una imagen de la galería abre la galería en esa imagen.
 - **Miniaturas en pantalla:** `<img>` con `srcset` (320 px, o 640 px en HiDPI), `loading="lazy"` y su ancho y alto guardados, para que el hueco esté reservado antes de cargar.
 - **Visor:** muestra el archivo completo (`ktms-media://file/…`), nunca en la cuadrícula ni en la ficha.
 - **Archivo borrado a mano:** `media.list` lo marca con `isMissing` (la ficha muestra «Archivo no encontrado»), y el protocolo deja de servir sus miniaturas aunque sigan en la caché, para que el aviso sea el mismo en todas partes. En la biblioteca, una portada que no se puede cargar deja la tarjeta solo con el título.
 
 ### La base de datos manda
 
-- Primero se borran las filas y después un **barrido** elimina las filas de archivos que nadie usa y los archivos y miniaturas sin fila.
+- Primero se borran las filas y después un **barrido** elimina las filas de archivos que nadie usa (ni una galería, ni unos documentos, ni una portada) y los archivos y miniaturas sin fila.
   - Un original se conserva mientras lo use una copia; el barrido repite hasta que no queda nada que borrar.
   - Solo toca archivos con el nombre de un archivo guardado: un archivo del usuario en esas carpetas no se borra nunca.
 - El barrido se ejecuta tras quitar un archivo, tras eliminar definitivamente un elemento, tras vaciar la papelera y al abrir el perfil.
@@ -87,7 +90,8 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 - **Guardar la ruta del archivo original** en lugar de copiarlo: se rompe en cuanto el usuario lo mueve, y la interfaz necesitaría acceso al disco.
 - **Una sola carpeta**, con los originales marcados solo en la base de datos: evitaría las copias idénticas, pero el usuario no podría localizar sus originales en el explorador de archivos.
 - **Servir los archivos con `file://`:** daría a la interfaz acceso a cualquier ruta del disco.
-- **Una columna `cover_id`:** es redundante con el orden, y se podría desincronizar.
+- **La primera imagen como portada, sin columna propia** (la decisión inicial, hasta la F6-B2): evitaba una columna redundante con el orden, pero obligaba a entender una regla implícita, y añadir una imagen a la galería de un elemento sin portada la convertía en portada sin pedirlo. Con la portada independiente, la columna ya no es redundante.
+- **Una columna `role` en `item_media`** (`cover` o `gallery`): habría que reconstruir la tabla, y con su clave (elemento, archivo) la misma imagen no podría ser portada y estar en la galería.
 
 ## Consecuencias
 

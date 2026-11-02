@@ -98,7 +98,10 @@ describe('item covers', () => {
   it('keeps the cover when the gallery is reordered, emptied or left out', async () => {
     const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
       cover: prepared(await prepare('cuadrada.png', square)),
-      images: [prepared(await prepare('ancha.png', wide)), prepared(await prepare('alta.png', tall))],
+      images: [
+        prepared(await prepare('ancha.png', wide)),
+        prepared(await prepare('alta.png', tall)),
+      ],
     });
     const [first, second] = mediaOf(item.id).images;
 
@@ -114,7 +117,10 @@ describe('item covers', () => {
 
   it('"Use as cover" makes a saved gallery image the cover too, storing it once', async () => {
     const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
-      images: [prepared(await prepare('ancha.png', wide)), prepared(await prepare('alta.png', tall))],
+      images: [
+        prepared(await prepare('ancha.png', wide)),
+        prepared(await prepare('alta.png', tall)),
+      ],
     });
     const [, second] = mediaOf(item.id).images;
 
@@ -192,7 +198,11 @@ describe('item covers', () => {
       cover: { kind: 'use_original', mediaId: optimized.mediaId },
     });
 
-    expect(mediaOf(item.id).cover).toMatchObject({ format: 'png', width: 2400, hasOriginal: false });
+    expect(mediaOf(item.id).cover).toMatchObject({
+      format: 'png',
+      width: 2400,
+      hasOriginal: false,
+    });
     expect(storedFiles()).toEqual([`${sha256(big)}.png`]);
   });
 

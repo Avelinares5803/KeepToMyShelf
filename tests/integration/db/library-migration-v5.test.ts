@@ -67,7 +67,9 @@ describe('library migration 4 → 5 (independent cover)', () => {
       // The gallery and the documents are left as they were.
       expect(
         db
-          .prepare('SELECT item_id, media_id, sort_order FROM item_media ORDER BY item_id, media_id')
+          .prepare(
+            'SELECT item_id, media_id, sort_order FROM item_media ORDER BY item_id, media_id',
+          )
           .all(),
       ).toEqual([
         { item_id: 1, media_id: 10, sort_order: 1 },
@@ -85,9 +87,7 @@ describe('library migration 4 → 5 (independent cover)', () => {
   it('never deletes a file that is a cover', () => {
     open((db) => {
       db.prepare('DELETE FROM item_media WHERE media_id = 11').run();
-      expect(() => db.prepare('DELETE FROM media_file WHERE id = 11').run()).toThrow(
-        /FOREIGN KEY/,
-      );
+      expect(() => db.prepare('DELETE FROM media_file WHERE id = 11').run()).toThrow(/FOREIGN KEY/);
     });
   });
 

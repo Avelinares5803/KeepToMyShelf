@@ -288,7 +288,8 @@ export class MediaService implements MediaForItems {
       return { kind: 'prepared', preparation, ...filesFor(preparation, entry.choice) };
     };
     const gallery = plan.images?.map(resolve);
-    const cover = plan.cover === undefined || plan.cover === null ? plan.cover : resolve(plan.cover);
+    const cover =
+      plan.cover === undefined || plan.cover === null ? plan.cover : resolve(plan.cover);
     const resolved = [...(gallery ?? []), ...(cover ? [cover] : [])];
 
     for (const entry of resolved) {
@@ -714,9 +715,7 @@ function toAttachment(store: MediaStore, row: AttachmentRow): MediaAttachment {
 function coverIdOf(db: SqliteDatabase, itemId: number): number | null {
   return (
     (db.prepare('SELECT cover_media_id FROM item WHERE id = ?').pluck().get(itemId) as
-      | number
-      | null
-      | undefined) ?? null
+      number | null | undefined) ?? null
   );
 }
 

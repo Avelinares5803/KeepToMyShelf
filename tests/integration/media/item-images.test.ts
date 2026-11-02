@@ -62,10 +62,9 @@ describe('saving an item with its images', () => {
     const first = await prepare('uno.png', images[0]!);
     const second = await prepare('dos.png', images[1]!);
 
-    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), { images: [
-      prepared(second),
-      prepared(first),
-    ] });
+    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
+      images: [prepared(second), prepared(first)],
+    });
 
     expect(listed(item.id).map((image) => image.sha256)).toEqual([
       sha256(images[1]!),
@@ -80,9 +79,9 @@ describe('saving an item with its images', () => {
   });
 
   it('leaves the images alone when the item is saved without a list', async () => {
-    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), { images: [
-      prepared(await prepare('uno.png', images[0]!)),
-    ] });
+    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
+      images: [prepared(await prepare('uno.png', images[0]!))],
+    });
 
     fx.items.update(token, item.id, { ...draft('Chrono Trigger'), isFavorite: true });
 
@@ -90,17 +89,18 @@ describe('saving an item with its images', () => {
   });
 
   it('reorders, adds and removes images, deleting the files nothing uses', async () => {
-    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), { images: [
-      prepared(await prepare('uno.png', images[0]!)),
-      prepared(await prepare('dos.png', images[1]!)),
-    ] });
+    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
+      images: [
+        prepared(await prepare('uno.png', images[0]!)),
+        prepared(await prepare('dos.png', images[1]!)),
+      ],
+    });
     const [one, two] = listed(item.id);
     const three = await prepare('tres.png', images[2]!);
 
-    fx.items.update(token, item.id, draft('Chrono Trigger'), { images: [
-      prepared(three),
-      existing(two!.mediaId),
-    ] });
+    fx.items.update(token, item.id, draft('Chrono Trigger'), {
+      images: [prepared(three), existing(two!.mediaId)],
+    });
 
     expect(listed(item.id).map((image) => image.sha256)).toEqual([sha256(images[2]!), two!.sha256]);
     expect(filesIn(join(mediaDir(), 'files'))).not.toContain(`${one!.sha256}.png`);
@@ -112,9 +112,9 @@ describe('saving an item with its images', () => {
     const manual = await prepare('Manual.pdf', PDF_BYTES);
     fx.media.commitImport(token, manual.id, item.id, null);
 
-    fx.items.update(token, item.id, draft('Chrono Trigger'), { images: [
-      prepared(await prepare('uno.png', images[0]!)),
-    ] });
+    fx.items.update(token, item.id, draft('Chrono Trigger'), {
+      images: [prepared(await prepare('uno.png', images[0]!))],
+    });
     fx.items.update(token, item.id, draft('Chrono Trigger'), { images: [] });
 
     expect(fx.media.list(token, item.id)).toMatchObject({
@@ -125,15 +125,15 @@ describe('saving an item with its images', () => {
 
   it('replaces an optimized image by its kept original', async () => {
     const big = await pngImage(2400, 1200);
-    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), { images: [
-      prepared(await prepare('grande.png', big), 'optimized_with_original'),
-    ] });
+    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
+      images: [prepared(await prepare('grande.png', big), 'optimized_with_original')],
+    });
     const [optimized] = listed(item.id);
     expect(optimized).toMatchObject({ format: 'webp', width: 2000, hasOriginal: true });
 
-    fx.items.update(token, item.id, draft('Chrono Trigger'), { images: [
-      { kind: 'use_original', mediaId: optimized!.mediaId },
-    ] });
+    fx.items.update(token, item.id, draft('Chrono Trigger'), {
+      images: [{ kind: 'use_original', mediaId: optimized!.mediaId }],
+    });
 
     expect(listed(item.id)).toMatchObject([
       { format: 'png', width: 2400, height: 1200, hasOriginal: false, isMissing: false },
@@ -143,25 +143,27 @@ describe('saving an item with its images', () => {
   });
 
   it('refuses to use the original of an image that has none, or whose original is gone', async () => {
-    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), { images: [
-      prepared(await prepare('uno.png', images[0]!)),
-      prepared(await prepare('dos.png', images[1]!), 'optimized_with_original'),
-    ] });
+    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
+      images: [
+        prepared(await prepare('uno.png', images[0]!)),
+        prepared(await prepare('dos.png', images[1]!), 'optimized_with_original'),
+      ],
+    });
     const [plain, optimized] = listed(item.id);
 
     expectCode(
       () =>
-        fx.items.update(token, item.id, draft('Chrono Trigger'), { images: [
-          { kind: 'use_original', mediaId: plain!.mediaId },
-        ] }),
+        fx.items.update(token, item.id, draft('Chrono Trigger'), {
+          images: [{ kind: 'use_original', mediaId: plain!.mediaId }],
+        }),
       'media.no_original',
     );
     rmSync(join(mediaDir(), 'originals'), { recursive: true });
     expectCode(
       () =>
-        fx.items.update(token, item.id, draft('Chrono Trigger'), { images: [
-          { kind: 'use_original', mediaId: optimized!.mediaId },
-        ] }),
+        fx.items.update(token, item.id, draft('Chrono Trigger'), {
+          images: [{ kind: 'use_original', mediaId: optimized!.mediaId }],
+        }),
       'media.original_missing',
     );
     expect(listed(item.id)).toHaveLength(2);
@@ -192,9 +194,9 @@ describe('saving an item with its images', () => {
 
     expectCode(
       () =>
-        fx.items.create(token, 'game', draft('Chrono Trigger'), { images: [
-          prepared(animated, 'optimized_only'),
-        ] }),
+        fx.items.create(token, 'game', draft('Chrono Trigger'), {
+          images: [prepared(animated, 'optimized_only')],
+        }),
       'media.animated_original_only',
     );
 
@@ -206,12 +208,12 @@ describe('saving an item with its images', () => {
     ['an image of another item', 'media.not_attached'],
     ['a document', 'media.not_an_image'],
   ])('refuses a list with %s', async (label, code) => {
-    const other = fx.items.create(token, 'game', draft('Otro'), { images: [
-      prepared(await prepare('otro.png', images[2]!)),
-    ] });
-    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), { images: [
-      prepared(await prepare('uno.png', images[0]!)),
-    ] });
+    const other = fx.items.create(token, 'game', draft('Otro'), {
+      images: [prepared(await prepare('otro.png', images[2]!))],
+    });
+    const item = fx.items.create(token, 'game', draft('Chrono Trigger'), {
+      images: [prepared(await prepare('uno.png', images[0]!))],
+    });
     const [mine] = listed(item.id);
 
     const plans: Record<string, () => Promise<ImagePlanEntry[]>> = {
@@ -265,9 +267,9 @@ describe('saving an item with its images', () => {
     const newToken = fx.sessions.open(profileId).token;
     expectCode(
       () =>
-        fx.items.create(newToken, 'game', draft('Chrono Trigger'), { images: [
-          { kind: 'prepared', preparedId: image.id, choice: 'original' },
-        ] }),
+        fx.items.create(newToken, 'game', draft('Chrono Trigger'), {
+          images: [{ kind: 'prepared', preparedId: image.id, choice: 'original' }],
+        }),
       'media.import_expired',
     );
   });

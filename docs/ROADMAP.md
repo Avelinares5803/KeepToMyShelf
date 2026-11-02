@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-02, tras la F6-B2.
+**Última actualización:** 2026-11-02, tras la F6-B3.
 
 ---
 
@@ -150,9 +150,13 @@ El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el
 - **Documentos:** solo PDF en la v1. Se guardan tal cual, sin optimizar, con un límite de tamaño configurable, y se abren con el visor del sistema.
 - **Para los tres tipos** de elemento.
 - **Orden en lugar de etiquetas** (acordado el 2026-10-31; sustituye a los papeles previstos «portada, imagen, arte, manual, guía y documento»):
-  - Cada elemento tiene una lista de imágenes y otra de documentos, separadas y ordenables con botones ↑/↓ y con el teclado, como el reparto. En el esquema solo se distingue entre imagen y documento.
-  - **La primera imagen de la lista es la portada.** Un botón «Usar como portada» la mueve al primer puesto. Al principio, la portada es la primera imagen añadida.
+  - Cada elemento tiene una lista de imágenes (la galería) y otra de documentos, separadas y ordenables con botones ↑/↓ y con el teclado, como el reparto. En el esquema solo se distingue entre imagen y documento.
   - Los documentos no pueden ser portada. Se muestran con el nombre del archivo, que se puede editar.
+- **Portada independiente de la galería** (acordado el 2026-11-02, en la F6-B3; sustituye a «la primera imagen de la lista es la portada»):
+  - La portada es un campo propio del elemento (`item.cover_media_id`). Añadir, ordenar o quitar imágenes de la galería nunca la cambia, y un elemento puede tener galería sin portada.
+  - En el formulario tiene su propia sección, «Portada», encima de «Identificación»: un hueco con «Añadir portada» o, si la hay, «Cambiar portada», «Quitar portada» y «Usar el original». Pasa por la misma ventana de importación que la galería.
+  - «Usar como portada», en la galería, hace que esa imagen sea también la portada sin sacarla de la galería. Es el mismo archivo, guardado una sola vez; se borra solo cuando ni la portada ni la galería lo usan.
+  - Al migrar, la primera imagen de cada elemento pasó a ser su portada y siguió en la galería.
 - **Presentación en la ficha** (acordada el 2026-10-31): una sola sección «Multimedia» con dos bloques, «Imágenes» (miniaturas que se amplían al hacer clic) y «Documentos» (lista que abre el visor del sistema). Un bloque vacío no se muestra. El formulario de edición sigue el mismo esquema.
   - Si hay más de **10 imágenes**, se muestran las 10 primeras y un enlace «Ver todas (N)» que abre la galería completa. El número se revisará en la F6-B al ver el aspecto real.
 - **Integridad:**
@@ -171,6 +175,7 @@ El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el
 - F6-B: imágenes en la interfaz, dividida en dos entregas (acordado el 2026-11-01):
   - **F6-B1**: canales IPC, selector de archivos, ventana de importación, bloque «Imágenes» del formulario (ordenar, «Usar como portada», «Quitar», «Usar el original»), y en Ajustes la opción por defecto y el tamaño máximo de la copia optimizada (2000 px). ✅ Hecha.
   - **F6-B2**: sección «Multimedia» de la ficha, visor ampliado, «Ver todas (N)», portadas en la biblioteca y aviso de archivo perdido. ✅ Hecha.
+  - **F6-B3** (añadida el 2026-11-02): portada independiente de la galería, con la migración 0005. ✅ Hecha.
 - F6-C: documentos PDF, con el visor del sistema; el visor integrado sigue anotado como mejora futura.
 
 Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto con la pantalla que los usa. **Para la F6-B:** el selector de archivos debe abrirse en el proceso principal (`dialog.showOpenDialog`), que pasa la ruta elegida a `MediaService.prepareImport`. La interfaz nunca debe enviar rutas del disco por IPC.
@@ -187,10 +192,10 @@ Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto co
 **Acordado para la F6-B2 (2026-11-02):**
 
 - **Cuadrícula de la biblioteca:** tarjetas de ancho fijo (unos 10 rem) **alineadas por abajo, como libros en una estantería**. Los títulos quedan a la misma altura y cada portada conserva su forma.
-- **Ficha:** la portada se muestra grande a la izquierda de los datos (encima en ventanas estrechas) y abre el visor. La sección «Multimedia» va al final, antes de «Añadido el», con todas las imágenes en su orden: la primera es la misma portada.
-- **Visor a pantalla completa** con fondo oscuro, flechas, contador y teclado (←, →, Esc). Muestra el archivo completo, no la miniatura.
+- **Ficha:** la portada se muestra grande a la izquierda de los datos (encima en ventanas estrechas) y abre el visor. La sección «Multimedia» va al final, antes de «Añadido el», con las imágenes de la galería en su orden (desde la F6-B3, la portada no se repite ahí salvo que también esté en la galería).
+- **Visor a pantalla completa** con fondo oscuro, flechas, contador y teclado (←, →, Esc). Muestra el archivo completo, no la miniatura. Desde la F6-B3, la portada se abre sola en el visor, y una imagen de la galería abre la galería.
 - **Papelera:** cada fila muestra una miniatura pequeña de la portada, si la tiene, para reconocer lo que se va a eliminar.
-- **La portada siempre es la imagen 1:** «Usar como portada» la mueve al primer puesto y las demás se desplazan sin cambiar su orden.
+- ~~**La portada siempre es la imagen 1**~~: sustituido en la F6-B3 por la portada independiente.
 
 ### 3.6 Búsqueda, filtros y ordenación (F7)
 
@@ -284,6 +289,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - **Papelera:** incluida en la v1; al principio estaba prevista como mejora futura.
 - **Librerías de la interfaz:** no se usan react-hook-form, TanStack Query ni Radix UI. El estado de los formularios es propio, se usa un hook `useLoad` y los diálogos son `<dialog>` nativos. Kysely llega en la F7.
 - **Países de origen:** atributo añadido en la F5, que no estaba en la especificación.
+- **Portada:** primero era la primera imagen de la lista (F6-B); desde la F6-B3 es un campo propio, independiente de la galería, porque la regla implícita resultaba poco intuitiva.
 
 ---
 

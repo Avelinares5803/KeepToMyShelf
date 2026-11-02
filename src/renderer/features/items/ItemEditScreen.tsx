@@ -8,15 +8,19 @@ import type { ItemKind } from '../../../shared/content';
 import type { IpcResult } from '../../../shared/ipc';
 import type { ImageStorageChoice } from '../../../core/media/import-rules';
 import type { ItemDetails } from '../../../shared/items';
-import type { MediaAttachment } from '../../../shared/media';
+import type { ItemMedia } from '../../../shared/media';
 import type { ImageImportChoice } from '../../../shared/settings';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
+import { CoverField } from '../media/CoverField';
 import { ImagesField } from '../media/ImagesField';
 import {
+  coverChanged,
+  fromAttachment,
   fromAttachments,
   imagesChanged,
   preparedIds,
+  toCoverPlan,
   toImagePlan,
   type FormImage,
 } from '../media/media-form';
@@ -114,7 +118,7 @@ export function ItemEditScreen({ token, kind, itemId, ...rest }: ItemEditScreenP
       token={token}
       kind={kind}
       item={loaded.data}
-      images={media.data?.images ?? []}
+      media={media.data ?? NO_MEDIA}
       catalogs={catalogs.data}
       {...rest}
     />
@@ -123,17 +127,18 @@ export function ItemEditScreen({ token, kind, itemId, ...rest }: ItemEditScreenP
 
 type ItemFormProps = Omit<ItemEditScreenProps, 'itemId'> & {
   item: ItemDetails | null;
-  images: readonly MediaAttachment[];
+  media: ItemMedia;
   catalogs: CatalogLists;
 };
 
 const FORMATS: OwnershipFormat[] = ['physical', 'digital', 'both'];
+const NO_MEDIA: ItemMedia = { cover: null, images: [], documents: [] };
 
 function ItemForm({
   token,
   kind,
   item,
-  images: initialImages,
+  media,
   catalogs,
   imageImport,
   registerGuard,
@@ -145,8 +150,12 @@ function ItemForm({
   const id = useId();
   const [saved, setSaved] = useState(() => toFormState(item));
   const [form, setForm] = useState(saved);
+  const [savedCover, setSavedCover] = useState<FormImage | null>(() =>
+    media.cover === null ? null : fromAttachment(media.cover),
+  );
+  const [cover, setCover] = useState(savedCover);
   const [savedImages, setSavedImages] = useState<readonly FormImage[]>(() =>
-    fromAttachments(initialImages),
+    fromAttachments(media.images),
   );
   const [images, setImages] = useState<readonly FormImage[]>(savedImages);
   const [error, setError] = useState<unknown>(null);
@@ -154,18 +163,37 @@ function ItemForm({
   const set = (changes: Partial<ItemFormState>) =>
     setForm((current) => ({ ...current, ...changes }));
 
+  /**
+   * Changes the cover or the gallery. An import neither of them uses any more is discarded
+   * early (the same import may be the cover and a gallery image at once).
+   */
+  function changeMedia(next: { cover?: FormImage | null; images?: readonly FormImage[] }) {
+    const nextCover = next.cover === undefined ? cover : next.cover;
+    const nextImages = next.images ?? images;
+    const kept = preparedIds(nextCover, nextImages);
+    const dropped = preparedIds(cover, images).filter((id) => !kept.includes(id));
+    // Only frees temporary files early: they are also dropped when the profile closes.
+    if (dropped.length > 0) void window.api.media.discardImports({ token, preparedIds: dropped });
+    setCover(nextCover);
+    setImages(nextImages);
+  }
+
   async function save(): Promise<ItemDetails | null> {
     setError(null);
     try {
       const draft = toItemDraft(kind, form);
-      // The images are sent only when they changed; the item and its images are saved together.
-      const plan = imagesChanged(savedImages, images) ? toImagePlan(images) : undefined;
+      // The cover and the gallery are sent only when they changed; they are saved with the item.
+      const plan = {
+        cover: coverChanged(savedCover, cover) ? toCoverPlan(cover) : undefined,
+        images: imagesChanged(savedImages, images) ? toImagePlan(images) : undefined,
+      };
       const result = unwrap(
         item
-          ? await window.api.items.update({ token, id: item.id, draft, images: plan })
-          : await window.api.items.create({ token, kind, draft, images: plan }),
+          ? await window.api.items.update({ token, id: item.id, draft, ...plan })
+          : await window.api.items.create({ token, kind, draft, ...plan }),
       );
       setSaved(form);
+      setSavedCover(cover);
       setSavedImages(images);
       return result;
     } catch (caught) {
@@ -175,14 +203,15 @@ function ItemForm({
   }
 
   // The guard always sees the latest form and save function.
-  const latest = useRef({ form, saved, images, savedImages, save });
+  const latest = useRef({ form, saved, cover, savedCover, images, savedImages, save });
   useEffect(() => {
-    latest.current = { form, saved, images, savedImages, save };
+    latest.current = { form, saved, cover, savedCover, images, savedImages, save };
   });
   useEffect(() => {
     registerGuard({
       isDirty: () =>
         hasChanges(latest.current.form, latest.current.saved) ||
+        coverChanged(latest.current.savedCover, latest.current.cover) ||
         imagesChanged(latest.current.savedImages, latest.current.images),
       save: async () => (await latest.current.save()) !== null,
     });
@@ -192,7 +221,7 @@ function ItemForm({
   // Leaving the editor drops the imports that were not saved (saved ones are already used up).
   useEffect(
     () => () => {
-      const ids = preparedIds(latest.current.images);
+      const ids = preparedIds(latest.current.cover, latest.current.images);
       if (ids.length > 0) void window.api.media.discardImports({ token, preparedIds: ids });
     },
     [token],
@@ -229,6 +258,17 @@ function ItemForm({
     <section className="item-edit">
       <h1>{item ? t('items.editItem', { title: displayTitle(item) }) : t(`items.new.${kind}`)}</h1>
       <form className="form item-form" onSubmit={(event) => void submit(event)}>
+        <FormSection title={t('items.sections.cover')}>
+          <CoverField
+            token={token}
+            cover={cover}
+            onChange={(next) => changeMedia({ cover: next })}
+            importChoice={imageImport.choice}
+            optimizedMaxSide={imageImport.optimizedMaxSide}
+            onRememberChoice={imageImport.onRemember}
+          />
+        </FormSection>
+
         <FormSection title={t('items.sections.identity')}>
           <div className="field">
             <label htmlFor={`${id}-title`}>{t('items.fields.title')}</label>
@@ -426,7 +466,9 @@ function ItemForm({
             <ImagesField
               token={token}
               images={images}
-              onChange={setImages}
+              onChange={(next) => changeMedia({ images: next })}
+              cover={cover}
+              onMakeCover={(image) => changeMedia({ cover: image })}
               importChoice={imageImport.choice}
               optimizedMaxSide={imageImport.optimizedMaxSide}
               onRememberChoice={imageImport.onRemember}

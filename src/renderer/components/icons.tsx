@@ -95,6 +95,14 @@ export const StarIcon = ({ filled = false, size = 22 }: { filled?: boolean; size
   </Icon>
 );
 
+export const ImageIcon = () => (
+  <Icon size={32}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="9" cy="10" r="1.5" />
+    <path d="M21 16l-5-5-9 9" />
+  </Icon>
+);
+
 export const GamepadIcon = () => (
   <Icon size={40}>
     <rect x="2" y="7" width="20" height="11" rx="5" />

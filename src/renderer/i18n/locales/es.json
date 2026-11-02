@@ -128,6 +128,7 @@
       "unknown": "Indeterminada"
     },
     "sections": {
+      "cover": "Portada",
       "identity": "Identificación",
       "tracking": "Mi seguimiento",
       "sheet": "Ficha",
@@ -278,6 +279,15 @@
     }
   },
   "media": {
+    "cover": {
+      "add": "Añadir portada",
+      "change": "Cambiar portada",
+      "remove": "Quitar portada",
+      "current": "Portada",
+      "preparing": "Preparando la imagen…",
+      "useOriginalLabel": "Usar el original de la portada",
+      "keepOptimizedLabel": "Seguir con la copia optimizada de la portada"
+    },
     "images": {
       "title": "Imágenes",
       "add": "Añadir imágenes",

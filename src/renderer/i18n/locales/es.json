@@ -383,7 +383,6 @@
       "import_expired": "La importación ha caducado. Vuelve a elegir el archivo.",
       "already_attached": "Ese archivo ya está añadido a este elemento.",
       "not_attached": "Ese archivo ya no está en este elemento.",
-      "cover_must_be_image": "Solo una imagen puede ser la portada.",
       "invalid_order": "El nuevo orden no es válido. Vuelve a intentarlo.",
       "not_an_image": "Ese archivo no es una imagen.",
       "no_original": "Esa imagen no conserva su original.",

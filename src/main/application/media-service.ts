@@ -24,6 +24,7 @@ import {
 import type {
   ImagePlanEntry,
   ItemMedia,
+  ItemMediaPlan,
   MediaAttachment,
   PickedImports,
   PreparedImport,
@@ -47,19 +48,19 @@ export interface MediaServiceDeps {
 }
 
 /**
- * What `ItemService` needs: saving an item's images together with the item, and removing
- * the files no item uses after a permanent deletion.
+ * What `ItemService` needs: saving an item's cover and gallery together with the item, and
+ * removing the files no item uses after a permanent deletion.
  */
 export interface MediaForItems {
-  stageImages(token: string, entries: readonly ImagePlanEntry[]): StagedImages;
+  stageMedia(token: string, plan: ItemMediaPlan): StagedMedia;
   sweep(token: string): void;
 }
 
 /**
- * An item's new list of images, with its files already in place. `write` runs inside the
- * item's transaction; then `finish` if it was committed, or `abort` if it was not.
+ * An item's new cover and gallery, with their files already in place. `write` runs inside
+ * the item's transaction; then `finish` if it was committed, or `abort` if it was not.
  */
-export interface StagedImages {
+export interface StagedMedia {
   write(db: SqliteDatabase, itemId: number): void;
   finish(): void;
   abort(): void;
@@ -90,7 +91,7 @@ interface StoredFile extends PreparedFile {
   readonly isAnimated: boolean;
 }
 
-/** An entry of a new list of images, checked and with its files known. */
+/** A new cover or gallery image, checked and with its files known. */
 type StagedEntry =
   | { readonly kind: 'existing'; readonly mediaId: number }
   | { readonly kind: 'use_original'; readonly mediaId: number; readonly original: StoredFile }
@@ -256,13 +257,14 @@ export class MediaService implements MediaForItems {
   }
 
   /**
-   * Puts in place the files of an item's new list of images. Nothing is written to the
+   * Puts in place the files of an item's new cover and gallery. Nothing is written to the
    * database yet: the item's save does it in its own transaction with `write`.
    *
    * Files are copied, not moved, out of the prepared imports: if the save fails (e.g. a
-   * catalog value was deleted meanwhile), the imports are still there to try again.
+   * catalog value was deleted meanwhile), the imports are still there to try again. The same
+   * import may be both the cover and a gallery image: its file is stored once.
    */
-  stageImages(token: string, entries: readonly ImagePlanEntry[]): StagedImages {
+  stageMedia(token: string, plan: ItemMediaPlan): StagedMedia {
     const session = this.deps.sessions.require(token);
     const { db } = session;
     const store = this.store(session);
@@ -270,7 +272,7 @@ export class MediaService implements MediaForItems {
       store.copyIn(file.path, store.filePath(storeName, file.sha256, file.format));
 
     // Everything is checked and resolved before any file is copied.
-    const resolved = entries.map((entry): StagedEntry => {
+    const resolve = (entry: ImagePlanEntry): StagedEntry => {
       if (entry.kind === 'existing') return { kind: 'existing', mediaId: entry.mediaId };
       if (entry.kind === 'use_original') {
         return {
@@ -284,7 +286,10 @@ export class MediaService implements MediaForItems {
         throw new ValidationError('media.not_an_image', `${entry.preparedId} is not an image`);
       }
       return { kind: 'prepared', preparation, ...filesFor(preparation, entry.choice) };
-    });
+    };
+    const gallery = plan.images?.map(resolve);
+    const cover = plan.cover === undefined || plan.cover === null ? plan.cover : resolve(plan.cover);
+    const resolved = [...(gallery ?? []), ...(cover ? [cover] : [])];
 
     for (const entry of resolved) {
       if (entry.kind === 'use_original') copy(entry.original, 'files');
@@ -299,8 +304,11 @@ export class MediaService implements MediaForItems {
     let removesFiles = false;
     return {
       write: (writeDb, itemId) => {
-        const current = attachedIds(writeDb, itemId, 'image');
-        const ids = resolved.map((entry) => {
+        const currentGallery = attachedIds(writeDb, itemId, 'image');
+        const currentCover = coverIdOf(writeDb, itemId);
+        // An image the item already has: its cover or one of its gallery images.
+        const current = [...currentGallery, ...(currentCover === null ? [] : [currentCover])];
+        const idOf = (entry: StagedEntry): number => {
           if (entry.kind !== 'prepared' && !current.includes(entry.mediaId)) {
             throw new NotFoundError(
               'media.not_attached',
@@ -332,22 +340,31 @@ export class MediaService implements MediaForItems {
               );
             }
           }
-        });
-        if (new Set(ids).size !== ids.length) {
+        };
+
+        const galleryIds = gallery?.map(idOf) ?? currentGallery;
+        const coverId = cover === undefined ? currentCover : cover === null ? null : idOf(cover);
+        if (new Set(galleryIds).size !== galleryIds.length) {
           throw new ConflictError('media.already_attached', `The same image is listed twice`);
         }
-        removesFiles = current.some((id) => !ids.includes(id));
+        const kept = [...galleryIds, coverId];
+        removesFiles = current.some((id) => !kept.includes(id));
 
-        writeDb
-          .prepare(
-            `DELETE FROM item_media WHERE item_id = ? AND media_id IN
-               (SELECT id FROM media_file WHERE kind = 'image')`,
-          )
-          .run(itemId);
-        const insert = writeDb.prepare(
-          'INSERT INTO item_media (item_id, media_id, label, sort_order) VALUES (?, ?, NULL, ?)',
-        );
-        ids.forEach((id, index) => insert.run(itemId, id, index));
+        if (gallery !== undefined) {
+          writeDb
+            .prepare(
+              `DELETE FROM item_media WHERE item_id = ? AND media_id IN
+                 (SELECT id FROM media_file WHERE kind = 'image')`,
+            )
+            .run(itemId);
+          const insert = writeDb.prepare(
+            'INSERT INTO item_media (item_id, media_id, label, sort_order) VALUES (?, ?, NULL, ?)',
+          );
+          galleryIds.forEach((id, index) => insert.run(itemId, id, index));
+        }
+        if (cover !== undefined) {
+          writeDb.prepare('UPDATE item SET cover_media_id = ? WHERE id = ?').run(coverId, itemId);
+        }
       },
       finish: () => {
         const used = resolved.flatMap((entry) =>
@@ -443,6 +460,7 @@ export class MediaService implements MediaForItems {
     assertItemExists(session.db, itemId);
     const attachments = this.readAttachments(session, itemId);
     return {
+      cover: this.readCover(session, itemId),
       images: attachments.filter((media) => media.kind === 'image'),
       documents: attachments.filter((media) => media.kind === 'document'),
     };
@@ -463,19 +481,10 @@ export class MediaService implements MediaForItems {
     writeOrder(db, itemId, mediaIds);
   }
 
-  /** "Use as cover": moves an image to the first place. */
-  setCover(token: string, itemId: number, mediaId: number): void {
-    const { db } = this.deps.sessions.require(token);
-    assertEditableItem(db, itemId);
-    const kind = attachedKind(db, itemId, mediaId);
-    if (kind !== 'image') {
-      throw new ValidationError('media.cover_must_be_image', 'Only an image can be the cover');
-    }
-    const others = attachedIds(db, itemId, 'image').filter((id) => id !== mediaId);
-    writeOrder(db, itemId, [mediaId, ...others]);
-  }
-
-  /** Removes a file from an item; the file itself is deleted if nothing else uses it. */
+  /**
+   * Removes a file from an item's gallery or documents; the file itself is deleted if nothing
+   * else uses it (the item's cover included).
+   */
   detach(token: string, itemId: number, mediaId: number): void {
     const session = this.deps.sessions.require(token);
     assertEditableItem(session.db, itemId);
@@ -627,24 +636,23 @@ export class MediaService implements MediaForItems {
          WHERE im.item_id = ? ORDER BY im.sort_order, f.id`,
       )
       .all(itemId) as AttachmentRow[];
-    return rows.map((row) => ({
-      mediaId: row.id,
-      kind: row.kind,
-      format: row.format,
-      sha256: row.sha256,
-      byteSize: row.byte_size,
-      width: row.width,
-      height: row.height,
-      isAnimated: row.is_animated === 1,
-      label: row.label,
-      hasOriginal: row.original_id !== null,
-      isMissing: !existsSync(store.filePath(row.store, row.sha256, row.format)),
-    }));
+    return rows.map((row) => toAttachment(store, row));
+  }
+
+  private readCover(session: ProfileSession, itemId: number): MediaAttachment | null {
+    const row = session.db
+      .prepare(
+        `SELECT f.*, NULL AS label FROM item JOIN media_file f ON f.id = item.cover_media_id
+         WHERE item.id = ?`,
+      )
+      .get(itemId) as AttachmentRow | undefined;
+    return row === undefined ? null : toAttachment(this.store(session), row);
   }
 
   /**
-   * Deletes the rows of files nothing uses (no item, trash included, and not the original of
-   * a used copy), then every stored file and thumbnail without a row.
+   * Deletes the rows of files nothing uses (no item's gallery, documents or cover, trash
+   * included, and not the original of a used copy), then every stored file and thumbnail
+   * without a row.
    */
   private sweepSession(session: ProfileSession): void {
     const { db } = session;
@@ -653,6 +661,7 @@ export class MediaService implements MediaForItems {
       const deleteUnused = db.prepare(
         `DELETE FROM media_file
          WHERE id NOT IN (SELECT media_id FROM item_media)
+           AND id NOT IN (SELECT cover_media_id FROM item WHERE cover_media_id IS NOT NULL)
            AND id NOT IN (SELECT original_id FROM media_file WHERE original_id IS NOT NULL)`,
       );
       while (deleteUnused.run().changes > 0);
@@ -684,6 +693,31 @@ function filesFor(
   if (choice === 'original') return { used: source, original: null };
   // Only animated images have no optimized copy, and they only allow 'original'.
   return { used: optimized!, original: choice === 'optimized_with_original' ? source : null };
+}
+
+function toAttachment(store: MediaStore, row: AttachmentRow): MediaAttachment {
+  return {
+    mediaId: row.id,
+    kind: row.kind,
+    format: row.format,
+    sha256: row.sha256,
+    byteSize: row.byte_size,
+    width: row.width,
+    height: row.height,
+    isAnimated: row.is_animated === 1,
+    label: row.label,
+    hasOriginal: row.original_id !== null,
+    isMissing: !existsSync(store.filePath(row.store, row.sha256, row.format)),
+  };
+}
+
+function coverIdOf(db: SqliteDatabase, itemId: number): number | null {
+  return (
+    (db.prepare('SELECT cover_media_id FROM item WHERE id = ?').pluck().get(itemId) as
+      | number
+      | null
+      | undefined) ?? null
+  );
 }
 
 /** The kept original of an optimized image, for "Use the original". */

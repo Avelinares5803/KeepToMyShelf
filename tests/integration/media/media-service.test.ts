@@ -357,7 +357,7 @@ describe('MediaService', () => {
     });
   });
 
-  describe('order and cover', () => {
+  describe('order', () => {
     let itemId: number;
     let ids: number[];
 
@@ -369,13 +369,9 @@ describe('MediaService', () => {
       }
     });
 
-    it('keeps images in the order they were added: the first one is the cover', () => {
+    it('keeps images in the order they were added, without making any of them the cover', () => {
       expect(imageIds(itemId)).toEqual(ids);
-    });
-
-    it('"Use as cover" moves an image to the first place', () => {
-      fx.media.setCover(token, itemId, ids[2]!);
-      expect(imageIds(itemId)).toEqual([ids[2], ids[0], ids[1]]);
+      expect(fx.media.list(token, itemId).cover).toBeNull();
     });
 
     it('accepts any order that lists every image once', () => {
@@ -395,12 +391,8 @@ describe('MediaService', () => {
       expect(imageIds(itemId)).toEqual(ids);
     });
 
-    it('orders documents apart from images, and never makes one the cover', async () => {
+    it('orders documents apart from images', async () => {
       const pdf = await attach(itemId, 'Guía.pdf', PDF_BYTES, null);
-      await expectCode(
-        () => fx.media.setCover(token, itemId, pdf.mediaId),
-        'media.cover_must_be_image',
-      );
       await expectCode(
         () => fx.media.reorder(token, itemId, 'image', [...ids, pdf.mediaId]),
         'media.invalid_order',
@@ -410,13 +402,15 @@ describe('MediaService', () => {
     });
 
     it('refuses files the item does not have', async () => {
-      await expectCode(() => fx.media.setCover(token, itemId, 999), 'media.not_attached');
       await expectCode(() => fx.media.detach(token, itemId, 999), 'media.not_attached');
     });
 
     it('cannot change the files of an item in the trash', async () => {
       fx.items.moveToTrash(token, itemId);
-      await expectCode(() => fx.media.setCover(token, itemId, ids[1]!), 'item.in_trash');
+      await expectCode(
+        () => fx.media.reorder(token, itemId, 'image', [ids[1]!, ids[0]!, ids[2]!]),
+        'item.in_trash',
+      );
       await expectCode(() => fx.media.detach(token, itemId, ids[1]!), 'item.in_trash');
       // It can still be looked at.
       expect(imageIds(itemId)).toEqual(ids);

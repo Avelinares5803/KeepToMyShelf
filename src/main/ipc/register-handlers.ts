@@ -70,11 +70,11 @@ export function registerIpcHandlers({
       items.listTrash(token, kind),
     ),
     getItem: createHandler(ipcInputSchemas.getItem, ({ token, id }) => items.get(token, id)),
-    createItem: createHandler(ipcInputSchemas.createItem, ({ token, kind, draft, images }) =>
-      items.create(token, kind, draft, images),
+    createItem: createHandler(ipcInputSchemas.createItem, ({ token, kind, draft, cover, images }) =>
+      items.create(token, kind, draft, { cover, images }),
     ),
-    updateItem: createHandler(ipcInputSchemas.updateItem, ({ token, id, draft, images }) =>
-      items.update(token, id, draft, images),
+    updateItem: createHandler(ipcInputSchemas.updateItem, ({ token, id, draft, cover, images }) =>
+      items.update(token, id, draft, { cover, images }),
     ),
     moveItemToTrash: createHandler(ipcInputSchemas.moveItemToTrash, ({ token, id }) =>
       items.moveToTrash(token, id),
@@ -105,12 +105,15 @@ export function registerIpcHandlers({
       ipcInputSchemas.deleteUnusedCatalogEntries,
       ({ token, catalog }) => catalogs.deleteUnused(token, catalog),
     ),
-    pickImages: createAsyncHandler(ipcInputSchemas.pickImages, async ({ token, filterName }) => {
-      // A stale session is reported before the dialog opens, not after the user chose.
-      sessions.require(token);
-      const paths = await chooseImageFiles(filterName);
-      return paths === null ? null : media.prepareMany(token, paths);
-    }),
+    pickImages: createAsyncHandler(
+      ipcInputSchemas.pickImages,
+      async ({ token, filterName, multiple }) => {
+        // A stale session is reported before the dialog opens, not after the user chose.
+        sessions.require(token);
+        const paths = await chooseImageFiles(filterName, multiple);
+        return paths === null ? null : media.prepareMany(token, paths);
+      },
+    ),
     discardImports: createHandler(ipcInputSchemas.discardImports, ({ token, preparedIds }) =>
       media.discardImports(token, preparedIds),
     ),

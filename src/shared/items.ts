@@ -14,7 +14,7 @@ export interface ItemSummary {
   readonly rating: number | null;
   readonly status: ItemStatus | null;
   readonly deletedAt: string | null;
-  /** The item's first image, shown as its cover; null when it has none. */
+  /** The item's cover; null when it has none. */
   readonly cover: ItemCover | null;
 }
 

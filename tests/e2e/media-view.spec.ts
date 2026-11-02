@@ -27,14 +27,24 @@ async function imageFile(width: number, height: number): Promise<string> {
 const heading = (name: string) => page.getByRole('heading', { name, exact: true });
 const button = (name: string) => page.getByRole('button', { name, exact: true });
 
-/** Adds a game with the given images (kept as originals, without asking). */
-async function addGame(title: string, images: string[]): Promise<void> {
+/** The system file dialog is replaced so it "chooses" the given files. */
+async function chooseFiles(filePaths: string[]): Promise<void> {
+  await app!.evaluate(({ dialog }, paths) => {
+    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: paths })) as never;
+  }, filePaths);
+}
+
+/** Adds a game with the given cover and gallery images (kept as originals, without asking). */
+async function addGame(title: string, images: string[], cover?: string): Promise<void> {
   await button('Añadir').click();
   await page.getByLabel('Título', { exact: true }).fill(title);
+  if (cover !== undefined) {
+    await chooseFiles([cover]);
+    await button('Añadir portada').click();
+    await expect(page.getByRole('img', { name: 'Portada', exact: true })).toBeVisible();
+  }
   if (images.length > 0) {
-    await app!.evaluate(({ dialog }, filePaths) => {
-      dialog.showOpenDialog = (async () => ({ canceled: false, filePaths })) as never;
-    }, images);
+    await chooseFiles(images);
     await button('Añadir imágenes').click();
     await expect(page.getByRole('img', { name: /^Imagen \d+$/ })).toHaveCount(images.length);
   }
@@ -71,9 +81,10 @@ test.afterEach(async () => {
 });
 
 test('shows covers in the library and the trash, and only the title without one', async () => {
-  await addGame('Con portada', [await imageFile(300, 600)]);
+  await addGame('Con portada', [], await imageFile(300, 600));
   await button('Volver').click();
-  await addGame('Sin portada', []);
+  // Gallery images alone give no cover.
+  await addGame('Sin portada', [await imageFile(400, 300)]);
   await button('Volver').click();
 
   const withCover = button('Con portada');
@@ -90,23 +101,28 @@ test('shows covers in the library and the trash, and only the title without one'
 });
 
 test('shows the cover and the images in the detail view, and opens them full screen', async () => {
-  await addGame('Chrono Trigger', [
-    await imageFile(300, 600),
-    await imageFile(800, 400),
-    await imageFile(500, 500),
-  ]);
+  await addGame(
+    'Chrono Trigger',
+    [await imageFile(300, 600), await imageFile(800, 400), await imageFile(500, 500)],
+    await imageFile(400, 600),
+  );
 
   await expect(page.getByRole('img', { name: 'Portada de «Chrono Trigger»' })).toBeVisible();
+  // The media section shows only the gallery, not the cover.
   const media = page.getByRole('region', { name: 'Multimedia' });
-  for (const number of [1, 2, 3]) {
-    await expect(
-      media.getByRole('button', { name: `Ver la imagen ${number} en grande` }),
-    ).toBeVisible();
-  }
+  await expect(media.getByRole('button', { name: /^Ver la imagen \d+ en grande$/ })).toHaveCount(3);
   await expect(media.getByRole('button', { name: /^Ver todas/ })).toHaveCount(0);
 
-  // The cover opens the first image, at full quality.
+  // The cover opens alone, at full quality.
   await button('Ver la portada en grande').click();
+  const cover = page.getByRole('dialog', { name: 'Imagen 1 de 1' });
+  await expect(cover).toBeVisible();
+  await expect(cover.getByRole('img')).toHaveAttribute('src', /^ktms-media:\/\/file\//);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // A gallery image opens the gallery, at full quality.
+  await media.getByRole('button', { name: 'Ver la imagen 1 en grande' }).click();
   const viewer = (number: number) => page.getByRole('dialog', { name: `Imagen ${number} de 3` });
   await expect(viewer(1)).toBeVisible();
   await expect(viewer(1).getByRole('button', { name: 'Cerrar', exact: true })).toBeFocused();
@@ -159,7 +175,9 @@ test('shows the first 10 images and all of them with "See all"', async () => {
 });
 
 test('shows a discreet notice for an image whose file was deleted by hand', async () => {
-  await addGame('Chrono Trigger', [await imageFile(300, 600)]);
+  // The same image as cover and in the gallery: one file, missing in both places.
+  const image = await imageFile(300, 600);
+  await addGame('Chrono Trigger', [image], image);
   await button('Volver').click();
   await expect.poll(() => loaded(button('Chrono Trigger').locator('img'))).toBe(true);
 

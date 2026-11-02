@@ -128,6 +128,7 @@
       "unknown": "Unknown"
     },
     "sections": {
+      "cover": "Cover",
       "identity": "Identification",
       "tracking": "My tracking",
       "sheet": "Details",
@@ -278,6 +279,15 @@
     }
   },
   "media": {
+    "cover": {
+      "add": "Add cover",
+      "change": "Change cover",
+      "remove": "Remove cover",
+      "current": "Cover",
+      "preparing": "Preparing the image…",
+      "useOriginalLabel": "Use the original of the cover",
+      "keepOptimizedLabel": "Keep the optimized copy of the cover"
+    },
     "images": {
       "title": "Images",
       "add": "Add images",
@@ -383,7 +393,6 @@
       "import_expired": "The import has expired. Choose the file again.",
       "already_attached": "That file is already added to this item.",
       "not_attached": "That file is no longer in this item.",
-      "cover_must_be_image": "Only an image can be the cover.",
       "invalid_order": "The new order is not valid. Please try again.",
       "not_an_image": "That file is not an image.",
       "no_original": "That image does not keep its original.",

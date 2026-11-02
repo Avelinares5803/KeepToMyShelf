@@ -3,15 +3,19 @@ import type { MediaAttachment, PreparedImport } from '../../../shared/media';
 import {
   automaticChoice,
   choicesFor,
+  coverChanged,
+  fromAttachment,
   fromAttachments,
   imagesChanged,
-  makeCover,
   moveImage,
   optimizingSavesNothing,
   preparedIds,
   preparedImage,
+  sameImage,
+  toCoverPlan,
   toggleOriginal,
   toImagePlan,
+  withOriginalToggled,
 } from './media-form';
 
 const attachment = (mediaId: number, hasOriginal = false): MediaAttachment => ({
@@ -58,11 +62,6 @@ describe('image list of the edit form', () => {
     expect(ids(moveImage(saved, 2, 1))).toEqual([1, 2, 3]);
   });
 
-  it('makes an image the cover by moving it first, keeping the others in order', () => {
-    expect(ids(makeCover(saved, 2))).toEqual([3, 1, 2]);
-    expect(ids(makeCover(saved, 0))).toEqual([1, 2, 3]);
-  });
-
   it('only switches to the original images that keep one', () => {
     expect(toImagePlan(toggleOriginal(saved, 1))[1]).toEqual({ kind: 'use_original', mediaId: 2 });
     expect(toImagePlan(toggleOriginal(saved, 0))[0]).toEqual({ kind: 'existing', mediaId: 1 });
@@ -78,7 +77,7 @@ describe('image list of the edit form', () => {
       { kind: 'prepared', preparedId: 'nueva', choice: 'optimized_only' },
       { kind: 'existing', mediaId: 1 },
     ]);
-    expect(preparedIds(images)).toEqual(['nueva']);
+    expect(preparedIds(null, images)).toEqual(['nueva']);
   });
 
   it('notices any change that would be saved, and only those', () => {
@@ -89,6 +88,51 @@ describe('image list of the edit form', () => {
     expect(imagesChanged(saved, saved.slice(1))).toBe(true);
     expect(imagesChanged(saved, toggleOriginal(saved, 1))).toBe(true);
     expect(imagesChanged([], [preparedImage(preparation('nueva'), 'original')])).toBe(true);
+  });
+});
+
+describe('cover of the edit form', () => {
+  const saved = fromAttachment(attachment(1, true));
+  const fresh = preparedImage(preparation('nueva'), 'optimized_only');
+
+  it('is sent as one entry, or null to remove it', () => {
+    expect(toCoverPlan(saved)).toEqual({ kind: 'existing', mediaId: 1 });
+    expect(toCoverPlan(withOriginalToggled(saved))).toEqual({ kind: 'use_original', mediaId: 1 });
+    expect(toCoverPlan(fresh)).toEqual({
+      kind: 'prepared',
+      preparedId: 'nueva',
+      choice: 'optimized_only',
+    });
+    expect(toCoverPlan(null)).toBeNull();
+  });
+
+  it('only switches to the original a cover that keeps one', () => {
+    const plain = fromAttachment(attachment(2));
+    expect(withOriginalToggled(plain)).toBe(plain);
+    expect(withOriginalToggled(fresh)).toBe(fresh);
+  });
+
+  it('notices when the cover would change, and only then', () => {
+    expect(coverChanged(saved, fromAttachment(attachment(1, true)))).toBe(false);
+    expect(coverChanged(null, null)).toBe(false);
+    expect(coverChanged(saved, null)).toBe(true);
+    expect(coverChanged(null, fresh)).toBe(true);
+    expect(coverChanged(saved, withOriginalToggled(saved))).toBe(true);
+  });
+
+  it('recognizes the gallery image that is also the cover, however it is kept', () => {
+    expect(sameImage(saved, fromAttachment(attachment(1)))).toBe(true);
+    expect(sameImage(saved, withOriginalToggled(saved))).toBe(true);
+    expect(sameImage(fresh, preparedImage(preparation('nueva'), 'original'))).toBe(true);
+    expect(sameImage(saved, fromAttachment(attachment(2)))).toBe(false);
+    expect(sameImage(saved, fresh)).toBe(false);
+    expect(sameImage(null, saved)).toBe(false);
+  });
+
+  it('lists each import once, even when it is the cover and in the gallery', () => {
+    const other = preparedImage(preparation('otra'), 'original');
+    expect(preparedIds(fresh, [fresh, other, saved])).toEqual(['nueva', 'otra']);
+    expect(preparedIds(saved, [])).toEqual([]);
   });
 });
 

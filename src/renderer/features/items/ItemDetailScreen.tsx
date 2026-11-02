@@ -58,6 +58,7 @@ export function ItemDetailScreen(props: ItemDetailScreenProps) {
     <ItemDetail
       {...props}
       item={loaded.data}
+      cover={media.data.cover}
       images={media.data.images}
       onChanged={loaded.reload}
     />
@@ -68,6 +69,7 @@ function ItemDetail({
   token,
   kind,
   item,
+  cover,
   images,
   onEdit,
   onTrashed,
@@ -75,6 +77,7 @@ function ItemDetail({
   onChanged,
 }: ItemDetailScreenProps & {
   item: ItemDetails;
+  cover: MediaAttachment | null;
   images: readonly MediaAttachment[];
   onChanged: () => void;
 }) {
@@ -83,10 +86,13 @@ function ItemDetail({
   const title = displayTitle(item);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  // Index of the image open in the full-screen viewer, and whether "See all" is open.
-  const [viewing, setViewing] = useState<number | null>(null);
+  // What the full-screen viewer shows: the cover alone, or the gallery from one image.
+  const [viewing, setViewing] = useState<{
+    images: readonly MediaAttachment[];
+    index: number;
+  } | null>(null);
   const [seeingAll, setSeeingAll] = useState(false);
-  const cover = images[0];
+  const viewGallery = (index: number) => setViewing({ images, index });
   const language = i18n.language as Language;
   const formatDate = (value: UsageDate) =>
     value.kind === 'unknown' ? t('items.dates.unknown') : formatPartialDate(value.date, language);
@@ -179,7 +185,7 @@ function ItemDetail({
                 type="button"
                 className="image-button"
                 aria-label={t('media.view.openCover')}
-                onClick={() => setViewing(0)}
+                onClick={() => setViewing({ images: [cover], index: 0 })}
               >
                 <Thumbnail
                   className="image-button__image"
@@ -273,7 +279,7 @@ function ItemDetail({
             {t('items.sections.media')}
           </h2>
           <h3 className="item-detail__media-title">{t('media.images.title')}</h3>
-          <ImageStrip images={images} onOpen={setViewing} onSeeAll={() => setSeeingAll(true)} />
+          <ImageStrip images={images} onOpen={viewGallery} onSeeAll={() => setSeeingAll(true)} />
         </section>
       )}
 
@@ -287,12 +293,16 @@ function ItemDetail({
         <AllImagesDialog
           title={title}
           images={images}
-          onOpen={setViewing}
+          onOpen={viewGallery}
           onClose={() => setSeeingAll(false)}
         />
       )}
       {viewing !== null && (
-        <ImageViewer images={images} startIndex={viewing} onClose={() => setViewing(null)} />
+        <ImageViewer
+          images={viewing.images}
+          startIndex={viewing.index}
+          onClose={() => setViewing(null)}
+        />
       )}
 
       {confirmingDelete && (

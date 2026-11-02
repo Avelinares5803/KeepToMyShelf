@@ -87,7 +87,7 @@ test.afterEach(async () => {
   rmSync(dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 });
 
-test('adds, orders and saves images with the item, the first one being the cover', async () => {
+test('adds, orders and saves gallery images with the item, without making a cover', async () => {
   await chooseFiles([
     await imageFile('portada.png', photoPng(2400, 1200)),
     await imageFile('trasera.png', photoPng(600, 900)),
@@ -106,7 +106,8 @@ test('adds, orders and saves images with the item, the first one being the cover
 
   const images = page.getByRole('img', { name: /^Imagen \d$/ });
   await expect(images).toHaveCount(2);
-  await expect(page.getByText('Portada', { exact: true })).toHaveCount(1);
+  // The gallery never makes a cover by itself.
+  await expect(button('Añadir portada')).toBeVisible();
   // Nothing is stored until the item is saved.
   expect(stored('files')).toEqual([]);
 
@@ -123,17 +124,66 @@ test('adds, orders and saves images with the item, the first one being the cover
     );
   await expect.poll(proportions).toEqual([2, 0.67]);
 
-  await button('Usar la imagen 2 como portada').click();
+  await button('Mover después la imagen 1').click();
   await expect.poll(proportions).toEqual([0.67, 2]);
   await button('Guardar').click();
   await expect(heading('Chrono Trigger')).toBeVisible();
   expect(stored('files')).toHaveLength(2);
   expect(stored('.tmp')).toEqual([]);
+  await expect(page.getByRole('img', { name: 'Portada de «Chrono Trigger»' })).toHaveCount(0);
 
-  // The saved order is kept: the second image chosen is now the cover.
+  // The saved order is kept, and there is still no cover.
   await page.getByRole('button', { name: 'Editar', exact: true }).click();
   await expect(images).toHaveCount(2);
   await expect.poll(proportions).toEqual([0.67, 2]);
+  await expect(button('Añadir portada')).toBeVisible();
+});
+
+test('sets the cover apart from the gallery, also from a gallery image', async () => {
+  // The cover is chosen in its own slot, above "Identificación".
+  const sections = await page.locator('.form-section__title').allTextContents();
+  expect(sections.slice(0, 2)).toEqual(['Portada', 'Identificación']);
+
+  await chooseFiles([await imageFile('caja.png', photoPng(600, 900))]);
+  await button('Añadir portada').click();
+  await importDialog('caja.png').getByRole('button', { name: 'Añadir', exact: true }).click();
+  await expect(page.getByRole('img', { name: 'Portada', exact: true })).toBeVisible();
+  await expect(button('Añadir portada')).toHaveCount(0);
+
+  // Gallery images do not touch it.
+  await chooseFiles([
+    await imageFile('captura.png', photoPng(800, 400)),
+    await imageFile('trasera.png', photoPng(500, 500)),
+  ]);
+  await button('Añadir imágenes').click();
+  const first = importDialog('captura.png');
+  await first.getByRole('radio', { name: 'Guardar el original', exact: true }).check();
+  await first.getByLabel('Usar esta elección para la otra imagen').check();
+  await first.getByRole('button', { name: 'Añadir', exact: true }).click();
+  await expect(page.getByRole('img', { name: /^Imagen \d$/ })).toHaveCount(2);
+  await expect(page.locator('.image-list .badge--accent')).toHaveCount(0);
+
+  // "Use as cover" copies a gallery image to the cover; it stays in the gallery, marked.
+  await button('Usar la imagen 2 como portada').click();
+  await expect(page.getByRole('img', { name: /^Imagen \d$/ })).toHaveCount(2);
+  await expect(page.locator('.image-list .badge--accent')).toHaveText(['Portada']);
+  await expect(button('Usar la imagen 2 como portada')).toHaveCount(0);
+
+  await button('Guardar').click();
+  await expect(heading('Chrono Trigger')).toBeVisible();
+  // The cover and the gallery image are one file; the first cover was discarded.
+  expect(stored('files')).toHaveLength(2);
+  expect(stored('.tmp')).toEqual([]);
+  await expect(page.getByRole('img', { name: 'Portada de «Chrono Trigger»' })).toBeVisible();
+
+  // Removing the cover leaves the gallery as it was.
+  await page.getByRole('button', { name: 'Editar', exact: true }).click();
+  await button('Quitar portada').click();
+  await expect(button('Añadir portada')).toBeVisible();
+  await button('Guardar').click();
+  await expect(heading('Chrono Trigger')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Portada de «Chrono Trigger»' })).toHaveCount(0);
+  expect(stored('files')).toHaveLength(2);
 });
 
 test('keeps nothing when the edit is cancelled, and asks before leaving with new images', async () => {
@@ -141,6 +191,10 @@ test('keeps nothing when the edit is cancelled, and asks before leaving with new
   await button('Añadir imágenes').click();
   await importDialog('portada.png').getByRole('button', { name: 'Añadir', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Imagen 1', exact: true })).toBeVisible();
+  await chooseFiles([await imageFile('caja.png', photoPng(400, 600))]);
+  await button('Añadir portada').click();
+  await importDialog('caja.png').getByRole('button', { name: 'Añadir', exact: true }).click();
+  await expect(page.getByRole('img', { name: 'Portada', exact: true })).toBeVisible();
 
   await button('Volver').click();
   const unsaved = page.getByRole('dialog', { name: 'Cambios sin guardar' });

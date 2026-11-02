@@ -1,131 +1,60 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ImageStorageChoice } from '../../../core/media/import-rules';
-import type { PreparedImport } from '../../../shared/media';
-import type { ImageImportChoice } from '../../../shared/settings';
-import { errorMessage, IpcError, unwrap } from '../../lib/ipc';
 import { preparedThumbnailSource, thumbnailSource } from '../../lib/media-url';
-import { ImageImportDialog, type ImportDecision } from './ImageImportDialog';
-import {
-  automaticChoice,
-  makeCover,
-  moveImage,
-  preparedImage,
-  toggleOriginal,
-  type FormImage,
-} from './media-form';
+import { moveImage, sameImage, toggleOriginal, type FormImage } from './media-form';
+import { useImageImport, type ImageImportOptions } from './use-image-import';
 
-interface ImagesFieldProps {
+interface ImagesFieldProps extends ImageImportOptions {
   token: string;
   images: readonly FormImage[];
   onChange: (images: readonly FormImage[]) => void;
-  /** The profile's preference: ask, or the choice the user asked to remember. */
-  importChoice: ImageImportChoice;
-  optimizedMaxSide: number;
-  /** "Remember my choice" was ticked: it becomes the profile's preference. */
-  onRememberChoice: (choice: ImageStorageChoice) => void;
+  /** The item's cover, to mark the gallery image that is also the cover. */
+  cover: FormImage | null;
+  /** "Use as cover": the image becomes the cover too, and stays in the gallery. */
+  onMakeCover: (image: FormImage) => void;
+}
+
+/** The thumbnail of an image of the edit form, saved or only prepared. */
+export function FormImageTile({ image, alt }: { image: FormImage; alt: string }) {
+  const source =
+    image.source === 'existing'
+      ? thumbnailSource(image.media.sha256)
+      : preparedThumbnailSource(image.prepared.id);
+  return <img className="image-tile__image" src={source.src} srcSet={source.srcSet} alt={alt} />;
 }
 
 /**
- * The item's images in the edit form. Images are only prepared here; they are saved, in
- * this order (the first one is the cover), when the item is saved.
+ * The item's gallery in the edit form. Images are only prepared here; they are saved, in
+ * this order, when the item is saved. The gallery never changes the cover.
  */
 export function ImagesField({
   token,
   images,
   onChange,
-  importChoice,
-  optimizedMaxSide,
-  onRememberChoice,
+  cover,
+  onMakeCover,
+  ...importOptions
 }: ImagesFieldProps) {
   const { t } = useTranslation();
-  const [busy, setBusy] = useState(false);
-  const [problems, setProblems] = useState<string[]>([]);
-  // Images chosen together that still wait for the import window.
-  const [queue, setQueue] = useState<readonly PreparedImport[]>([]);
+  const importer = useImageImport({
+    token,
+    multiple: true,
+    ...importOptions,
+    onAdded: (added) => onChange([...images, ...added]),
+  });
 
-  const discard = (ids: string[]) => {
-    // Only frees temporary files early: they are also dropped when the profile closes.
-    if (ids.length > 0) void window.api.media.discardImports({ token, preparedIds: ids });
-  };
-
-  async function pick() {
-    setBusy(true);
-    setProblems([]);
-    try {
-      const picked = unwrap(
-        await window.api.media.pickImages({ token, filterName: t('media.images.fileType') }),
-      );
-      if (picked === null) return;
-      setProblems(
-        picked.rejected.map(({ fileName, code }) =>
-          t('media.images.rejected', {
-            name: fileName,
-            reason: errorMessage(t, new IpcError(code, code)),
-          }),
-        ),
-      );
-      if (importChoice === 'ask') {
-        setQueue(picked.prepared);
-      } else {
-        const added = picked.prepared.map((p) =>
-          preparedImage(p, automaticChoice(p, importChoice)),
-        );
-        onChange([...images, ...added]);
-      }
-    } catch (caught) {
-      setProblems([errorMessage(t, caught)]);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function decide(prepared: PreparedImport, decision: ImportDecision) {
-    const [, ...rest] = queue;
-    let added = [preparedImage(prepared, decision.choice)];
-    if (decision.remember) onRememberChoice(decision.choice);
-    if (decision.remember || decision.applyToRest) {
-      added = [...added, ...rest.map((p) => preparedImage(p, automaticChoice(p, decision.choice)))];
-      setQueue([]);
-    } else {
-      setQueue(rest);
-    }
-    onChange([...images, ...added]);
-  }
-
-  function cancel(prepared: PreparedImport) {
-    discard([prepared.id]);
-    setQueue(queue.slice(1));
-  }
-
-  function remove(index: number) {
-    const image = images[index];
-    if (image?.source === 'prepared') discard([image.prepared.id]);
-    onChange(images.filter((_, i) => i !== index));
-  }
-
-  const current = queue[0];
   return (
     <div className="images-field">
       {images.length > 0 && (
         <ul className="image-list">
           {images.map((image, index) => {
             const number = index + 1;
-            const source =
-              image.source === 'existing'
-                ? thumbnailSource(image.media.sha256)
-                : preparedThumbnailSource(image.prepared.id);
+            const isCover = sameImage(image, cover);
             return (
               <li key={image.key} className="image-list__item">
                 <figure className="image-tile">
-                  <img
-                    className="image-tile__image"
-                    src={source.src}
-                    srcSet={source.srcSet}
-                    alt={t('media.images.image', { number })}
-                  />
+                  <FormImageTile image={image} alt={t('media.images.image', { number })} />
                   <figcaption className="image-tile__badges">
-                    {index === 0 && (
+                    {isCover && (
                       <span className="badge badge--accent">{t('media.images.cover')}</span>
                     )}
                     {image.source === 'prepared' && (
@@ -155,12 +84,12 @@ export function ImagesField({
                   >
                     →
                   </button>
-                  {index > 0 && (
+                  {!isCover && (
                     <button
                       type="button"
                       className="link-button"
                       aria-label={t('media.images.makeCoverLabel', { number })}
-                      onClick={() => onChange(makeCover(images, index))}
+                      onClick={() => onMakeCover(image)}
                     >
                       {t('media.images.makeCover')}
                     </button>
@@ -188,7 +117,7 @@ export function ImagesField({
                     type="button"
                     className="link-button link-button--danger"
                     aria-label={t('media.images.removeLabel', { number })}
-                    onClick={() => remove(index)}
+                    onClick={() => onChange(images.filter((_, i) => i !== index))}
                   >
                     {t('media.images.remove')}
                   </button>
@@ -203,36 +132,31 @@ export function ImagesField({
         <button
           type="button"
           className="button button--ghost"
-          disabled={busy || current !== undefined}
-          onClick={() => void pick()}
+          disabled={importer.busy}
+          onClick={() => void importer.pick()}
         >
           {t('media.images.add')}
         </button>
-        {busy && (
+        {importer.preparing && (
           <span className="muted" role="status">
             {' '}
             {t('media.images.preparing')}
           </span>
         )}
       </div>
-      {problems.length > 0 && (
-        <ul className="banner banner--error plain-list" role="alert">
-          {problems.map((problem, index) => (
-            <li key={index}>{problem}</li>
-          ))}
-        </ul>
-      )}
-
-      {current !== undefined && (
-        <ImageImportDialog
-          key={current.id}
-          prepared={current}
-          remaining={queue.length - 1}
-          optimizedMaxSide={optimizedMaxSide}
-          onConfirm={(decision) => decide(current, decision)}
-          onCancel={() => cancel(current)}
-        />
-      )}
+      <Problems problems={importer.problems} />
+      {importer.dialog}
     </div>
+  );
+}
+
+export function Problems({ problems }: { problems: readonly string[] }) {
+  if (problems.length === 0) return null;
+  return (
+    <ul className="banner banner--error plain-list" role="alert">
+      {problems.map((problem, index) => (
+        <li key={index}>{problem}</li>
+      ))}
+    </ul>
   );
 }

@@ -74,7 +74,7 @@ describe('library migration 3 → 4 (media)', () => {
 
   it('keeps every item and relation, adds empty media tables and leaves a backup', () => {
     open((db) => {
-      expect(getSchemaVersion(db)).toBe(4);
+      expect(getSchemaVersion(db)).toBe(libraryMigrations.length);
       expect(db.prepare('SELECT id, title, deleted_at FROM item ORDER BY id').all()).toEqual([
         { id: 1, title: 'Sonic', deleted_at: null },
         { id: 2, title: 'Alien', deleted_at: '2026-10-03' },

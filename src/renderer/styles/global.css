@@ -1266,9 +1266,38 @@ h1 {
 }
 
 /* Images of an item: each keeps its own proportions, never stretched or cropped. */
-.images-field {
+.images-field,
+.cover-field {
   display: grid;
   gap: 0.75rem;
+}
+
+/* The empty cover slot: a dashed frame the size of a cover tile. */
+.cover-field__empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.5rem;
+  width: 10rem;
+  height: 13rem;
+  padding: 1rem;
+  border: 2px dashed var(--color-border);
+  border-radius: calc(var(--radius) / 2);
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cover-field__empty:hover:not(:disabled),
+.cover-field__empty:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.cover-field__empty:disabled {
+  cursor: progress;
+  opacity: 0.6;
 }
 
 .image-list {

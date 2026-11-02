@@ -47,8 +47,12 @@ export interface MediaAttachment {
   readonly isMissing: boolean;
 }
 
-/** The files of an item, in the order chosen by the user. The first image is the cover. */
+/**
+ * The files of an item. The cover is its own attribute; the gallery images and the documents
+ * are in the order chosen by the user. The cover may also be one of the gallery images.
+ */
 export interface ItemMedia {
+  readonly cover: MediaAttachment | null;
   readonly images: readonly MediaAttachment[];
   readonly documents: readonly MediaAttachment[];
 }
@@ -60,9 +64,9 @@ export interface PickedImports {
 }
 
 /**
- * One image of the list an item is saved with, in order (the first one is the cover):
- * an image it already has, a prepared import and how to keep it, or an image it already has
- * to be replaced by its kept original.
+ * An image an item is saved with, as its cover or in its gallery: an image it already has
+ * (its cover or one of its gallery images), a prepared import and how to keep it, or an
+ * image it already has to be replaced by its kept original.
  */
 export type ImagePlanEntry =
   | { readonly kind: 'existing'; readonly mediaId: number }
@@ -72,3 +76,12 @@ export type ImagePlanEntry =
       readonly choice: ImageStorageChoice;
     }
   | { readonly kind: 'use_original'; readonly mediaId: number };
+
+/**
+ * The images an item is saved with. `cover` is the new cover (null: none) and `images` the
+ * whole gallery in order; either one left out does not change.
+ */
+export interface ItemMediaPlan {
+  readonly cover?: ImagePlanEntry | null;
+  readonly images?: readonly ImagePlanEntry[];
+}

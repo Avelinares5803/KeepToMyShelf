@@ -15,8 +15,8 @@ import { normalizeForSearch } from '../../core/text/normalize';
 import type { ItemKind } from '../../shared/content';
 import type { EntryName, ItemDetails, ItemRelease, ItemSummary } from '../../shared/items';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
-import type { ImagePlanEntry } from '../../shared/media';
-import type { MediaForItems, StagedImages } from './media-service';
+import type { ItemMediaPlan } from '../../shared/media';
+import type { MediaForItems, StagedMedia } from './media-service';
 import type { SessionManager } from './session-manager';
 
 export interface ItemServiceDeps {
@@ -63,16 +63,8 @@ const SUMMARY_COLUMNS = `item.id, item.kind, item.title, item.placeholder_no, it
   item.rating, item.status, item.deleted_at,
   cover.sha256 AS cover_sha256, cover.width AS cover_width, cover.height AS cover_height`;
 
-/**
- * The first image of every item, found in one pass (not one query per item), joined as
- * `cover`. Documents never count as a cover.
- */
-const COVER_JOIN = `LEFT JOIN (
-    SELECT im.item_id, f.sha256, f.width, f.height,
-           ROW_NUMBER() OVER (PARTITION BY im.item_id ORDER BY im.sort_order, f.id) AS position
-    FROM item_media im JOIN media_file f ON f.id = im.media_id
-    WHERE f.kind = 'image'
-  ) cover ON cover.item_id = item.id AND cover.position = 1`;
+/** The cover of every item, joined as `cover`. */
+const COVER_JOIN = 'LEFT JOIN media_file cover ON cover.id = item.cover_media_id';
 
 // Titled items first, alphabetically ignoring case and accents; untitled ones after, by number.
 const LIBRARY_ORDER = 'ORDER BY item.title IS NULL, item.title_norm, item.placeholder_no, item.id';
@@ -132,20 +124,15 @@ export class ItemService {
   }
 
   /**
-   * Creates an item. `images`, when given, is its list of images, saved in the same
+   * Creates an item. `media`, when given, holds its cover and gallery, saved in the same
    * transaction: either everything is saved or nothing is.
    */
-  create(
-    token: string,
-    kind: ItemKind,
-    draft: ItemDraft,
-    images?: readonly ImagePlanEntry[],
-  ): ItemDetails {
+  create(token: string, kind: ItemKind, draft: ItemDraft, media: ItemMediaPlan = {}): ItemDetails {
     const db = this.db(token);
     const valid = validateItemDraft(kind, draft);
     const timestamp = this.deps.now().toISOString();
 
-    const id = this.withImages(token, images, (staged) =>
+    const id = this.withMedia(token, media, (staged) =>
       db.transaction(() => {
         const placeholder = valid.title === null ? this.freePlaceholderNumber(db, kind) : null;
         const result = db
@@ -175,15 +162,10 @@ export class ItemService {
   /**
    * Replaces all editable attributes. An untitled item keeps its placeholder number; an item
    * whose title is removed gets the lowest free number; giving it a title frees its number.
-   * `images`, when given, replaces its list of images in the same transaction; when left
-   * out, its images do not change.
+   * `media.cover` and `media.images`, when given, replace its cover and its gallery in the
+   * same transaction; when left out, they do not change.
    */
-  update(
-    token: string,
-    id: number,
-    draft: ItemDraft,
-    images?: readonly ImagePlanEntry[],
-  ): ItemDetails {
+  update(token: string, id: number, draft: ItemDraft, media: ItemMediaPlan = {}): ItemDetails {
     const db = this.db(token);
     const current = this.read(db, id);
     if (current.deletedAt !== null) {
@@ -192,7 +174,7 @@ export class ItemService {
     const valid = validateItemDraft(current.kind, draft);
     const timestamp = this.deps.now().toISOString();
 
-    this.withImages(token, images, (staged) =>
+    this.withMedia(token, media, (staged) =>
       db.transaction(() => {
         const placeholder =
           valid.title !== null
@@ -215,15 +197,16 @@ export class ItemService {
   }
 
   /**
-   * Runs a save with the item's new images already in place: if the save fails, the files
-   * copied for it are removed; if it succeeds, the imports it used are released.
+   * Runs a save with the item's new cover and gallery already in place: if the save fails,
+   * the files copied for it are removed; if it succeeds, the imports it used are released.
    */
-  private withImages<T>(
+  private withMedia<T>(
     token: string,
-    images: readonly ImagePlanEntry[] | undefined,
-    save: (staged: StagedImages | null) => T,
+    media: ItemMediaPlan,
+    save: (staged: StagedMedia | null) => T,
   ): T {
-    const staged = images === undefined ? null : this.deps.media.stageImages(token, images);
+    const changes = media.cover !== undefined || media.images !== undefined;
+    const staged = changes ? this.deps.media.stageMedia(token, media) : null;
     let result: T;
     try {
       result = save(staged);

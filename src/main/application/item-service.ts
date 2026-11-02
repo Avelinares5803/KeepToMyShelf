@@ -38,6 +38,12 @@ interface SummaryRow {
   deleted_at: string | null;
 }
 
+interface CoverColumns {
+  cover_sha256: string | null;
+  cover_width: number | null;
+  cover_height: number | null;
+}
+
 interface DetailRow extends SummaryRow {
   description: string | null;
   notes: string | null;
@@ -53,12 +59,25 @@ interface DetailRow extends SummaryRow {
   episodes_count: number | null;
 }
 
-const SUMMARY_COLUMNS = 'id, kind, title, placeholder_no, is_favorite, rating, status, deleted_at';
+const SUMMARY_COLUMNS = `item.id, item.kind, item.title, item.placeholder_no, item.is_favorite,
+  item.rating, item.status, item.deleted_at,
+  cover.sha256 AS cover_sha256, cover.width AS cover_width, cover.height AS cover_height`;
+
+/**
+ * The first image of every item, found in one pass (not one query per item), joined as
+ * `cover`. Documents never count as a cover.
+ */
+const COVER_JOIN = `LEFT JOIN (
+    SELECT im.item_id, f.sha256, f.width, f.height,
+           ROW_NUMBER() OVER (PARTITION BY im.item_id ORDER BY im.sort_order, f.id) AS position
+    FROM item_media im JOIN media_file f ON f.id = im.media_id
+    WHERE f.kind = 'image'
+  ) cover ON cover.item_id = item.id AND cover.position = 1`;
 
 // Titled items first, alphabetically ignoring case and accents; untitled ones after, by number.
-const LIBRARY_ORDER = 'ORDER BY title IS NULL, title_norm, placeholder_no, id';
+const LIBRARY_ORDER = 'ORDER BY item.title IS NULL, item.title_norm, item.placeholder_no, item.id';
 
-const toSummary = (row: SummaryRow): ItemSummary => ({
+const toSummary = (row: SummaryRow): Omit<ItemSummary, 'cover'> => ({
   id: row.id,
   kind: row.kind,
   title: row.title,
@@ -67,6 +86,14 @@ const toSummary = (row: SummaryRow): ItemSummary => ({
   rating: row.rating,
   status: row.status,
   deletedAt: row.deleted_at,
+});
+
+const toSummaryWithCover = (row: SummaryRow & CoverColumns): ItemSummary => ({
+  ...toSummary(row),
+  cover:
+    row.cover_sha256 === null
+      ? null
+      : { sha256: row.cover_sha256, width: row.cover_width!, height: row.cover_height! },
 });
 
 const storedDate = (value: string | null) => (value === null ? null : parseStoredUsageDate(value));
@@ -81,22 +108,23 @@ export class ItemService {
   list(token: string, kind: ItemKind): ItemSummary[] {
     const rows = this.db(token)
       .prepare(
-        `SELECT ${SUMMARY_COLUMNS} FROM item WHERE kind = ? AND deleted_at IS NULL ${LIBRARY_ORDER}`,
+        `SELECT ${SUMMARY_COLUMNS} FROM item ${COVER_JOIN}
+         WHERE item.kind = ? AND item.deleted_at IS NULL ${LIBRARY_ORDER}`,
       )
-      .all(kind) as SummaryRow[];
-    return rows.map(toSummary);
+      .all(kind) as (SummaryRow & CoverColumns)[];
+    return rows.map(toSummaryWithCover);
   }
 
   /** Items in the trash, most recently deleted first; all kinds when `kind` is null. */
   listTrash(token: string, kind: ItemKind | null): ItemSummary[] {
     const rows = this.db(token)
       .prepare(
-        `SELECT ${SUMMARY_COLUMNS} FROM item
-         WHERE deleted_at IS NOT NULL AND (? IS NULL OR kind = ?)
-         ORDER BY deleted_at DESC, id DESC`,
+        `SELECT ${SUMMARY_COLUMNS} FROM item ${COVER_JOIN}
+         WHERE item.deleted_at IS NOT NULL AND (? IS NULL OR item.kind = ?)
+         ORDER BY item.deleted_at DESC, item.id DESC`,
       )
-      .all(kind, kind) as SummaryRow[];
-    return rows.map(toSummary);
+      .all(kind, kind) as (SummaryRow & CoverColumns)[];
+    return rows.map(toSummaryWithCover);
   }
 
   get(token: string, id: number): ItemDetails {

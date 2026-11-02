@@ -50,7 +50,7 @@ test('creates, shows and edits items, hiding empty fields and guarding unsaved c
   await expect(heading('Nuevo videojuego')).toBeVisible();
   await button('Guardar').click();
   await expect(heading('Sin nombre 1')).toBeVisible();
-  const details = page.locator('.details');
+  const details = page.locator('.item-detail');
   await expect(details).toContainText('Añadido el');
   await expect(details).not.toContainText('Descripción');
   await expect(details).not.toContainText('Valoración');
@@ -344,9 +344,9 @@ test('shows untitled items in the current language', async () => {
   await page.getByLabel('Temporadas').fill('3');
   await button('Guardar').click();
   await expect(heading('Sin nombre 1')).toBeVisible();
-  await expect(page.locator('.details')).toContainText('Temporadas');
+  await expect(page.locator('.item-detail')).toContainText('Temporadas');
 
   await button('English').click();
   await expect(heading('Untitled 1')).toBeVisible();
-  await expect(page.locator('.details')).toContainText('Seasons');
+  await expect(page.locator('.item-detail')).toContainText('Seasons');
 });

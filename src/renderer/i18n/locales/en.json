@@ -299,6 +299,17 @@
       "removeLabel": "Remove image {{number}}",
       "rejected": "“{{name}}” could not be added: {{reason}}"
     },
+    "view": {
+      "missing": "File not found",
+      "coverOf": "Cover of “{{title}}”",
+      "openCover": "View the cover full size",
+      "open": "View image {{number}} full size",
+      "seeAll": "See all ({{count}})",
+      "allTitle": "Images of “{{title}}” ({{count}})",
+      "position": "Image {{number}} of {{count}}",
+      "previous": "Previous image",
+      "next": "Next image"
+    },
     "import": {
       "title": "Add “{{name}}”",
       "choice": "How to keep it",

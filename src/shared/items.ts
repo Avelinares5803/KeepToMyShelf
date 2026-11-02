@@ -14,6 +14,15 @@ export interface ItemSummary {
   readonly rating: number | null;
   readonly status: ItemStatus | null;
   readonly deletedAt: string | null;
+  /** The item's first image, shown as its cover; null when it has none. */
+  readonly cover: ItemCover | null;
+}
+
+/** Enough to show a cover: its thumbnails are served by ktms-media:// by hash. */
+export interface ItemCover {
+  readonly sha256: string;
+  readonly width: number;
+  readonly height: number;
 }
 
 /** A catalog value as an item shows it, with its current name. */

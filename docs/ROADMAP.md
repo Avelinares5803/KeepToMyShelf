@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-01, tras la F6-B1.
+**Última actualización:** 2026-11-02, tras la F6-B2.
 
 ---
 
@@ -39,7 +39,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F3 Estructura de la UI  | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                                          | ✅ Hecha                                       |
 | F4 Elementos            | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
 | F5 Catálogos            | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
-| **F6 Multimedia**       | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ⏳ **En curso** (F6-A y F6-B1 hechas)          |
+| **F6 Multimedia**       | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ⏳ **En curso** (falta la F6-C: PDF)           |
 | F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | Pendiente                                      |
 | F8 Películas y series   | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
@@ -157,7 +157,7 @@ El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el
   - Si hay más de **10 imágenes**, se muestran las 10 primeras y un enlace «Ver todas (N)» que abre la galería completa. El número se revisará en la F6-B al ver el aspecto real.
 - **Integridad:**
   - La base de datos manda: primero se borra la fila y luego un barrido elimina los archivos huérfanos.
-  - Un archivo que falte (borrado a mano) muestra un aviso discreto, sin que falle nada.
+  - Un archivo que falte (borrado a mano) muestra un aviso discreto, sin que falle nada: «Archivo no encontrado» en la ficha, y solo el título en la biblioteca. Limitación conocida: si se borra con la app abierta, la biblioteca sigue mostrando las portadas que ya había mostrado hasta reiniciar la app, porque Chromium las guarda en memoria.
   - Un elemento en la papelera conserva sus archivos. Al eliminarlo definitivamente, se borran los que nadie más use.
 - **Seguridad:** la interfaz no puede leer el disco. Las imágenes se sirven con un protocolo propio (`ktms-media://`) limitado a la carpeta `media` del perfil abierto, nunca con `file://`.
 - **En la biblioteca:**
@@ -170,7 +170,7 @@ El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el
 - F6-A: tabla, migración 0004, servicio, miniaturas y protocolo. ✅ Hecha.
 - F6-B: imágenes en la interfaz, dividida en dos entregas (acordado el 2026-11-01):
   - **F6-B1**: canales IPC, selector de archivos, ventana de importación, bloque «Imágenes» del formulario (ordenar, «Usar como portada», «Quitar», «Usar el original»), y en Ajustes la opción por defecto y el tamaño máximo de la copia optimizada (2000 px). ✅ Hecha.
-  - **F6-B2**: sección «Multimedia» de la ficha, visor ampliado, «Ver todas (N)», portadas en la biblioteca y aviso de archivo perdido.
+  - **F6-B2**: sección «Multimedia» de la ficha, visor ampliado, «Ver todas (N)», portadas en la biblioteca y aviso de archivo perdido. ✅ Hecha.
 - F6-C: documentos PDF, con el visor del sistema; el visor integrado sigue anotado como mejora futura.
 
 Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto con la pantalla que los usa. **Para la F6-B:** el selector de archivos debe abrirse en el proceso principal (`dialog.showOpenDialog`), que pasa la ruta elegida a `MediaService.prepareImport`. La interfaz nunca debe enviar rutas del disco por IPC.
@@ -183,6 +183,14 @@ Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto co
 - **Límites ajustables:** el tamaño máximo de la copia optimizada (2000 px) se ajusta en Ajustes desde la F6-B1; el límite de los PDF, en la F6-C; los 3840 px de los fondos, en la F10. Los 50 MB por imagen son fijos.
 
 **Portadas con proporciones distintas en la cuadrícula** (acordado el 2026-10-31): cada portada conserva su proporción (tarjetas de altura variable). No se deforma, no se recorta y no hay una proporción común: quien quiera uniformidad puede preparar sus imágenes con la misma proporción.
+
+**Acordado para la F6-B2 (2026-11-02):**
+
+- **Cuadrícula de la biblioteca:** tarjetas de ancho fijo (unos 10 rem) **alineadas por abajo, como libros en una estantería**. Los títulos quedan a la misma altura y cada portada conserva su forma.
+- **Ficha:** la portada se muestra grande a la izquierda de los datos (encima en ventanas estrechas) y abre el visor. La sección «Multimedia» va al final, antes de «Añadido el», con todas las imágenes en su orden: la primera es la misma portada.
+- **Visor a pantalla completa** con fondo oscuro, flechas, contador y teclado (←, →, Esc). Muestra el archivo completo, no la miniatura.
+- **Papelera:** cada fila muestra una miniatura pequeña de la portada, si la tiene, para reconocer lo que se va a eliminar.
+- **La portada siempre es la imagen 1:** «Usar como portada» la mueve al primer puesto y las demás se desplazan sin cambiar su orden.
 
 ### 3.6 Búsqueda, filtros y ordenación (F7)
 
@@ -290,6 +298,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - Ejecutar las E2E también en Linux (con xvfb) y medir la cobertura (objetivos: `core/` ≥ 90 %, `application/` e `infrastructure/` ≥ 80 %).
 - Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
 - Visor de PDF integrado (pdf.js).
+- Un control para agrandar o reducir las portadas de la biblioteca.
 - Añadir imágenes y documentos arrastrándolos a la ventana. Necesita `webUtils.getPathForFile` en el preload para obtener la ruta del archivo soltado.
 - Exportar e importar bibliotecas (JSON/CSV) y copias programadas.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.

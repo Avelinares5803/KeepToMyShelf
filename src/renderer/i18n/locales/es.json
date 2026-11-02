@@ -299,6 +299,17 @@
       "removeLabel": "Quitar la imagen {{number}}",
       "rejected": "No se ha podido añadir «{{name}}»: {{reason}}"
     },
+    "view": {
+      "missing": "Archivo no encontrado",
+      "coverOf": "Portada de «{{title}}»",
+      "openCover": "Ver la portada en grande",
+      "open": "Ver la imagen {{number}} en grande",
+      "seeAll": "Ver todas ({{count}})",
+      "allTitle": "Imágenes de «{{title}}» ({{count}})",
+      "position": "Imagen {{number}} de {{count}}",
+      "previous": "Imagen anterior",
+      "next": "Imagen siguiente"
+    },
     "import": {
       "title": "Añadir «{{name}}»",
       "choice": "Cómo guardarla",

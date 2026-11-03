@@ -52,6 +52,8 @@ const api: KeepToMyShelfApi = {
   },
   media: {
     pickImages: invoke(IpcChannels.pickImages),
+    pickDocuments: invoke(IpcChannels.pickDocuments),
+    openDocument: invoke(IpcChannels.openDocument),
     discardImports: invoke(IpcChannels.discardImports),
     list: invoke(IpcChannels.listItemMedia),
   },

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { app, BrowserWindow, dialog, Menu, protocol } from 'electron';
+import { join } from 'node:path';
+import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
 import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
 import { MEDIA_SETTING_DEFAULTS, type AppSettings } from '../shared/settings';
 import { CatalogService } from './application/catalog-service';
@@ -42,11 +43,25 @@ function startApp(): void {
     sessions,
     paths,
     now,
-    limitsFor: (profileId) => ({
-      ...DEFAULT_MEDIA_LIMITS,
-      optimizedMaxSide: settings.getForProfile(profileId).optimizedMaxSide,
-    }),
+    limitsFor: (profileId) => {
+      const preferences = settings.getForProfile(profileId);
+      return {
+        ...DEFAULT_MEDIA_LIMITS,
+        optimizedMaxSide: preferences.optimizedMaxSide,
+        maxDocumentBytes: preferences.maxDocumentMegabytes * 1024 * 1024,
+      };
+    },
+    // Copies of the documents opened in the system viewer go to the system's temporary
+    // folder; tests keep them inside their own data folder.
+    openedDocumentsDir: userDataOverride
+      ? join(userDataOverride, 'opened-documents')
+      : join(app.getPath('temp'), 'KeepToMyShelf', 'opened-documents'),
+    // shell.openPath asks Windows to open the file with its default program, like a double
+    // click in the File Explorer.
+    openWithSystem: (path) => shell.openPath(path),
   });
+  // Copies left from the last run that a viewer kept open.
+  media.clearOpenedDocuments();
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
 

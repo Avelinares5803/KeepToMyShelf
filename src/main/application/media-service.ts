@@ -1,8 +1,13 @@
-import { createHash } from 'node:crypto';
-import { existsSync, rmSync, writeFileSync } from 'node:fs';
-import { open, readFile, stat } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFile, open, readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../core/errors';
+import {
+  cleanDocumentLabel,
+  fileNameForLabel,
+  labelFromFileName,
+} from '../../core/media/document-label';
 import {
   assertChoiceAllowed,
   assertWithinSizeLimit,
@@ -22,6 +27,7 @@ import {
   type MediaKind,
 } from '../../core/media/media-format';
 import type {
+  DocumentPlanEntry,
   ImagePlanEntry,
   ItemMedia,
   ItemMediaPlan,
@@ -43,13 +49,20 @@ export interface MediaServiceDeps {
   readonly sessions: SessionManager;
   readonly paths: DataPaths;
   readonly now: () => Date;
-  /** Limits for a profile (the optimized size is a preference); the defaults otherwise. */
+  /** Limits for a profile (some are preferences); the defaults otherwise. */
   readonly limitsFor?: (profileId: string) => MediaLimits;
+  /** Folder for the copies of documents opened in the system viewer. */
+  readonly openedDocumentsDir: string;
+  /**
+   * Opens a file with the system's default program. Resolves to an error message, or to ''
+   * when it worked (like Electron's `shell.openPath`).
+   */
+  readonly openWithSystem: (path: string) => Promise<string>;
 }
 
 /**
- * What `ItemService` needs: saving an item's cover and gallery together with the item, and
- * removing the files no item uses after a permanent deletion.
+ * What `ItemService` needs: saving an item's cover, gallery and documents together with the
+ * item, and removing the files no item uses after a permanent deletion.
  */
 export interface MediaForItems {
   stageMedia(token: string, plan: ItemMediaPlan): StagedMedia;
@@ -57,8 +70,8 @@ export interface MediaForItems {
 }
 
 /**
- * An item's new cover and gallery, with their files already in place. `write` runs inside
- * the item's transaction; then `finish` if it was committed, or `abort` if it was not.
+ * An item's new cover, gallery and documents, with their files already in place. `write`
+ * runs inside the item's transaction; then `finish` if it was committed, or `abort` if not.
  */
 export interface StagedMedia {
   write(db: SqliteDatabase, itemId: number): void;
@@ -102,6 +115,11 @@ type StagedEntry =
       readonly original: PreparedFile | null;
     };
 
+/** A new document, checked, with its name already cleaned. */
+type StagedDocument =
+  | { readonly kind: 'existing'; readonly mediaId: number; readonly label: string }
+  | { readonly kind: 'prepared'; readonly preparation: Preparation; readonly label: string };
+
 interface FileRow {
   id: number;
   sha256: string;
@@ -136,14 +154,19 @@ export class MediaService implements MediaForItems {
 
   /**
    * Prepares the files chosen in the file dialog one after another. Files that cannot be
-   * imported are reported with the reason, without stopping the others.
+   * imported, or are not of the `expected` kind, are reported with the reason, without
+   * stopping the others.
    */
-  async prepareMany(token: string, sourcePaths: readonly string[]): Promise<PickedImports> {
+  async prepareMany(
+    token: string,
+    sourcePaths: readonly string[],
+    expected: MediaKind,
+  ): Promise<PickedImports> {
     const prepared: PreparedImport[] = [];
     const rejected: { fileName: string; code: string }[] = [];
     for (const path of sourcePaths) {
       try {
-        prepared.push(await this.prepareImport(token, path));
+        prepared.push(await this.prepareImport(token, path, expected));
       } catch (error) {
         // A closed session ends the whole import; any other expected error refuses one file.
         if (!(error instanceof AppError) || error.code === 'session.stale') throw error;
@@ -156,12 +179,23 @@ export class MediaService implements MediaForItems {
   /**
    * Checks a chosen file and prepares everything needed to save it, without saving it yet:
    * the format is judged by the content, and images get their optimized copy and thumbnails.
+   * With `expected`, a file of the other kind is refused before it is read.
    */
-  async prepareImport(token: string, sourcePath: string): Promise<PreparedImport> {
+  async prepareImport(
+    token: string,
+    sourcePath: string,
+    expected?: MediaKind,
+  ): Promise<PreparedImport> {
     const limits = this.limitsOf(this.deps.sessions.require(token));
     const fileName = basename(sourcePath);
     const format = await readFormat(sourcePath);
     const kind = mediaKindOf(format);
+    if (expected !== undefined && kind !== expected) {
+      throw new ValidationError(
+        expected === 'image' ? 'media.not_an_image' : 'media.not_a_document',
+        `${fileName} is a ${kind}, not a ${expected}`,
+      );
+    }
     // Checked before reading, so a huge file is never loaded into memory; and again after,
     // in case it grew in between.
     assertWithinSizeLimit(kind, (await stat(sourcePath)).size, limits);
@@ -257,14 +291,41 @@ export class MediaService implements MediaForItems {
   }
 
   /**
-   * Puts in place the files of an item's new cover and gallery. Nothing is written to the
-   * database yet: the item's save does it in its own transaction with `write`.
+   * Puts in place the files of an item's new cover, gallery and documents. Nothing is written
+   * to the database yet: the item's save does it in its own transaction with `write`.
    *
    * Files are copied, not moved, out of the prepared imports: if the save fails (e.g. a
    * catalog value was deleted meanwhile), the imports are still there to try again. The same
    * import may be both the cover and a gallery image: its file is stored once.
    */
   stageMedia(token: string, plan: ItemMediaPlan): StagedMedia {
+    const images = this.stageImages(token, plan);
+    let documents: StagedMedia | undefined;
+    try {
+      documents = plan.documents && this.stageDocuments(token, plan.documents);
+    } catch (error) {
+      // The images were already copied: the sweep removes them.
+      images.abort();
+      throw error;
+    }
+    return {
+      write: (db, itemId) => {
+        images.write(db, itemId);
+        documents?.write(db, itemId);
+      },
+      finish: () => {
+        images.finish();
+        documents?.finish();
+      },
+      abort: () => {
+        images.abort();
+        documents?.abort();
+      },
+    };
+  }
+
+  /** The cover and the gallery of `stageMedia`. */
+  private stageImages(token: string, plan: ItemMediaPlan): StagedMedia {
     const session = this.deps.sessions.require(token);
     const { db } = session;
     const store = this.store(session);
@@ -379,6 +440,121 @@ export class MediaService implements MediaForItems {
     };
   }
 
+  /** The documents of `stageMedia`: PDFs are stored as they are, with the name given. */
+  private stageDocuments(token: string, entries: readonly DocumentPlanEntry[]): StagedMedia {
+    const session = this.deps.sessions.require(token);
+    const store = this.store(session);
+
+    // Everything is checked before any file is copied.
+    const resolved = entries.map((entry): StagedDocument => {
+      const label = cleanDocumentLabel(entry.label);
+      if (entry.kind === 'existing') return { kind: 'existing', mediaId: entry.mediaId, label };
+      const preparation = this.preparationOf(token, entry.preparedId);
+      if (preparation.summary.kind !== 'document') {
+        throw new ValidationError('media.not_a_document', `${entry.preparedId} is not a PDF`);
+      }
+      return { kind: 'prepared', preparation, label };
+    });
+
+    for (const entry of resolved) {
+      if (entry.kind !== 'prepared') continue;
+      const { source } = entry.preparation;
+      store.copyIn(source.path, store.filePath('files', source.sha256, source.format));
+    }
+
+    let removesFiles = false;
+    return {
+      write: (db, itemId) => {
+        const current = attachedIds(db, itemId, 'document');
+        const ids = resolved.map((entry) => {
+          if (entry.kind === 'prepared') {
+            return this.findOrInsertFile(db, entry.preparation.source, 'files', null, false);
+          }
+          if (!current.includes(entry.mediaId)) {
+            throw new NotFoundError(
+              'media.not_attached',
+              `Item ${itemId} has no file ${entry.mediaId}`,
+            );
+          }
+          return entry.mediaId;
+        });
+        if (new Set(ids).size !== ids.length) {
+          throw new ConflictError('media.already_attached', 'The same document is listed twice');
+        }
+        removesFiles = current.some((id) => !ids.includes(id));
+
+        db.prepare(
+          `DELETE FROM item_media WHERE item_id = ? AND media_id IN
+             (SELECT id FROM media_file WHERE kind = 'document')`,
+        ).run(itemId);
+        const insert = db.prepare(
+          'INSERT INTO item_media (item_id, media_id, label, sort_order) VALUES (?, ?, ?, ?)',
+        );
+        ids.forEach((id, index) => insert.run(itemId, id, resolved[index]!.label, index));
+      },
+      finish: () => {
+        const used = resolved.flatMap((entry) =>
+          entry.kind === 'prepared' ? [entry.preparation.summary.id] : [],
+        );
+        this.discardImports(token, used);
+        if (removesFiles) this.sweepSession(session);
+      },
+      abort: () => this.sweepSession(session),
+    };
+  }
+
+  /**
+   * Opens one of an item's documents in the system's PDF viewer. A copy named after the
+   * document is opened: the viewer shows its name, and anything it saves (annotations…)
+   * never changes the stored file, whose name must keep matching its bytes.
+   */
+  async openDocument(token: string, itemId: number, mediaId: number): Promise<void> {
+    const session = this.deps.sessions.require(token);
+    const row = session.db
+      .prepare(
+        `SELECT f.*, im.label FROM item_media im JOIN media_file f ON f.id = im.media_id
+         WHERE im.item_id = ? AND im.media_id = ? AND f.kind = 'document'`,
+      )
+      .get(itemId, mediaId) as AttachmentRow | undefined;
+    if (row === undefined) {
+      throw new NotFoundError('media.not_attached', `Item ${itemId} has no document ${mediaId}`);
+    }
+    const stored = this.store(session).filePath('files', row.sha256, row.format);
+    if (!existsSync(stored)) {
+      throw new NotFoundError('media.file_missing', `${stored} was deleted`);
+    }
+
+    // A folder per opening: two documents with the same name never clash, and a copy the
+    // viewer keeps open never stops another one from being made.
+    const folder = join(this.deps.openedDocumentsDir, randomUUID());
+    mkdirSync(folder, { recursive: true });
+    // Documents always have a name; an empty one would become "document.pdf".
+    const copy = join(folder, fileNameForLabel(row.label ?? ''));
+    await copyFile(stored, copy);
+    const failure = await this.deps.openWithSystem(copy);
+    if (failure !== '') {
+      throw new AppError('media.open_failed', `Could not open ${copy}: ${failure}`);
+    }
+  }
+
+  /**
+   * Removes the copies of opened documents. A copy a viewer still has open cannot be removed
+   * on Windows: it is left for the next time.
+   */
+  clearOpenedDocuments(): void {
+    const dir = this.deps.openedDocumentsDir;
+    if (!existsSync(dir)) return;
+    for (const folder of readdirSync(dir)) {
+      try {
+        rmSync(join(dir, folder), { recursive: true, force: true });
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === undefined || !LOCKED_FILE_CODES.has(code)) throw error;
+        console.warn(`Could not remove an opened document in ${folder} (${code}); will retry`);
+      }
+    }
+  }
+
   /**
    * Saves a prepared file and adds it at the end of the item's images or documents.
    * `choice` says how an image is kept; documents are always kept as they are.
@@ -442,7 +618,12 @@ export class MediaService implements MediaForItems {
           .get(itemId, summary.kind) as number;
         db.prepare(
           'INSERT INTO item_media (item_id, media_id, label, sort_order) VALUES (?, ?, ?, ?)',
-        ).run(itemId, id, summary.kind === 'document' ? summary.fileName : null, nextOrder);
+        ).run(
+          itemId,
+          id,
+          summary.kind === 'document' ? labelFromFileName(summary.fileName) : null,
+          nextOrder,
+        );
         return id;
       })();
     } catch (error) {
@@ -513,6 +694,7 @@ export class MediaService implements MediaForItems {
       if (preparation.token === session.token) this.preparations.delete(id);
     }
     this.store(session).clearTemp();
+    this.clearOpenedDocuments();
   }
 
   /**
@@ -534,8 +716,8 @@ export class MediaService implements MediaForItems {
   }
 
   /**
-   * A file for a `ktms-media://` URL, only from the open profile and only among the files
-   * items use (never the kept originals). A missing thumbnail is made again from its file.
+   * An image for a `ktms-media://` URL, only from the open profile and only among the files
+   * items use (never the kept originals nor documents). A missing thumbnail is made again.
    * Resolves to null when there is nothing to serve.
    */
   async readForProtocol(
@@ -547,7 +729,8 @@ export class MediaService implements MediaForItems {
     const row = session.db
       .prepare("SELECT kind, format FROM media_file WHERE sha256 = ? AND store = 'files'")
       .get(sha256) as { kind: MediaKind; format: MediaFormat } | undefined;
-    if (row === undefined) return null;
+    // Documents never leave the app this way: they open in the system viewer.
+    if (row === undefined || row.kind !== 'image') return null;
 
     const store = this.store(session);
     const filePath = store.filePath('files', sha256, row.format);
@@ -555,7 +738,6 @@ export class MediaService implements MediaForItems {
       const bytes = await readIfExists(filePath);
       return bytes && { bytes, mimeType: mimeTypeOf(row.format) };
     }
-    if (row.kind !== 'image') return null;
     // A file deleted by hand shows as missing everywhere, even while its thumbnail is cached.
     if (!existsSync(filePath)) return null;
 

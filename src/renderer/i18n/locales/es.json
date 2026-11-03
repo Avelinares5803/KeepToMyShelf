@@ -395,6 +395,12 @@
       "not_attached": "Ese archivo ya no está en este elemento.",
       "invalid_order": "El nuevo orden no es válido. Vuelve a intentarlo.",
       "not_an_image": "Ese archivo no es una imagen.",
+      "not_a_document": "Ese archivo no es un documento PDF.",
+      "label_required": "El nombre del documento no puede estar vacío.",
+      "label_too_long": "El nombre del documento no puede tener más de 200 caracteres.",
+      "label_invalid_characters": "El nombre del documento contiene caracteres no válidos.",
+      "file_missing": "No se encuentra el archivo en la carpeta de la biblioteca.",
+      "open_failed": "No se ha podido abrir el documento con el programa del sistema. Comprueba que tienes instalado un visor de PDF.",
       "no_original": "Esa imagen no conserva su original.",
       "original_missing": "No se encuentra el original de esa imagen en la carpeta de originales."
     },

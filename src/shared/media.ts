@@ -78,10 +78,19 @@ export type ImagePlanEntry =
   | { readonly kind: 'use_original'; readonly mediaId: number };
 
 /**
- * The images an item is saved with. `cover` is the new cover (null: none) and `images` the
- * whole gallery in order; either one left out does not change.
+ * A document an item is saved with, and the name it is shown with: one it already has, or a
+ * prepared PDF. Documents are kept as they are.
+ */
+export type DocumentPlanEntry =
+  | { readonly kind: 'existing'; readonly mediaId: number; readonly label: string }
+  | { readonly kind: 'prepared'; readonly preparedId: string; readonly label: string };
+
+/**
+ * The files an item is saved with. `cover` is the new cover (null: none), `images` the whole
+ * gallery and `documents` all its documents, in order; any of them left out does not change.
  */
 export interface ItemMediaPlan {
   readonly cover?: ImagePlanEntry | null;
   readonly images?: readonly ImagePlanEntry[];
+  readonly documents?: readonly DocumentPlanEntry[];
 }

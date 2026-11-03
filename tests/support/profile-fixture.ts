@@ -31,6 +31,12 @@ export interface ProfileFixture {
   readonly media: MediaService;
   /** Temporary folder for test files outside the app's data folder (e.g. files to import). */
   readonly scratchDir: string;
+  /** Where the copies of opened documents go. */
+  readonly openedDocumentsDir: string;
+  /** Files "opened in the system viewer", in order. */
+  readonly openedFiles: string[];
+  /** What the system viewer answers next: '' when it opens the file, or an error message. */
+  setViewerAnswer(answer: string): void;
   readonly cleanup: () => void;
 }
 
@@ -58,15 +64,28 @@ export function createProfileFixture(): ProfileFixture {
     onClose: (session) => media.onSessionClosing(session),
   });
   const profiles = new ProfileService({ appDb, paths, sessions, settings, now, newId: randomUUID });
-  // Wired like the app: the optimized size is the profile's preference.
+  // Wired like the app: the optimized size and the PDF limit are the profile's preferences.
+  // The system viewer is replaced by a recorder.
+  const openedDocumentsDir = join(tempDir.path, 'opened-documents');
+  const openedFiles: string[] = [];
+  let viewerAnswer = '';
   const media = new MediaService({
     sessions,
     paths,
     now,
-    limitsFor: (profileId) => ({
-      ...DEFAULT_MEDIA_LIMITS,
-      optimizedMaxSide: settings.getForProfile(profileId).optimizedMaxSide,
-    }),
+    limitsFor: (profileId) => {
+      const preferences = settings.getForProfile(profileId);
+      return {
+        ...DEFAULT_MEDIA_LIMITS,
+        optimizedMaxSide: preferences.optimizedMaxSide,
+        maxDocumentBytes: preferences.maxDocumentMegabytes * 1024 * 1024,
+      };
+    },
+    openedDocumentsDir,
+    openWithSystem: (path) => {
+      openedFiles.push(path);
+      return Promise.resolve(viewerAnswer);
+    },
   });
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
@@ -75,6 +94,11 @@ export function createProfileFixture(): ProfileFixture {
     catalogs,
     media,
     scratchDir,
+    openedDocumentsDir,
+    openedFiles,
+    setViewerAnswer: (answer) => {
+      viewerAnswer = answer;
+    },
     paths,
     appDb,
     settings,

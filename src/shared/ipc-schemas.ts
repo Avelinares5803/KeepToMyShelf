@@ -81,6 +81,21 @@ const imagePlanEntrySchema = z.discriminatedUnion('kind', [
 const imagePlanSchema = z.array(imagePlanEntrySchema).max(1_000).readonly();
 // null removes the cover; left out, it does not change.
 const coverPlanSchema = imagePlanEntrySchema.nullable();
+// The name is checked by the service (cleanDocumentLabel); here only its size is bounded.
+const documentLabelSchema = z.string().max(1_000);
+const documentPlanSchema = z
+  .array(
+    z.discriminatedUnion('kind', [
+      z.object({ kind: z.literal('existing'), mediaId: mediaIdSchema, label: documentLabelSchema }),
+      z.object({
+        kind: z.literal('prepared'),
+        preparedId: preparedIdSchema,
+        label: documentLabelSchema,
+      }),
+    ]),
+  )
+  .max(1_000)
+  .readonly();
 
 export const ipcInputSchemas = {
   getAppInfo: z.undefined(),
@@ -99,13 +114,15 @@ export const ipcInputSchemas = {
   listItems: z.object({ token: sessionTokenSchema, kind: itemKindSchema }),
   listTrash: z.object({ token: sessionTokenSchema, kind: itemKindSchema.nullable() }),
   getItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
-  // `cover` is the item's cover and `images` its whole gallery; left out, they do not change.
+  // `cover` is the item's cover, `images` its whole gallery and `documents` all its
+  // documents; left out, they do not change.
   createItem: z.object({
     token: sessionTokenSchema,
     kind: itemKindSchema,
     draft: itemDraftSchema,
     cover: coverPlanSchema.optional(),
     images: imagePlanSchema.optional(),
+    documents: documentPlanSchema.optional(),
   }),
   updateItem: z.object({
     token: sessionTokenSchema,
@@ -113,6 +130,7 @@ export const ipcInputSchemas = {
     draft: itemDraftSchema,
     cover: coverPlanSchema.optional(),
     images: imagePlanSchema.optional(),
+    documents: documentPlanSchema.optional(),
   }),
   moveItemToTrash: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   restoreItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
@@ -137,6 +155,12 @@ export const ipcInputSchemas = {
     token: sessionTokenSchema,
     filterName: z.string().min(1).max(100),
     multiple: z.boolean(),
+  }),
+  pickDocuments: z.object({ token: sessionTokenSchema, filterName: z.string().min(1).max(100) }),
+  openDocument: z.object({
+    token: sessionTokenSchema,
+    itemId: itemIdSchema,
+    mediaId: mediaIdSchema,
   }),
   discardImports: z.object({
     token: sessionTokenSchema,

@@ -395,6 +395,12 @@
       "not_attached": "That file is no longer in this item.",
       "invalid_order": "The new order is not valid. Please try again.",
       "not_an_image": "That file is not an image.",
+      "not_a_document": "That file is not a PDF document.",
+      "label_required": "The document name cannot be empty.",
+      "label_too_long": "The document name cannot be longer than 200 characters.",
+      "label_invalid_characters": "The document name contains invalid characters.",
+      "file_missing": "The file is not in the library folder any more.",
+      "open_failed": "The document could not be opened with the system's program. Check that a PDF viewer is installed.",
       "no_original": "That image does not keep its original.",
       "original_missing": "The original of that image is not in the originals folder."
     },

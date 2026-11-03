@@ -174,6 +174,8 @@ describe('MediaService', () => {
         paths: fx.paths,
         now: () => new Date(),
         limitsFor: () => ({ ...DEFAULT_MEDIA_LIMITS, maxImageBytes: 100, maxDocumentBytes: 1000 }),
+        openedDocumentsDir: fx.openedDocumentsDir,
+        openWithSystem: () => Promise.resolve(''),
       });
       const image = writeFile(fx.scratchDir, 'grande.png', await pngImage(20, 20));
       const pdf = writeFile(fx.scratchDir, 'pequeño.pdf', PDF_BYTES);
@@ -311,7 +313,7 @@ describe('MediaService', () => {
       await attach(itemId, 'portada.png', bigPng);
       const manual = await attach(itemId, 'Manual de instrucciones.pdf', PDF_BYTES, null);
 
-      expect(manual).toMatchObject({ kind: 'document', label: 'Manual de instrucciones.pdf' });
+      expect(manual).toMatchObject({ kind: 'document', label: 'Manual de instrucciones' });
       const { images, documents } = fx.media.list(token, itemId);
       expect(images).toHaveLength(1);
       expect(documents.map((m) => m.mediaId)).toEqual([manual.mediaId]);

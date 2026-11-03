@@ -144,6 +144,7 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
             <label htmlFor={maxSideId}>{t('settings.optimizedMaxSide.label')}</label>
             <select
               id={maxSideId}
+              aria-describedby={`${maxSideId}-hint`}
               value={settings.optimizedMaxSide}
               onChange={(event) =>
                 onChange({
@@ -170,6 +171,9 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
             {t('settings.applyToAll')}
           </button>
         </div>
+        <p id={`${maxSideId}-hint`} className="muted field__hint setting-row__hint">
+          {t('settings.optimizedMaxSide.hint')}
+        </p>
 
         <div className="setting-row">
           <div className="field">

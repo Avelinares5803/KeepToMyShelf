@@ -130,6 +130,20 @@ test.describe('app shell', () => {
     await expectTheme(page, 'dark');
   });
 
+  test('explains the size of optimized images in the settings dialog', async () => {
+    await page.getByRole('button', { name: 'Ajustes', exact: true }).click();
+    const settings = page.getByRole('dialog', { name: 'Ajustes' });
+
+    const maxSize = settings.getByLabel('Tamaño máximo de las imágenes optimizadas', {
+      exact: true,
+    });
+    await expect(maxSize).toHaveValue('2000');
+    await expect(maxSize).toHaveAccessibleDescription(
+      'Las imágenes más grandes se reducen hasta que su lado más largo mide esto. Nunca se amplían.',
+    );
+    await settings.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  });
+
   test('changes the language from the settings dialog', async () => {
     await page.getByRole('button', { name: 'Ajustes' }).click();
     const settings = page.getByRole('dialog');

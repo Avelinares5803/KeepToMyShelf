@@ -411,6 +411,11 @@ h1 {
   white-space: nowrap;
 }
 
+/* A setting's explanation, under its whole row: it stays with the setting above it. */
+.setting-row__hint {
+  margin-top: -0.6rem;
+}
+
 /* Content modes */
 .modes,
 .library {

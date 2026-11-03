@@ -276,6 +276,11 @@
       "label": "Longest side of optimized copies",
       "applyToAll": "Apply this maximum size to all profiles",
       "value": "{{pixels}} px"
+    },
+    "maxDocumentMegabytes": {
+      "label": "Maximum size of PDFs",
+      "applyToAll": "Apply this maximum PDF size to all profiles",
+      "value": "{{megabytes}} MB"
     }
   },
   "media": {
@@ -308,6 +313,20 @@
       "remove": "Remove",
       "removeLabel": "Remove image {{number}}",
       "rejected": "“{{name}}” could not be added: {{reason}}"
+    },
+    "documents": {
+      "title": "Documents",
+      "add": "Add documents",
+      "preparing": "Preparing the documents…",
+      "fileType": "PDF documents",
+      "name": "Name of document {{number}}",
+      "new": "New",
+      "moveUp": "Move document {{number}} up",
+      "moveDown": "Move document {{number}} down",
+      "remove": "Remove",
+      "removeLabel": "Remove document {{number}}",
+      "open": "Open “{{name}}”",
+      "opening": "Opening…"
     },
     "view": {
       "missing": "File not found",

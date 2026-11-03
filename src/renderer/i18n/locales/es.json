@@ -276,6 +276,11 @@
       "label": "Lado mayor de las copias optimizadas",
       "applyToAll": "Aplicar este tamaño máximo a todos los perfiles",
       "value": "{{pixels}} px"
+    },
+    "maxDocumentMegabytes": {
+      "label": "Tamaño máximo de los PDF",
+      "applyToAll": "Aplicar este tamaño máximo de los PDF a todos los perfiles",
+      "value": "{{megabytes}} MB"
     }
   },
   "media": {
@@ -308,6 +313,20 @@
       "remove": "Quitar",
       "removeLabel": "Quitar la imagen {{number}}",
       "rejected": "No se ha podido añadir «{{name}}»: {{reason}}"
+    },
+    "documents": {
+      "title": "Documentos",
+      "add": "Añadir documentos",
+      "preparing": "Preparando los documentos…",
+      "fileType": "Documentos PDF",
+      "name": "Nombre del documento {{number}}",
+      "new": "Nuevo",
+      "moveUp": "Subir el documento {{number}}",
+      "moveDown": "Bajar el documento {{number}}",
+      "remove": "Quitar",
+      "removeLabel": "Quitar el documento {{number}}",
+      "open": "Abrir «{{name}}»",
+      "opening": "Abriendo…"
     },
     "view": {
       "missing": "Archivo no encontrado",

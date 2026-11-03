@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-02, tras la F6-B3.
+**Última actualización:** 2026-11-03, tras la F6-C (fin de la F6).
 
 ---
 
@@ -31,21 +31,21 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 
 ## 2. Estado de las fases
 
-| Fase                    | Contenido                                                                                                                                                      | Estado                                         |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| F0 Fundaciones          | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»                          | ✅ Hecha                                       |
-| F1 Núcleo               | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                                     | ✅ Hecha                                       |
-| F2 Perfiles             | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                                        | ✅ Hecha                                       |
-| F3 Estructura de la UI  | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                                          | ✅ Hecha                                       |
-| F4 Elementos            | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
-| F5 Catálogos            | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
-| **F6 Multimedia**       | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ⏳ **En curso** (falta la F6-C: PDF)           |
-| F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | Pendiente                                      |
-| F8 Películas y series   | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
-| F9 Colecciones          | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
-| F10 Personalización     | Fondos predeterminados e importados, desenfoque                                                                                                                | Pendiente                                      |
-| F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                                   | Pendiente (la copia antes de migrar ya existe) |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                                | Pendiente                                      |
+| Fase                      | Contenido                                                                                                                                                      | Estado                                         |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| F0 Fundaciones            | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»                          | ✅ Hecha                                       |
+| F1 Núcleo                 | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                                     | ✅ Hecha                                       |
+| F2 Perfiles               | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                                        | ✅ Hecha                                       |
+| F3 Estructura de la UI    | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                                          | ✅ Hecha                                       |
+| F4 Elementos              | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
+| F5 Catálogos              | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
+| F6 Multimedia             | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ✅ Hecha (PR #25 a #28 y la F6-C)              |
+| **F7 Búsqueda y filtros** | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | ⏭️ **Siguiente**                               |
+| F8 Películas y series     | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
+| F9 Colecciones            | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
+| F10 Personalización       | Fondos predeterminados e importados, desenfoque                                                                                                                | Pendiente                                      |
+| F11 Copias de seguridad   | Copia y restauración manual, copia antes de borrar un perfil                                                                                                   | Pendiente (la copia antes de migrar ya existe) |
+| F12 Distribución v1.0     | Workflow de release, instalador y portable, documentación final                                                                                                | Pendiente                                      |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -116,9 +116,9 @@ Todo está en el [ADR 0004](adr/0004-catalogs.md). Resumen:
 - **Listas iniciales:** se copian una vez por perfil, en su idioma. Los valores que se añadan después a una lista ya existente no llegan a los perfiles que ya la recibieron; un catálogo nuevo necesita su propia marca de carga.
 - **Criterio para los géneros iniciales:** géneros amplios, sin subgéneros ni ambientaciones (Medieval, Cyberpunk, Cocina…), que se cubren con etiquetas. Los alias de la lista inicial no deben ser redundantes; una prueba lo impone.
 
-### 3.5 Multimedia (F6, en curso)
+### 3.5 Multimedia (F6, implementado)
 
-El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el detalle técnico está en el [ADR 0005](adr/0005-media.md).
+Toda la F6 está implementada; el detalle técnico está en el [ADR 0005](adr/0005-media.md).
 
 **Acordado en la planificación inicial:**
 
@@ -176,7 +176,7 @@ El almacenamiento, las miniaturas y el protocolo están implementados (F6-A); el
   - **F6-B1**: canales IPC, selector de archivos, ventana de importación, bloque «Imágenes» del formulario (ordenar, «Usar como portada», «Quitar», «Usar el original»), y en Ajustes la opción por defecto y el tamaño máximo de la copia optimizada (2000 px). ✅ Hecha.
   - **F6-B2**: sección «Multimedia» de la ficha, visor ampliado, «Ver todas (N)», portadas en la biblioteca y aviso de archivo perdido. ✅ Hecha.
   - **F6-B3** (añadida el 2026-11-02): portada independiente de la galería, con la migración 0005. ✅ Hecha.
-- F6-C: documentos PDF, con el visor del sistema; el visor integrado sigue anotado como mejora futura.
+- F6-C: documentos PDF, con el visor del sistema; el visor integrado sigue anotado como mejora futura. ✅ Hecha.
 
 Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto con la pantalla que los usa. **Para la F6-B:** el selector de archivos debe abrirse en el proceso principal (`dialog.showOpenDialog`), que pasa la ruta elegida a `MediaService.prepareImport`. La interfaz nunca debe enviar rutas del disco por IPC.
 
@@ -185,7 +185,16 @@ Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto co
 - **Las imágenes forman parte del borrador.** Añadir una imagen solo la prepara; ordenar, quitar o cambiar la portada solo modifica el borrador. «Guardar» aplica todo en una sola transacción, junto con los datos del elemento. «Cancelar» o «Descartar cambios» descartan las preparaciones, y el aviso de cambios sin guardar también tiene en cuenta las imágenes.
 - **Elección recordada:** si la opción recordada es optimizada y la copia no ocupa menos, se usa el original sin preguntar. «Recordar mi elección» se deshace en Ajustes, con «Al importar imágenes» → «Preguntar siempre». Al marcar la casilla, la ventana de importación indica «Puedes cambiar esta elección en Ajustes». No se avisa en ningún otro sitio.
 - **Limpieza de temporales:** las importaciones preparadas se descartan al guardar, al cancelar, al cerrar el perfil (cambiar de perfil o salir de la app) y, tras un cierre inesperado, al volver a abrirlo.
-- **Límites ajustables:** el tamaño máximo de la copia optimizada (2000 px) se ajusta en Ajustes desde la F6-B1; el límite de los PDF, en la F6-C; los 3840 px de los fondos, en la F10. Los 50 MB por imagen son fijos.
+- **Límites ajustables:** el tamaño máximo de la copia optimizada (2000 px) se ajusta en Ajustes desde la F6-B1; el límite de los PDF, desde la F6-C; los 3840 px de los fondos, en la F10. Los 50 MB por imagen son fijos.
+
+**Acordado para la F6-C (2026-11-03):**
+
+- **Abrir un documento** copia el PDF a una carpeta temporal (`%TEMP%\KeepToMyShelf\opened-documents\<carpeta aleatoria>\`) con su nombre visible («Manual de Zelda.pdf») y abre esa copia con el visor del sistema. El archivo guardado nunca se toca, porque algunos visores escriben en el archivo abierto (anotaciones) y su contenido debe seguir coincidiendo con su hash. Las anotaciones hechas en la copia no se guardan en la biblioteca. Las copias se borran al cerrar el perfil y al abrir la app; las que un visor tenga abiertas, la vez siguiente.
+- **Nombre del documento:** al añadirlo, el del archivo sin «.pdf» (cualquier otro nombre se respeta tal cual). El archivo guardado y la copia que se abre sí llevan la extensión. Se cambia en el formulario de edición (no en la ficha), con las mismas reglas que los títulos: sin espacios sobrantes, sin caracteres de control y como mucho 200 caracteres. **Un nombre vacío bloquea el guardado.**
+- **El protocolo `ktms-media://` no sirve documentos:** responde «no encontrado». Los PDF solo salen de la app por el visor del sistema.
+- **Una sola PR** para toda la F6-C.
+- **Tamaño máximo de los PDF** en Ajustes: 50, 100, **200** (por defecto), 500 o 1000 MB, con «Aplicar a todos los perfiles». Solo afecta a las importaciones nuevas. **Los PDF no se optimizan** (ver las mejoras anotadas).
+- **Cada diálogo comprueba lo elegido:** un PDF en el de imágenes, o una imagen en el de documentos, se rechaza al momento con su nombre y el motivo.
 
 **Portadas con proporciones distintas en la cuadrícula** (acordado el 2026-10-31): cada portada conserva su proporción (tarjetas de altura variable). No se deforma, no se recorta y no hay una proporción común: quien quiera uniformidad puede preparar sus imágenes con la misma proporción.
 
@@ -274,6 +283,9 @@ Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto co
    ├─ media\files\              archivos que usan los elementos     (implementado)
    ├─ media\originals\          originales junto a una copia optimizada (implementado)
    └─ cache\thumbs\             miniaturas regenerables             (implementado)
+
+%TEMP%\KeepToMyShelf\
+└─ opened-documents\<id>\       copias de los PDF abiertos en el visor (implementado; se borran solas)
 ```
 
 Las pruebas automáticas usan siempre una carpeta temporal (`KTMS_USER_DATA_DIR`). Los datos reales del usuario nunca se tocan.
@@ -304,6 +316,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - Ejecutar las E2E también en Linux (con xvfb) y medir la cobertura (objetivos: `core/` ≥ 90 %, `application/` e `infrastructure/` ≥ 80 %).
 - Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
 - Visor de PDF integrado (pdf.js).
+- Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.
 - Un control para agrandar o reducir las portadas de la biblioteca.
 - Añadir imágenes y documentos arrastrándolos a la ventana. Necesita `webUtils.getPathForFile` en el preload para obtener la ruta del archivo soltado.
 - Exportar e importar bibliotecas (JSON/CSV) y copias programadas.

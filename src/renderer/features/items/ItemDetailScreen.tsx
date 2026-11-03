@@ -11,6 +11,7 @@ import type { ItemKind } from '../../../shared/content';
 import type { MediaAttachment } from '../../../shared/media';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { AllImagesDialog } from '../media/AllImagesDialog';
+import { DocumentList } from '../media/DocumentList';
 import { ImageStrip } from '../media/ImageStrip';
 import { ImageViewer } from '../media/ImageViewer';
 import { Thumbnail } from '../media/Thumbnail';
@@ -60,6 +61,7 @@ export function ItemDetailScreen(props: ItemDetailScreenProps) {
       item={loaded.data}
       cover={media.data.cover}
       images={media.data.images}
+      documents={media.data.documents}
       onChanged={loaded.reload}
     />
   );
@@ -71,6 +73,7 @@ function ItemDetail({
   item,
   cover,
   images,
+  documents,
   onEdit,
   onTrashed,
   onTitle,
@@ -79,6 +82,7 @@ function ItemDetail({
   item: ItemDetails;
   cover: MediaAttachment | null;
   images: readonly MediaAttachment[];
+  documents: readonly MediaAttachment[];
   onChanged: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -273,13 +277,27 @@ function ItemDetail({
         </dl>
       </div>
 
-      {images.length > 0 && (
+      {(images.length > 0 || documents.length > 0) && (
         <section className="item-detail__media" aria-labelledby={`${item.id}-media`}>
           <h2 id={`${item.id}-media`} className="form-section__title">
             {t('items.sections.media')}
           </h2>
-          <h3 className="item-detail__media-title">{t('media.images.title')}</h3>
-          <ImageStrip images={images} onOpen={viewGallery} onSeeAll={() => setSeeingAll(true)} />
+          {images.length > 0 && (
+            <>
+              <h3 className="item-detail__media-title">{t('media.images.title')}</h3>
+              <ImageStrip
+                images={images}
+                onOpen={viewGallery}
+                onSeeAll={() => setSeeingAll(true)}
+              />
+            </>
+          )}
+          {documents.length > 0 && (
+            <>
+              <h3 className="item-detail__media-title">{t('media.documents.title')}</h3>
+              <DocumentList token={token} itemId={item.id} documents={documents} />
+            </>
+          )}
         </section>
       )}
 

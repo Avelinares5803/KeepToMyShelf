@@ -13,15 +13,22 @@ import type { ImageImportChoice } from '../../../shared/settings';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { CoverField } from '../media/CoverField';
+import { DocumentsField } from '../media/DocumentsField';
 import { ImagesField } from '../media/ImagesField';
 import {
+  assertDocumentLabels,
   coverChanged,
+  documentsChanged,
   fromAttachment,
   fromAttachments,
+  fromDocumentAttachments,
   imagesChanged,
+  preparedDocumentIds,
   preparedIds,
   toCoverPlan,
+  toDocumentPlan,
   toImagePlan,
+  type FormDocument,
   type FormImage,
 } from '../media/media-form';
 import { EntryPicker } from './EntryPicker';
@@ -158,6 +165,10 @@ function ItemForm({
     fromAttachments(media.images),
   );
   const [images, setImages] = useState<readonly FormImage[]>(savedImages);
+  const [savedDocuments, setSavedDocuments] = useState<readonly FormDocument[]>(() =>
+    fromDocumentAttachments(media.documents),
+  );
+  const [documents, setDocuments] = useState<readonly FormDocument[]>(savedDocuments);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const set = (changes: Partial<ItemFormState>) =>
@@ -178,14 +189,27 @@ function ItemForm({
     setImages(nextImages);
   }
 
+  /** Changes the documents; a PDF removed before saving is discarded early. */
+  function changeDocuments(next: readonly FormDocument[]) {
+    const kept = preparedDocumentIds(next);
+    const dropped = preparedDocumentIds(documents).filter((id) => !kept.includes(id));
+    if (dropped.length > 0) void window.api.media.discardImports({ token, preparedIds: dropped });
+    setDocuments(next);
+  }
+
   async function save(): Promise<ItemDetails | null> {
     setError(null);
     try {
       const draft = toItemDraft(kind, form);
-      // The cover and the gallery are sent only when they changed; they are saved with the item.
+      // An empty document name blocks the save, like the main process would.
+      assertDocumentLabels(documents);
+      // Media are sent only when they changed; they are saved with the item.
       const plan = {
         cover: coverChanged(savedCover, cover) ? toCoverPlan(cover) : undefined,
         images: imagesChanged(savedImages, images) ? toImagePlan(images) : undefined,
+        documents: documentsChanged(savedDocuments, documents)
+          ? toDocumentPlan(documents)
+          : undefined,
       };
       const result = unwrap(
         item
@@ -195,6 +219,7 @@ function ItemForm({
       setSaved(form);
       setSavedCover(cover);
       setSavedImages(images);
+      setSavedDocuments(documents);
       return result;
     } catch (caught) {
       setError(caught);
@@ -203,16 +228,27 @@ function ItemForm({
   }
 
   // The guard always sees the latest form and save function.
-  const latest = useRef({ form, saved, cover, savedCover, images, savedImages, save });
+  const current = {
+    form,
+    saved,
+    cover,
+    savedCover,
+    images,
+    savedImages,
+    documents,
+    savedDocuments,
+  };
+  const latest = useRef({ ...current, save });
   useEffect(() => {
-    latest.current = { form, saved, cover, savedCover, images, savedImages, save };
+    latest.current = { ...current, save };
   });
   useEffect(() => {
     registerGuard({
       isDirty: () =>
         hasChanges(latest.current.form, latest.current.saved) ||
         coverChanged(latest.current.savedCover, latest.current.cover) ||
-        imagesChanged(latest.current.savedImages, latest.current.images),
+        imagesChanged(latest.current.savedImages, latest.current.images) ||
+        documentsChanged(latest.current.savedDocuments, latest.current.documents),
       save: async () => (await latest.current.save()) !== null,
     });
     return () => registerGuard(null);
@@ -221,7 +257,10 @@ function ItemForm({
   // Leaving the editor drops the imports that were not saved (saved ones are already used up).
   useEffect(
     () => () => {
-      const ids = preparedIds(latest.current.cover, latest.current.images);
+      const ids = [
+        ...preparedIds(latest.current.cover, latest.current.images),
+        ...preparedDocumentIds(latest.current.documents),
+      ];
       if (ids.length > 0) void window.api.media.discardImports({ token, preparedIds: ids });
     },
     [token],
@@ -473,6 +512,10 @@ function ItemForm({
               optimizedMaxSide={imageImport.optimizedMaxSide}
               onRememberChoice={imageImport.onRemember}
             />
+          </fieldset>
+          <fieldset className="fieldset">
+            <legend>{t('media.documents.title')}</legend>
+            <DocumentsField token={token} documents={documents} onChange={changeDocuments} />
           </fieldset>
         </FormSection>
 

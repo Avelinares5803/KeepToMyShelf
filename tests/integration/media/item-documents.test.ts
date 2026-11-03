@@ -1,5 +1,13 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  truncateSync,
+  writeFileSync,
+} from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AppError } from '../../../src/core/errors';
@@ -208,15 +216,29 @@ describe('saving an item with its documents', () => {
   });
 
   it('applies the PDF size limit chosen in the profile settings', async () => {
-    fx.settings.setForProfile(profileId, { key: 'maxDocumentMegabytes', value: 50 });
-    const limit = 50 * 1024 * 1024;
-    const large = Buffer.alloc(limit + 1, 0x20);
-    PDF_BYTES.copy(large);
+    const MB = 1024 * 1024;
+    /**
+     * A PDF of the given size, made by growing the file without writing its bytes: the size
+     * is checked before the file is read, so nothing large is ever written or read. (The
+     * exact limit, inclusive, is tested in import-rules.test.ts.)
+     */
+    const pdfOfSize = (name: string, bytes: number) => {
+      const path = writeFile(fx.scratchDir, name, PDF_BYTES);
+      truncateSync(path, bytes);
+      return path;
+    };
 
-    await expectCode(() => prepare('grande.pdf', large), 'media.too_large');
-    await expect(prepare('justo.pdf', large.subarray(0, limit))).resolves.toMatchObject({
-      kind: 'document',
-    });
+    // With the default limit (200 MB) these would be accepted.
+    fx.settings.setForProfile(profileId, { key: 'maxDocumentMegabytes', value: 50 });
+    await expectCode(
+      () => fx.media.prepareImport(token, pdfOfSize('grande.pdf', 50 * MB + 1)),
+      'media.too_large',
+    );
+    fx.settings.setForProfile(profileId, { key: 'maxDocumentMegabytes', value: 100 });
+    await expectCode(
+      () => fx.media.prepareImport(token, pdfOfSize('mayor.pdf', 100 * MB + 1)),
+      'media.too_large',
+    );
   });
 });
 

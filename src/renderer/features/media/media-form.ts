@@ -1,5 +1,11 @@
+import { cleanDocumentLabel, labelFromFileName } from '../../../core/media/document-label';
 import type { ImageStorageChoice } from '../../../core/media/import-rules';
-import type { ImagePlanEntry, MediaAttachment, PreparedImport } from '../../../shared/media';
+import type {
+  DocumentPlanEntry,
+  ImagePlanEntry,
+  MediaAttachment,
+  PreparedImport,
+} from '../../../shared/media';
 
 /**
  * One image in the edit form, as the cover or in the gallery: one the item already has
@@ -37,14 +43,11 @@ export const preparedImage = (prepared: PreparedImport, choice: ImageStorageChoi
   choice,
 });
 
-export function moveImage(
-  images: readonly FormImage[],
-  index: number,
-  offset: -1 | 1,
-): FormImage[] {
+/** Moves an image or a document one place earlier or later, never past the ends. */
+export function moveImage<T>(items: readonly T[], index: number, offset: -1 | 1): T[] {
   const target = index + offset;
-  if (target < 0 || target >= images.length) return [...images];
-  const moved = [...images];
+  if (target < 0 || target >= items.length) return [...items];
+  const moved = [...items];
   [moved[index], moved[target]] = [moved[target]!, moved[index]!];
   return moved;
 }
@@ -104,6 +107,71 @@ export const preparedIds = (cover: FormImage | null, images: readonly FormImage[
     ),
   ),
 ];
+
+/**
+ * One document in the edit form, with the name the user may change: one the item already has
+ * or a PDF prepared but not saved yet. Nothing is saved until the item is.
+ */
+export type FormDocument =
+  | {
+      readonly key: string;
+      readonly source: 'existing';
+      readonly media: MediaAttachment;
+      readonly label: string;
+    }
+  | {
+      readonly key: string;
+      readonly source: 'prepared';
+      readonly prepared: PreparedImport;
+      readonly label: string;
+    };
+
+export const fromDocumentAttachments = (documents: readonly MediaAttachment[]): FormDocument[] =>
+  documents.map((media) => ({
+    key: `media:${media.mediaId}`,
+    source: 'existing',
+    media,
+    label: media.label ?? '',
+  }));
+
+/** A PDF just chosen: its name starts as the file name without ".pdf". */
+export const preparedDocument = (prepared: PreparedImport): FormDocument => ({
+  key: `prepared:${prepared.id}`,
+  source: 'prepared',
+  prepared,
+  label: labelFromFileName(prepared.fileName),
+});
+
+export const renameDocument = (
+  documents: readonly FormDocument[],
+  index: number,
+  label: string,
+): FormDocument[] =>
+  documents.map((document, i) => (i === index ? { ...document, label } : document));
+
+/** The documents sent with the item when it is saved. */
+export const toDocumentPlan = (documents: readonly FormDocument[]): DocumentPlanEntry[] =>
+  documents.map((document) =>
+    document.source === 'prepared'
+      ? { kind: 'prepared', preparedId: document.prepared.id, label: document.label }
+      : { kind: 'existing', mediaId: document.media.mediaId, label: document.label },
+  );
+
+export const documentsChanged = (
+  saved: readonly FormDocument[],
+  current: readonly FormDocument[],
+) => JSON.stringify(toDocumentPlan(saved)) !== JSON.stringify(toDocumentPlan(current));
+
+export const preparedDocumentIds = (documents: readonly FormDocument[]): string[] =>
+  documents.flatMap((document) => (document.source === 'prepared' ? [document.prepared.id] : []));
+
+/**
+ * Checks the documents' names before saving, like the main process does; throws the error of
+ * the first one that is not valid.
+ */
+export function assertDocumentLabels(documents: readonly FormDocument[]): void {
+  for (const document of documents) cleanDocumentLabel(document.label);
+}
 
 /** Animated images can only be kept as they are. */
 export const choicesFor = (prepared: PreparedImport): readonly ImageStorageChoice[] =>

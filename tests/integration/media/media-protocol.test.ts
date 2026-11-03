@@ -128,12 +128,10 @@ describe('ktms-media:// handler', () => {
     expect(metadata).toMatchObject({ width: 320, height: 160 });
   });
 
-  it('serves documents, but no thumbnail for them', async () => {
+  it('never serves documents nor thumbnails of them: they open in the system viewer', async () => {
     const pdf = await attach('Manual.pdf', PDF_BYTES, null);
 
-    const file = await get(`ktms-media://file/${pdf.sha256}`);
-    expect(file.status).toBe(200);
-    expect(file.headers.get('content-type')).toBe('application/pdf');
+    expect((await get(`ktms-media://file/${pdf.sha256}`)).status).toBe(404);
     expect((await get(`ktms-media://thumb/${pdf.sha256}/320`)).status).toBe(404);
   });
 

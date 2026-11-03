@@ -6,7 +6,7 @@ import type { MediaService } from './application/media-service';
  * The UI shows stored images through this scheme instead of file:// URLs, so it never gets
  * access to the disk:
  *
- *   ktms-media://file/<sha256>           a file items use
+ *   ktms-media://file/<sha256>           an image items use (documents are never served)
  *   ktms-media://thumb/<sha256>/<size>   its thumbnail (320 or 640 px on the longest side)
  *   ktms-media://prepared/<id>/<size>    the thumbnail of an import not saved yet
  */

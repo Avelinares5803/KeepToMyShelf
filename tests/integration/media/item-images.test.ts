@@ -119,7 +119,7 @@ describe('saving an item with its images', () => {
 
     expect(fx.media.list(token, item.id)).toMatchObject({
       images: [],
-      documents: [{ label: 'Manual.pdf' }],
+      documents: [{ label: 'Manual' }],
     });
   });
 
@@ -246,15 +246,19 @@ describe('saving an item with its images', () => {
       writeFile(fx.scratchDir, 'buena.png', images[0]!),
       writeFile(fx.scratchDir, 'falsa.png', Buffer.from('no soy una imagen')),
       join(fx.scratchDir, 'borrada.png'),
+      writeFile(fx.scratchDir, 'Manual.pdf', PDF_BYTES),
     ];
 
-    const result = await fx.media.prepareMany(token, paths);
+    const result = await fx.media.prepareMany(token, paths, 'image');
 
     expect(result.prepared.map((p) => p.fileName)).toEqual(['buena.png']);
     expect(result.rejected).toEqual([
       { fileName: 'falsa.png', code: 'media.unsupported_format' },
       { fileName: 'borrada.png', code: 'media.source_unreadable' },
+      { fileName: 'Manual.pdf', code: 'media.not_an_image' },
     ]);
+    // A refused file leaves nothing prepared behind.
+    expect(readdirSync(join(mediaDir(), '.tmp'))).toEqual([result.prepared[0]!.id]);
   });
 
   it('drops imports that were not saved when the profile closes', async () => {

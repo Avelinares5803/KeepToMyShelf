@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import {
   IMAGE_IMPORT_CHOICES,
   LANGUAGES,
+  MAX_DOCUMENT_MEGABYTES,
   OPTIMIZED_MAX_SIDES,
   THEMES,
   type AppSettings,
   type ImageImportChoice,
   type Language,
+  type MaxDocumentMegabytes,
   type OptimizedMaxSide,
   type SettingUpdate,
   type Theme,
@@ -29,6 +31,7 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
   const themeId = useId();
   const imageImportId = useId();
   const maxSideId = useId();
+  const maxDocumentId = useId();
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
 
@@ -162,6 +165,41 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
             aria-label={t('settings.optimizedMaxSide.applyToAll')}
             onClick={() =>
               void applyToAll({ key: 'optimizedMaxSide', value: settings.optimizedMaxSide })
+            }
+          >
+            {t('settings.applyToAll')}
+          </button>
+        </div>
+
+        <div className="setting-row">
+          <div className="field">
+            <label htmlFor={maxDocumentId}>{t('settings.maxDocumentMegabytes.label')}</label>
+            <select
+              id={maxDocumentId}
+              value={settings.maxDocumentMegabytes}
+              onChange={(event) =>
+                onChange({
+                  key: 'maxDocumentMegabytes',
+                  value: Number(event.target.value) as MaxDocumentMegabytes,
+                })
+              }
+            >
+              {MAX_DOCUMENT_MEGABYTES.map((megabytes) => (
+                <option key={megabytes} value={megabytes}>
+                  {t('settings.maxDocumentMegabytes.value', { megabytes })}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            className="button button--ghost"
+            aria-label={t('settings.maxDocumentMegabytes.applyToAll')}
+            onClick={() =>
+              void applyToAll({
+                key: 'maxDocumentMegabytes',
+                value: settings.maxDocumentMegabytes,
+              })
             }
           >
             {t('settings.applyToAll')}

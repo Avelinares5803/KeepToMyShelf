@@ -41,6 +41,8 @@ export const IpcChannels = {
   deleteCatalogEntry: 'catalogs:delete',
   deleteUnusedCatalogEntries: 'catalogs:delete-unused',
   pickImages: 'media:pick-images',
+  pickDocuments: 'media:pick-documents',
+  openDocument: 'media:open-document',
   discardImports: 'media:discard-imports',
   listItemMedia: 'media:list',
 } as const;
@@ -129,6 +131,13 @@ export interface KeepToMyShelfApi {
      * The UI never handles file paths: it gets prepared imports and refers to them by id.
      */
     pickImages(input: IpcInput<'pickImages'>): Promise<IpcResult<PickedImports | null>>;
+    /** Like `pickImages`, for PDF documents. */
+    pickDocuments(input: IpcInput<'pickDocuments'>): Promise<IpcResult<PickedImports | null>>;
+    /**
+     * Opens one of the item's documents in the system's PDF viewer. A copy named after the
+     * document is opened, so the stored file is never changed by the viewer.
+     */
+    openDocument(input: IpcInput<'openDocument'>): Promise<IpcResult<void>>;
     discardImports(input: IpcInput<'discardImports'>): Promise<IpcResult<void>>;
     list(input: IpcInput<'listItemMedia'>): Promise<IpcResult<ItemMedia>>;
   };

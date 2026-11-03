@@ -7,7 +7,7 @@ import type { MediaService } from '../application/media-service';
 import type { ProfileService } from '../application/profile-service';
 import type { SessionManager } from '../application/session-manager';
 import type { SettingsService } from '../application/settings-service';
-import { chooseImageFiles } from '../file-dialogs';
+import { chooseDocumentFiles, chooseImageFiles } from '../file-dialogs';
 import { createAsyncHandler, createHandler } from './create-handler';
 
 export interface Services {
@@ -70,11 +70,15 @@ export function registerIpcHandlers({
       items.listTrash(token, kind),
     ),
     getItem: createHandler(ipcInputSchemas.getItem, ({ token, id }) => items.get(token, id)),
-    createItem: createHandler(ipcInputSchemas.createItem, ({ token, kind, draft, cover, images }) =>
-      items.create(token, kind, draft, { cover, images }),
+    createItem: createHandler(
+      ipcInputSchemas.createItem,
+      ({ token, kind, draft, cover, images, documents }) =>
+        items.create(token, kind, draft, { cover, images, documents }),
     ),
-    updateItem: createHandler(ipcInputSchemas.updateItem, ({ token, id, draft, cover, images }) =>
-      items.update(token, id, draft, { cover, images }),
+    updateItem: createHandler(
+      ipcInputSchemas.updateItem,
+      ({ token, id, draft, cover, images, documents }) =>
+        items.update(token, id, draft, { cover, images, documents }),
     ),
     moveItemToTrash: createHandler(ipcInputSchemas.moveItemToTrash, ({ token, id }) =>
       items.moveToTrash(token, id),
@@ -111,8 +115,19 @@ export function registerIpcHandlers({
         // A stale session is reported before the dialog opens, not after the user chose.
         sessions.require(token);
         const paths = await chooseImageFiles(filterName, multiple);
-        return paths === null ? null : media.prepareMany(token, paths);
+        return paths === null ? null : media.prepareMany(token, paths, 'image');
       },
+    ),
+    pickDocuments: createAsyncHandler(
+      ipcInputSchemas.pickDocuments,
+      async ({ token, filterName }) => {
+        sessions.require(token);
+        const paths = await chooseDocumentFiles(filterName);
+        return paths === null ? null : media.prepareMany(token, paths, 'document');
+      },
+    ),
+    openDocument: createAsyncHandler(ipcInputSchemas.openDocument, ({ token, itemId, mediaId }) =>
+      media.openDocument(token, itemId, mediaId),
     ),
     discardImports: createHandler(ipcInputSchemas.discardImports, ({ token, preparedIds }) =>
       media.discardImports(token, preparedIds),

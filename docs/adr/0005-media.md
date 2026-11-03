@@ -1,7 +1,7 @@
 # ADR 0005: Almacenamiento de imágenes y documentos
 
-- **Estado:** aceptada; implementadas la F6-A (almacenamiento, miniaturas y protocolo), la F6-B1 (guardado con el elemento, selector de archivos y ventana de importación), la F6-B2 (portadas, ficha y visor) y la F6-B3 (portada independiente de la galería)
-- **Fecha:** 2026-10-31 (ampliada el 2026-11-01 con la F6-B1 y el 2026-11-02 con la F6-B2 y la F6-B3)
+- **Estado:** aceptada; implementadas la F6-A (almacenamiento, miniaturas y protocolo), la F6-B1 (guardado con el elemento, selector de archivos y ventana de importación), la F6-B2 (portadas, ficha y visor), la F6-B3 (portada independiente de la galería) y la F6-C (documentos PDF)
+- **Fecha:** 2026-10-31 (ampliada el 2026-11-01 con la F6-B1, el 2026-11-02 con la F6-B2 y la F6-B3, y el 2026-11-03 con la F6-C)
 
 ## Contexto
 
@@ -65,6 +65,19 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 - **Visor:** muestra el archivo completo (`ktms-media://file/…`), nunca en la cuadrícula ni en la ficha.
 - **Archivo borrado a mano:** `media.list` lo marca con `isMissing` (la ficha muestra «Archivo no encontrado»), y el protocolo deja de servir sus miniaturas aunque sigan en la caché, para que el aviso sea el mismo en todas partes. En la biblioteca, una portada que no se puede cargar deja la tarjeta solo con el título.
 
+### Documentos PDF (F6-C)
+
+- **Se guardan con el elemento,** como las imágenes: `items.create` e `items.update` reciben la lista completa de documentos (`documents`), en orden, cada uno con su nombre (`label`). Si no se envía, no cambian. Se guardan tal cual, sin optimizar ni miniaturas.
+- **Nombre:** al añadirlo, el del archivo sin «.pdf» (`labelFromFileName`). `cleanDocumentLabel` aplica las reglas de los títulos (sin espacios sobrantes ni caracteres de control, 200 caracteres como mucho) y rechaza el nombre vacío. La interfaz lo comprueba antes de guardar y el servicio lo vuelve a comprobar.
+- **Selector propio** (`media:pick-documents`). Cada selector prepara solo su tipo: `prepareMany` rechaza al momento, antes de leer el archivo entero, un PDF elegido como imagen (`media.not_an_image`) o una imagen elegida como documento (`media.not_a_document`).
+- **Abrir un documento** (`media:open-document`): el proceso principal comprueba que el documento es de ese elemento y del perfil abierto, lo copia a `openedDocumentsDir\<uuid>\<nombre>.pdf` y abre la copia con `shell.openPath`, el programa predeterminado de Windows para los PDF.
+  - **Por qué una copia:** algunos visores escriben en el archivo abierto (anotaciones). Si fuera el archivo guardado, sus bytes dejarían de coincidir con su hash y se rompería «mismo nombre, mismos bytes». Además, el visor muestra el nombre del documento, no un hash.
+  - **Una carpeta por apertura:** dos documentos con el mismo nombre no chocan, y una copia que el visor mantiene abierta no impide abrir otra.
+  - `fileNameForLabel` adapta el nombre a Windows: sustituye `<>:"/\|?*`, evita los nombres reservados (`CON`, `NUL`…) y los puntos o espacios del final, y lo acorta a 120 caracteres.
+  - La carpeta es `%TEMP%\KeepToMyShelf\opened-documents` (dentro de la carpeta de datos de las pruebas, con `KTMS_USER_DATA_DIR`). Se vacía al cerrar el perfil y al abrir la app; una copia bloqueada por un visor se deja para la vez siguiente.
+  - `shell.openPath` y la carpeta se inyectan en `MediaService`, así que se prueba sin Electron.
+- **Límite de tamaño:** preferencia del perfil `maxDocumentMegabytes` (50, 100, 200, 500 o 1000 MB; 200 por defecto). Solo afecta a las importaciones nuevas.
+
 ### La base de datos manda
 
 - Primero se borran las filas y después un **barrido** elimina las filas de archivos que nadie usa (ni una galería, ni unos documentos, ni una portada) y los archivos y miniaturas sin fila.
@@ -81,7 +94,7 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 - La interfaz carga las imágenes con `ktms-media://file/<sha256>` y `ktms-media://thumb/<sha256>/<320|640>`, nunca con `file://`.
 - El esquema se declara como `standard` y `secure` (`protocol.registerSchemesAsPrivileged`) antes de que la app esté lista, y se atiende con `protocol.handle`. La CSP lo admite solo en `img-src`.
 - La URL se analiza de forma estricta: el hash debe ser hexadecimal de 64 caracteres, el tamaño uno de los dos de miniatura, y no se admiten consultas, puertos ni partes de más.
-- Solo se sirven archivos de `files` que existan en la base del **perfil abierto**. Los originales guardados no se sirven nunca.
+- Solo se sirven imágenes de `files` que existan en la base del **perfil abierto**. Los originales guardados y los documentos no se sirven nunca (desde la F6-C): los PDF solo salen de la app por el visor del sistema.
 - El tipo MIME sale de la base de datos y la respuesta lleva `X-Content-Type-Options: nosniff`.
 - El manejador usa los tipos web `Request`/`Response`, así que se prueba con Vitest sin Electron.
 
@@ -90,6 +103,9 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 - **Guardar la ruta del archivo original** en lugar de copiarlo: se rompe en cuanto el usuario lo mueve, y la interfaz necesitaría acceso al disco.
 - **Una sola carpeta**, con los originales marcados solo en la base de datos: evitaría las copias idénticas, pero el usuario no podría localizar sus originales en el explorador de archivos.
 - **Servir los archivos con `file://`:** daría a la interfaz acceso a cualquier ruta del disco.
+- **Abrir el PDF guardado directamente:** el visor mostraría un hash como nombre y podría modificar el archivo.
+- **Marcar los PDF guardados como de solo lectura:** el visor seguiría mostrando un hash, el barrido tendría que quitar la marca antes de borrar, y cada visor reacciona de forma distinta.
+- **Optimizar los PDF:** sharp no los trata; las herramientas que de verdad los reducen (Ghostscript) tienen licencia AGPL, y recomprimir puede degradar escaneos o romper formularios y firmas. Queda como mejora opcional.
 - **La primera imagen como portada, sin columna propia** (la decisión inicial, hasta la F6-B2): evitaba una columna redundante con el orden, pero obligaba a entender una regla implícita, y añadir una imagen a la galería de un elemento sin portada la convertía en portada sin pedirlo. Con la portada independiente, la columna ya no es redundante.
 - **Una columna `role` en `item_media`** (`cover` o `gallery`): habría que reconstruir la tabla, y con su clave (elemento, archivo) la misma imagen no podría ser portada y estar en la galería.
 

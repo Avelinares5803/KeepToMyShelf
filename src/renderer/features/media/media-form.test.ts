@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import type { MediaAttachment, PreparedImport } from '../../../shared/media';
 import {
+  assertDocumentLabels,
   automaticChoice,
   choicesFor,
   coverChanged,
+  documentsChanged,
   fromAttachment,
   fromAttachments,
+  fromDocumentAttachments,
   imagesChanged,
   moveImage,
   optimizingSavesNothing,
+  preparedDocument,
+  preparedDocumentIds,
   preparedIds,
   preparedImage,
+  renameDocument,
+  toDocumentPlan,
   sameImage,
   toCoverPlan,
   toggleOriginal,
@@ -133,6 +140,64 @@ describe('cover of the edit form', () => {
     const other = preparedImage(preparation('otra'), 'original');
     expect(preparedIds(fresh, [fresh, other, saved])).toEqual(['nueva', 'otra']);
     expect(preparedIds(saved, [])).toEqual([]);
+  });
+});
+
+describe('documents of the edit form', () => {
+  const pdfAttachment = (mediaId: number, label: string): MediaAttachment => ({
+    ...attachment(mediaId),
+    kind: 'document',
+    format: 'pdf',
+    width: null,
+    height: null,
+    label,
+  });
+  const pdfPreparation = (id: string, fileName: string): PreparedImport => ({
+    ...preparation(id, 1000, null),
+    fileName,
+    kind: 'document',
+    format: 'pdf',
+    isAnimated: false,
+    fitsOptimizedSize: false,
+  });
+  const saved = fromDocumentAttachments([pdfAttachment(1, 'Manual'), pdfAttachment(2, 'Mapa')]);
+
+  it('names a new PDF after its file, without ".pdf"', () => {
+    expect(preparedDocument(pdfPreparation('nuevo', 'Guía oficial.PDF')).label).toBe(
+      'Guía oficial',
+    );
+  });
+
+  it('builds the list sent with the item, with the names, in order', () => {
+    const documents = [
+      ...renameDocument(moveImage(saved, 1, -1), 0, 'Mapa del mundo'),
+      preparedDocument(pdfPreparation('nuevo', 'Guía.pdf')),
+    ];
+    expect(toDocumentPlan(documents)).toEqual([
+      { kind: 'existing', mediaId: 2, label: 'Mapa del mundo' },
+      { kind: 'existing', mediaId: 1, label: 'Manual' },
+      { kind: 'prepared', preparedId: 'nuevo', label: 'Guía' },
+    ]);
+    expect(preparedDocumentIds(documents)).toEqual(['nuevo']);
+  });
+
+  it('notices renaming, reordering, adding and removing, and only those', () => {
+    expect(
+      documentsChanged(
+        saved,
+        fromDocumentAttachments([pdfAttachment(1, 'Manual'), pdfAttachment(2, 'Mapa')]),
+      ),
+    ).toBe(false);
+    expect(documentsChanged(saved, renameDocument(saved, 0, 'Manual (EE. UU.)'))).toBe(true);
+    expect(documentsChanged(saved, moveImage(saved, 0, 1))).toBe(true);
+    expect(documentsChanged(saved, saved.slice(1))).toBe(true);
+  });
+
+  it('blocks saving when a name is empty', () => {
+    expect(() => assertDocumentLabels(saved)).not.toThrow();
+    expect(() => assertDocumentLabels(renameDocument(saved, 1, '   '))).toThrow(
+      expect.objectContaining({ code: 'media.label_required' }),
+    );
   });
 });
 

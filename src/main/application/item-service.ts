@@ -205,7 +205,8 @@ export class ItemService {
     media: ItemMediaPlan,
     save: (staged: StagedMedia | null) => T,
   ): T {
-    const changes = media.cover !== undefined || media.images !== undefined;
+    const changes =
+      media.cover !== undefined || media.images !== undefined || media.documents !== undefined;
     const staged = changes ? this.deps.media.stageMedia(token, media) : null;
     let result: T;
     try {

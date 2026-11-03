@@ -194,6 +194,7 @@ Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto co
 - **El protocolo `ktms-media://` no sirve documentos:** responde «no encontrado». Los PDF solo salen de la app por el visor del sistema.
 - **Una sola PR** para toda la F6-C.
 - **Tamaño máximo de los PDF** en Ajustes: 50, 100, **200** (por defecto), 500 o 1000 MB, con «Aplicar a todos los perfiles». Solo afecta a las importaciones nuevas. **Los PDF no se optimizan** (ver las mejoras anotadas).
+- **Ajustes más claros** (2026-11-03, tras probar la F6-C): la opción de 2000 px se llama «Tamaño máximo de las imágenes optimizadas» y lleva una explicación debajo («Las imágenes más grandes se reducen hasta que su lado más largo mide esto. Nunca se amplían.»). El icono de Ajustes es un engranaje con dientes; antes parecía el sol del tema claro.
 - **Cada diálogo comprueba lo elegido:** un PDF en el de imágenes, o una imagen en el de documentos, se rechaza al momento con su nombre y el motivo.
 
 **Portadas con proporciones distintas en la cuadrícula** (acordado el 2026-10-31): cada portada conserva su proporción (tarjetas de altura variable). No se deforma, no se recorta y no hay una proporción común: quien quiera uniformidad puede preparar sus imágenes con la misma proporción.

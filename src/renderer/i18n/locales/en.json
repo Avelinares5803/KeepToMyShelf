@@ -273,8 +273,9 @@
       "optimized_only": "Use only the optimized copy"
     },
     "optimizedMaxSide": {
-      "label": "Longest side of optimized copies",
-      "applyToAll": "Apply this maximum size to all profiles",
+      "label": "Maximum size of optimized images",
+      "hint": "Larger images are reduced until their longest side measures this. They are never enlarged.",
+      "applyToAll": "Apply this maximum image size to all profiles",
       "value": "{{pixels}} px"
     },
     "maxDocumentMegabytes": {

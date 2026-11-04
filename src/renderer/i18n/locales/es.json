@@ -45,6 +45,36 @@
     "movie": "Películas",
     "series": "Series"
   },
+  "library": {
+    "search": "Buscar por título",
+    "noResults": "No se ha encontrado nada.",
+    "clearSearch": "Limpiar búsqueda",
+    "sort": {
+      "label": "Ordenar por",
+      "reverse": "Invertir el orden",
+      "title": "Título",
+      "createdAt": "Fecha de alta",
+      "rating": "Valoración",
+      "releaseDate": "Fecha de lanzamiento",
+      "premiereDate": "Fecha de estreno",
+      "startedOn": "Fecha de inicio",
+      "finishedOn": "Fecha de fin",
+      "direction": {
+        "text": {
+          "asc": "A-Z",
+          "desc": "Z-A"
+        },
+        "number": {
+          "asc": "Menor primero",
+          "desc": "Mayor primero"
+        },
+        "date": {
+          "asc": "Más antigua primero",
+          "desc": "Más reciente primero"
+        }
+      }
+    }
+  },
   "items": {
     "untitled": "Sin nombre {{number}}",
     "add": "Añadir",

@@ -379,6 +379,9 @@
       "day_without_month": "To enter a day, enter the month too.",
       "end_before_start": "The end date cannot be before the start date."
     },
+    "filter": {
+      "invalid": "The filter is not valid. Remove it and create it again."
+    },
     "item": {
       "title_invalid_characters": "The title contains invalid characters.",
       "title_too_long": "The title cannot be longer than 300 characters.",

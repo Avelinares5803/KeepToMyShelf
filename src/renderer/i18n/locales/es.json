@@ -379,6 +379,9 @@
       "day_without_month": "Para indicar el día, indica también el mes.",
       "end_before_start": "La fecha de finalización no puede ser anterior a la de comienzo."
     },
+    "filter": {
+      "invalid": "El filtro no es válido. Quítalo y vuelve a crearlo."
+    },
     "item": {
       "title_invalid_characters": "El título contiene caracteres no válidos.",
       "title_too_long": "El título no puede tener más de 300 caracteres.",

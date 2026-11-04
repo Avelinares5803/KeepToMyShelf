@@ -8,6 +8,8 @@ import {
 import { parseIsoPartialDate, toIsoPartialDate } from '../../core/dates/partial-date';
 import { parseStoredUsageDate, toStoredUsageDate } from '../../core/dates/usage-period';
 import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
+import { validateFilter, type FilterNode } from '../../core/filters/filter-tree';
+import type { ItemSort } from '../../core/filters/item-sort';
 import { validateItemDraft, type ItemDraft, type ItemStatus } from '../../core/items/item-draft';
 import type { EntryRef } from '../../core/items/item-relations';
 import { lowestFreeNumber } from '../../core/naming/lowest-free-number';
@@ -15,6 +17,7 @@ import { normalizeForSearch } from '../../core/text/normalize';
 import type { ItemKind } from '../../shared/content';
 import type { EntryName, ItemDetails, ItemRelease, ItemSummary } from '../../shared/items';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
+import { buildItemListQuery, type ItemSearch } from '../infrastructure/db/item-query';
 import type { ItemMediaPlan } from '../../shared/media';
 import type { MediaForItems, StagedMedia } from './media-service';
 import type { SessionManager } from './session-manager';
@@ -25,6 +28,12 @@ export interface ItemServiceDeps {
   readonly newId: () => string;
   /** Saves an item's images with it; deleting items for good deletes the files only they used. */
   readonly media: MediaForItems;
+}
+
+export interface ItemListRequest {
+  readonly search?: ItemSearch | undefined;
+  readonly filter?: FilterNode | undefined;
+  readonly sort?: ItemSort | undefined;
 }
 
 interface SummaryRow {
@@ -66,9 +75,6 @@ const SUMMARY_COLUMNS = `item.id, item.kind, item.title, item.placeholder_no, it
 /** The cover of every item, joined as `cover`. */
 const COVER_JOIN = 'LEFT JOIN media_file cover ON cover.id = item.cover_media_id';
 
-// Titled items first, alphabetically ignoring case and accents; untitled ones after, by number.
-const LIBRARY_ORDER = 'ORDER BY item.title IS NULL, item.title_norm, item.placeholder_no, item.id';
-
 const toSummary = (row: SummaryRow): Omit<ItemSummary, 'cover'> => ({
   id: row.id,
   kind: row.kind,
@@ -97,13 +103,12 @@ const storedDate = (value: string | null) => (value === null ? null : parseStore
 export class ItemService {
   constructor(private readonly deps: ItemServiceDeps) {}
 
-  list(token: string, kind: ItemKind): ItemSummary[] {
-    const rows = this.db(token)
-      .prepare(
-        `SELECT ${SUMMARY_COLUMNS} FROM item ${COVER_JOIN}
-         WHERE item.kind = ? AND item.deleted_at IS NULL ${LIBRARY_ORDER}`,
-      )
-      .all(kind) as (SummaryRow & CoverColumns)[];
+  /** The library of one kind, narrowed down by a search and a filter, and sorted. */
+  list(token: string, kind: ItemKind, options: ItemListRequest = {}): ItemSummary[] {
+    const db = this.db(token);
+    const filter = options.filter ? validateFilter(kind, options.filter) : null;
+    const query = buildItemListQuery(kind, { ...options, filter });
+    const rows = db.prepare(query.sql).all(...query.parameters) as (SummaryRow & CoverColumns)[];
     return rows.map(toSummaryWithCover);
   }
 

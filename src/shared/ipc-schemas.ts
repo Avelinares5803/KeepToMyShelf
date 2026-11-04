@@ -5,6 +5,9 @@
  */
 import { z } from 'zod';
 import { CATALOGS, ITEM_ROLES } from '../core/catalogs/catalogs';
+import { FILTER_OPERATORS } from '../core/filters/filter-fields';
+import type { FilterNode } from '../core/filters/filter-tree';
+import { ITEM_SORT_FIELDS, SORT_DIRECTIONS } from '../core/filters/item-sort';
 import { ITEM_STATUSES } from '../core/items/item-draft';
 import { IMAGE_STORAGE_CHOICES } from '../core/media/import-rules';
 import { ITEM_KINDS } from './content';
@@ -67,6 +70,32 @@ const itemDraftSchema = z.object({
   releases: z.array(releaseSchema).max(1_000).readonly(),
 });
 
+// Library queries: zod checks the shape; core/filters checks fields, operators and values
+// against the registry, and the limits of the tree.
+const filterNodeSchema: z.ZodType<FilterNode> = z.lazy(() =>
+  z.discriminatedUnion('type', [
+    z.object({
+      type: z.literal('condition'),
+      field: z.string().max(100),
+      operator: z.enum(FILTER_OPERATORS),
+      value: z.union([z.string().max(100), z.number(), z.boolean(), z.null()]),
+    }),
+    z.object({
+      type: z.literal('group'),
+      op: z.enum(['and', 'or']),
+      children: z.array(filterNodeSchema).max(1_000).readonly(),
+    }),
+  ]),
+);
+const itemSearchSchema = z.object({
+  text: z.string().max(1_000),
+  untitledLabel: z.string().max(100),
+});
+const itemSortSchema = z.object({
+  field: z.enum(ITEM_SORT_FIELDS),
+  direction: z.enum(SORT_DIRECTIONS),
+});
+
 const preparedIdSchema = z.uuid();
 const mediaIdSchema = z.number().int().positive();
 const imagePlanEntrySchema = z.discriminatedUnion('kind', [
@@ -111,7 +140,14 @@ export const ipcInputSchemas = {
   setProfileSetting: z.object({ token: sessionTokenSchema, setting: settingUpdateSchema }),
   applySettingToAllProfiles: z.object({ setting: settingUpdateSchema }),
   setNativeTheme: z.object({ theme: themeSchema }),
-  listItems: z.object({ token: sessionTokenSchema, kind: itemKindSchema }),
+  // Without a search, a filter or a sort, the whole library in title order.
+  listItems: z.object({
+    token: sessionTokenSchema,
+    kind: itemKindSchema,
+    search: itemSearchSchema.optional(),
+    filter: filterNodeSchema.optional(),
+    sort: itemSortSchema.optional(),
+  }),
   listTrash: z.object({ token: sessionTokenSchema, kind: itemKindSchema.nullable() }),
   getItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   // `cover` is the item's cover, `images` its whole gallery and `documents` all its

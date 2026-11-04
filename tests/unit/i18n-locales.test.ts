@@ -27,11 +27,13 @@ function sourceFiles(dir: string): string[] {
  * (e.g. 'profile.name_empty'), found wherever they appear, even when passed in a variable.
  */
 function thrownErrorCodes(): string[] {
-  const pattern = /'((?:catalog|date|item|media|profile|session|settings|ipc)\.[a-z_]+)'/g;
+  const pattern = /'((?:catalog|date|filter|item|media|profile|session|settings|ipc)\.[a-z_]+)'/g;
   const codes = new Set<string>();
   // Error codes originate outside the UI; renderer keys (t('settings.title')) look alike.
   const roots = ['core', 'main', 'shared'].map((dir) => join(__dirname, '../../src', dir));
-  for (const file of roots.flatMap(sourceFiles)) {
+  // The library query names columns such as 'item.title', and throws no error codes.
+  const files = roots.flatMap(sourceFiles).filter((file) => !file.endsWith('item-query.ts'));
+  for (const file of files) {
     for (const match of readFileSync(file, 'utf8').matchAll(pattern)) {
       codes.add(match[1] as string);
     }

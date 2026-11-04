@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-03, tras la F6-C (fin de la F6).
+**Última actualización:** 2026-11-04, tras la F7-A.
 
 ---
 
@@ -40,7 +40,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F4 Elementos              | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
 | F5 Catálogos              | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
 | F6 Multimedia             | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ✅ Hecha (PR #25 a #28 y la F6-C)              |
-| **F7 Búsqueda y filtros** | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | ⏭️ **Siguiente**                               |
+| **F7 Búsqueda y filtros** | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | 🚧 **En curso** (F7-A hecha; sigue la F7-B)    |
 | F8 Películas y series     | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
 | F9 Colecciones            | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
 | F10 Personalización       | Fondos predeterminados e importados, desenfoque                                                                                                                | Pendiente                                      |
@@ -209,21 +209,41 @@ Los canales IPC (elegir archivos, importar, ordenar…) van en la F6-B, junto co
 
 ### 3.6 Búsqueda, filtros y ordenación (F7)
 
+El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters.md).
+
 - **Buscador** por título y títulos alternativos: parcial, sin distinguir mayúsculas ni acentos (columnas `title_norm`), y combinable con los filtros. Si algún día no basta, se puede pasar a SQLite FTS5 sin cambiar la API.
+- **Los «Sin nombre N» se encuentran al buscarlos** (acordado el 2026-11-04), comparando con el nombre en el idioma actual.
 - **Filtros como árbol de expresiones** (grupos AND/OR de condiciones). Hay un **registro de campos**: añadir un filtro nuevo consiste en registrar un descriptor, sin tocar el motor. Ejemplos de la especificación:
   - Género = RPG AND Plataforma = PC.
   - Género = RPG OR Género = Acción.
   - Estado = Terminado AND Etiqueta = Romhack.
 - **SQL:** parametrizado, con `EXISTS` para las relaciones de muchos a muchos. Así, «Género = RPG AND Género = Acción» significa que el elemento tiene ambos.
-- **Kysely** se adopta en esta fase, para construir el SQL dinámico.
-- **Interfaz:**
-  - Primero un panel de facetas (OR dentro de un atributo, AND entre atributos).
-  - Después un constructor avanzado de grupos.
-  - Los dos generan el mismo árbol.
-- **Catálogos compartidos en los filtros** (etiquetas, sagas, empresas, personas, países): un selector por tipo, que empieza en el modo actual.
-- **Ordenación:** por título (los «Sin nombre» al final), fecha de alta, valoración, fecha de lanzamiento más temprana y fechas de uso (las indeterminadas al final).
+- **Kysely** se adopta en esta fase, solo para generar el SQL dinámico; lo ejecuta better-sqlite3.
+- **Filtros disponibles:**
+  - Todos los tipos: Estado, Rejugado/Revisionada, Formato, Valoración (≥, ≤ y «sin valorar»), Favorito, Sagas, Géneros, Países de origen, Etiquetas y Música.
+  - Videojuegos: Mis plataformas, Plataformas de lanzamiento, Distribuidoras y Desarrolladoras.
+  - Películas y series: Productoras, Dirección y Reparto.
+  - Más adelante, sin tocar el motor: año de lanzamiento, horas, temporadas.
+- **Interfaz: dos pestañas, «Filtros simples» y «Filtros avanzados»** (acordado el 2026-11-04; sustituye a que el panel y el constructor compartieran un solo árbol):
+  - Los filtros simples son listas de casillas: OR dentro de un atributo, AND entre atributos.
+  - Los avanzados son un constructor de grupos AND/OR anidados.
+  - Cada pestaña guarda sus propios filtros y **solo se aplica una**. La otra se ve atenuada y sus filtros se ignoran, pero no se borran.
+  - Si la pestaña en uso tiene filtros, cambiar pide confirmación («Si continúas, se usarán los filtros avanzados y se ignorarán los filtros simples. No se borrarán: podrás volver a ellos.»), con el foco en «Cancelar». Si no tiene, se cambia directamente.
+  - «Quitar filtros» solo vacía la pestaña en uso.
+- **Valores que ofrecen los filtros** (acordado el 2026-11-04; sustituye al selector por tipo, que se queda solo en «Catálogos»): los que usa algún elemento de esa biblioteca, sin contar la papelera.
+- **Plataformas** (acordado el 2026-11-04): «Lo tengo en» pasa a llamarse **«Mis plataformas»** («My platforms») y «Publicado en», **«Plataformas de lanzamiento»** («Release platforms»), en los filtros, el formulario y la ficha. El cambio de nombre va en la F7-D.
+- **Estado de la biblioteca** (acordado el 2026-11-04): la búsqueda, los filtros, el orden y el scroll se guardan por modo hasta cerrar el perfil.
+- **Ordenación:** por título (los «Sin nombre» al final), fecha de alta, valoración, fecha de lanzamiento más temprana y fechas de uso. Lo que no tiene dato va siempre al final, también en orden descendente.
 - **Cabecera:** con filtros activos, «(N)» es el número de resultados.
-- **Rendimiento:** cuadrícula virtualizada (se valorará TanStack Virtual), índices, y una prueba con 10 000 elementos.
+- **Rendimiento:** cuadrícula virtualizada con TanStack Virtual y una prueba con 10 000 elementos. No hacen falta índices nuevos; `items.list` devuelve todos los resultados, sin paginar.
+
+**Entregas (acordadas el 2026-11-04):**
+
+- F7-A: motor (árbol, registro, consulta, búsqueda, ordenación e IPC), sin cambios visibles. ✅ Hecha.
+- F7-B: buscador, selector de orden, «(N)», aviso de «sin resultados» y estado por modo.
+- F7-C: cuadrícula virtualizada, con la prueba E2E de 10 000 elementos.
+- F7-D: filtros simples y nombres nuevos de las plataformas.
+- F7-E: filtros avanzados y las dos pestañas.
 
 ### 3.7 Colecciones (F9)
 
@@ -303,6 +323,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - **Librerías de la interfaz:** no se usan react-hook-form, TanStack Query ni Radix UI. El estado de los formularios es propio, se usa un hook `useLoad` y los diálogos son `<dialog>` nativos. Kysely llega en la F7.
 - **Países de origen:** atributo añadido en la F5, que no estaba en la especificación.
 - **Portada:** primero era la primera imagen de la lista (F6-B); desde la F6-B3 es un campo propio, independiente de la galería, porque la regla implícita resultaba poco intuitiva.
+- **Selector por tipo en los filtros:** previsto en el ADR 0004 y descartado en la F7, porque cada biblioteca es de un solo tipo.
 
 ---
 

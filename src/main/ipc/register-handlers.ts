@@ -63,8 +63,8 @@ export function registerIpcHandlers({
     setNativeTheme: createHandler(ipcInputSchemas.setNativeTheme, ({ theme }) => {
       nativeTheme.themeSource = theme;
     }),
-    listItems: createHandler(ipcInputSchemas.listItems, ({ token, kind }) =>
-      items.list(token, kind),
+    listItems: createHandler(ipcInputSchemas.listItems, ({ token, kind, search, filter, sort }) =>
+      items.list(token, kind, { search, filter, sort }),
     ),
     listTrash: createHandler(ipcInputSchemas.listTrash, ({ token, kind }) =>
       items.listTrash(token, kind),

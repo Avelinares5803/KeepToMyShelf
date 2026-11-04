@@ -496,6 +496,37 @@ h1 {
   gap: 0.4rem;
 }
 
+.library__toolbar {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.library__search {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.library__toolbar .inline-field {
+  align-items: center;
+}
+
+.library__toolbar .button {
+  white-space: nowrap;
+}
+
+.library__no-results {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.library__no-results p {
+  margin: 0;
+}
+
 /* Cards sit on their bottom edge, like books on a shelf: titles line up across a row and
    each cover keeps its own shape. */
 .item-grid {

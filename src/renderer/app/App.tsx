@@ -6,6 +6,7 @@ import { CatalogsScreen } from '../features/catalogs/CatalogsScreen';
 import { ItemDetailScreen } from '../features/items/ItemDetailScreen';
 import { ItemEditScreen, type EditorGuard } from '../features/items/ItemEditScreen';
 import { UnsavedChangesDialog } from '../features/items/UnsavedChangesDialog';
+import { libraryViewOf, type LibraryViews } from '../features/library/library-view';
 import { LibraryScreen } from '../features/library/LibraryScreen';
 import { ModeSelectionScreen } from '../features/modes/ModeSelectionScreen';
 import { ProfileSelectionScreen } from '../features/profiles/ProfileSelectionScreen';
@@ -34,6 +35,7 @@ export function App({ initialSettings }: AppProps) {
   const [navigation, dispatch] = useReducer(navigationReducer, initialNavigation);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [libraryViews, setLibraryViews] = useState<LibraryViews>({});
 
   // The item editor registers a guard; leaving it with unsaved changes asks first.
   const editorGuard = useRef<EditorGuard | null>(null);
@@ -95,6 +97,7 @@ export function App({ initialSettings }: AppProps) {
       const opened = unwrap(await window.api.session.open({ profileId }));
       await applySettings(unwrap(await window.api.settings.getForProfile({ token: opened.token })));
       dispatch({ type: 'reset' });
+      setLibraryViews({});
       setSession(opened);
     });
 
@@ -158,6 +161,13 @@ export function App({ initialSettings }: AppProps) {
           <LibraryScreen
             token={token}
             kind={screen.kind}
+            view={libraryViewOf(libraryViews, screen.kind)}
+            onViewChange={(change) =>
+              setLibraryViews((views) => ({
+                ...views,
+                [screen.kind]: { ...libraryViewOf(views, screen.kind), ...change },
+              }))
+            }
             onAdd={() =>
               dispatch({ type: 'open', screen: { name: 'edit', kind: screen.kind, itemId: null } })
             }

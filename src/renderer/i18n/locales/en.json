@@ -45,6 +45,36 @@
     "movie": "Movies",
     "series": "Series"
   },
+  "library": {
+    "search": "Search by title",
+    "noResults": "Nothing found.",
+    "clearSearch": "Clear search",
+    "sort": {
+      "label": "Sort by",
+      "reverse": "Reverse the order",
+      "title": "Title",
+      "createdAt": "Date added",
+      "rating": "Rating",
+      "releaseDate": "Release date",
+      "premiereDate": "Premiere date",
+      "startedOn": "Start date",
+      "finishedOn": "End date",
+      "direction": {
+        "text": {
+          "asc": "A-Z",
+          "desc": "Z-A"
+        },
+        "number": {
+          "asc": "Lowest first",
+          "desc": "Highest first"
+        },
+        "date": {
+          "asc": "Oldest first",
+          "desc": "Newest first"
+        }
+      }
+    }
+  },
   "items": {
     "untitled": "Untitled {{number}}",
     "add": "Add",

@@ -93,7 +93,7 @@ Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama 
   - Formato de visualización: en español 14/03/2021, 03/2021 o 2021; en inglés «14 Mar 2021».
 - **Otros campos:**
   - Favorito y notas.
-  - Fecha de alta automática.
+  - Fecha de adición automática.
   - Horas jugadas (HH:MM), solo en videojuegos.
   - Temporadas y capítulos, solo en series, como números generales.
 - **Edición:**
@@ -233,7 +233,7 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
 - **Valores que ofrecen los filtros** (acordado el 2026-11-04; sustituye al selector por tipo, que se queda solo en «Catálogos»): los que usa algún elemento de esa biblioteca, sin contar la papelera.
 - **Plataformas** (acordado el 2026-11-04): «Lo tengo en» pasa a llamarse **«Mis plataformas»** («My platforms») y «Publicado en», **«Plataformas de lanzamiento»** («Release platforms»), en los filtros, el formulario y la ficha. El cambio de nombre va en la F7-D.
 - **Estado de la biblioteca** (acordado el 2026-11-04): la búsqueda, los filtros, el orden y el scroll se guardan por modo hasta cerrar el perfil.
-- **Ordenación:** por título (los «Sin nombre» al final), fecha de alta, valoración, fecha de lanzamiento más temprana y fechas de uso. Lo que no tiene dato va siempre al final, también en orden descendente. Al elegir un criterio, el título empieza de la A a la Z y el resto de mayor a menor (acordado el 2026-11-04); un botón invierte el sentido.
+- **Ordenación:** por título (los «Sin nombre» al final), fecha de adición, valoración, fecha de lanzamiento más temprana y fechas de uso. Lo que no tiene dato va siempre al final, también en orden descendente. Al elegir un criterio, el título empieza de la A a la Z y el resto de mayor a menor (acordado el 2026-11-04); un botón invierte el sentido.
 - **Cabecera:** con filtros activos, «(N)» es el número de resultados.
 - **Rendimiento:** cuadrícula virtualizada con TanStack Virtual y una prueba con 10 000 elementos. No hacen falta índices nuevos; `items.list` devuelve todos los resultados, sin paginar.
 

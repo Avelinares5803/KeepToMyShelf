@@ -35,7 +35,7 @@ Los papeles se filtran por separado aunque compartan catálogo: «Lo tengo en» 
 - **«No es»:** incluye los elementos sin ese dato. Un juego sin estado «no es» Terminado.
 - **Búsqueda:** parcial, con `LIKE` sobre `title_norm` y `item_alt_title.title_norm`, sin distinguir mayúsculas ni acentos. `%`, `_` y `\` se tratan como texto normal.
 - **Elementos sin título:** se encuentran por el nombre que muestran («Sin nombre 3»). Ese texto no está guardado y depende del idioma, así que la interfaz envía la etiqueta traducida.
-- **Ordenación:** por título, fecha de alta, valoración, fecha de lanzamiento más temprana, inicio o fin de uso. Lo que no tiene dato por el que ordenar queda siempre al final, también en orden descendente. Los empates siguen el orden por título y, después, el `id`.
+- **Ordenación:** por título, fecha de adición, valoración, fecha de lanzamiento más temprana, inicio o fin de uso. Lo que no tiene dato por el que ordenar queda siempre al final, también en orden descendente. Los empates siguen el orden por título y, después, el `id`.
 - **Fechas parciales:** se ordenan como texto, así que en orden ascendente «2021» queda antes que «2021-03».
 
 ### Kysely solo genera el SQL

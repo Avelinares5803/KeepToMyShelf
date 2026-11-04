@@ -185,7 +185,7 @@ test('sorts by every field both ways, always with missing data last', async () =
   await button('A-Z').click();
   await expectOrder(['zelda', 'Sin datos', 'Ábaco', 'Sin nombre 1']);
 
-  await sortField().selectOption({ label: 'Fecha de alta' });
+  await sortField().selectOption({ label: 'Fecha de adición' });
   await expectOrder(['Sin nombre 1', 'zelda', 'Ábaco', 'Sin datos']);
   await button('Más reciente primero').click();
   await expectOrder(['Sin datos', 'Ábaco', 'zelda', 'Sin nombre 1']);
@@ -312,6 +312,6 @@ test('returns to the same scroll position, and to the top with new results', asy
   await expect.poll(scrollY).toBeGreaterThan(position - 2);
   expect(await scrollY()).toBeLessThan(position + 2);
 
-  await sortField().selectOption({ label: 'Fecha de alta' });
+  await sortField().selectOption({ label: 'Fecha de adición' });
   await expect.poll(scrollY).toBe(0);
 });

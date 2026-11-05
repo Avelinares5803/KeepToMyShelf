@@ -342,6 +342,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - Visor de PDF integrado (pdf.js).
 - Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.
 - Un control para agrandar o reducir las portadas de la biblioteca.
+- Orden natural de los números en los títulos y los catálogos: hoy «Final Fantasy 10» va antes que «Final Fantasy 2». Necesita una columna o una función de orden propia en SQLite.
 - Añadir imágenes y documentos arrastrándolos a la ventana. Necesita `webUtils.getPathForFile` en el preload para obtener la ruta del archivo soltado.
 - Exportar e importar bibliotecas (JSON/CSV) y copias programadas.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.

@@ -37,6 +37,8 @@ async function openGames(items: readonly SeedItem[]): Promise<void> {
   seedItems(dataDir, items);
   await button('Videojuegos').click();
   await expect(heading(`Videojuegos (${items.length})`)).toBeVisible();
+  // The rows, and so the height of the page, come right after the count.
+  await expect(cards().first()).toBeVisible();
 }
 
 test.beforeEach(async () => {
@@ -142,6 +144,29 @@ test('keeps the same item in view when the window changes the number of columns'
   await page.setViewportSize({ width: 640, height: 720 });
   await expect.poll(() => firstRowCards.count()).toBeLessThan(columnsBefore);
   await expect(button(seen)).toBeInViewport();
+});
+
+test('keeps the width of the cards with and without a scrollbar', async () => {
+  // Narrow enough for the scrollbar to take space from the grid. If it did, a page that barely
+  // fits would never settle: see the comment in the styles.
+  await app!.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]!.setSize(1024, 720);
+  });
+  const cardWidth = () =>
+    cards()
+      .first()
+      .evaluate((card) => (card as unknown as { offsetWidth: number }).offsetWidth);
+
+  await openGames(games(1));
+  const withoutScrollbar = await cardWidth();
+  expect(await pageHeight()).toBeLessThan(1000);
+
+  seedItems(dataDir, games(200));
+  await button('Volver').click();
+  await button('Videojuegos').click();
+  await expect(heading('Videojuegos (201)')).toBeVisible();
+  await expect.poll(pageHeight).toBeGreaterThan(1000);
+  expect(await cardWidth()).toBe(withoutScrollbar);
 });
 
 test('does not jump back while scrolling up through rows of different heights', async () => {

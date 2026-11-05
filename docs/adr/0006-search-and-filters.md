@@ -53,6 +53,7 @@ Kysely construye la consulta y `.compile()` devuelve el SQL y sus parámetros; l
 - **Por filas:** virtualizar filas conserva la alineación por abajo dentro de cada una. El número de columnas se calcula con el ancho disponible y la misma regla que antes (mínimo 10 rem por tarjeta).
 - **Alturas variables:** se estiman con el tamaño de las portadas (`grid-layout.ts`) y se sustituyen por la altura real al medir la fila.
 - **Posición al volver:** se guarda el primer elemento visible, no los píxeles, porque la altura de las filas no dibujadas es una estimación. Su fila queda arriba de la ventana, y se recupera también al cambiar el número de columnas. Con el ancho mínimo de la ventana (960 px) y el máximo del contenido (64 rem) hoy siempre caben 5 columnas, así que esto solo se nota si esos límites cambian.
+- **Hueco de la barra de scroll:** en la biblioteca siempre está reservado (`scrollbar-gutter: stable`). Si no, una página que casi cabe entra en un bucle sin fin: la barra estrecha las portadas, la página pasa a caber, la barra desaparece, las portadas crecen y la barra vuelve. Lo encontró la CI, con una pantalla más estrecha que la del equipo de desarrollo.
 - **Accesibilidad:** `role="list"` y `role="listitem"` con `aria-setsize` y `aria-posinset`, porque las filas impiden usar `<ul>` y `<li>` directamente.
 
 Medido con 10 000 elementos en el mismo equipo:

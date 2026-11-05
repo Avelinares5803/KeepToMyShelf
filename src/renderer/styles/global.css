@@ -529,6 +529,13 @@ h1 {
 
 /* Cards sit on their bottom edge, like books on a shelf: titles line up across a row and
    each cover keeps its own shape. */
+/* The space of the scrollbar is always kept. Otherwise, when the page barely fits, the scrollbar
+   narrows the covers, which makes the page fit and removes the scrollbar, which widens the
+   covers... and the grid, whose rows are measured from outside, never stops moving. */
+html:has(.library) {
+  scrollbar-gutter: stable;
+}
+
 .item-grid {
   position: relative;
   margin: 1.5rem 0 0;

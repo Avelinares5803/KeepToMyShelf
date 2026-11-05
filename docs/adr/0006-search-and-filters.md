@@ -1,7 +1,7 @@
 # ADR 0006: Búsqueda, filtros y ordenación
 
-- **Estado:** aceptada; implementada la F7-A (motor). La interfaz llega en las entregas siguientes
-- **Fecha:** 2026-11-04
+- **Estado:** aceptada; implementadas la F7-A (motor), la F7-B (buscador y orden) y la F7-C (cuadrícula virtualizada). Los filtros llegan en las entregas siguientes
+- **Fecha:** 2026-11-04 (ampliada el 2026-11-05 con la F7-C)
 
 ## Contexto
 
@@ -44,16 +44,36 @@ Kysely construye la consulta y `.compile()` devuelve el SQL y sus parámetros; l
 
 ### Sin paginación ni índices nuevos
 
-`items.list` devuelve todos los resultados y la interfaz virtualizará solo el dibujado. Una prueba con 10 000 elementos comprueba los tiempos y que las tablas relacionadas se leen por sus índices. No hizo falta ninguna migración: los índices existentes cubren los `EXISTS`, y un `LIKE '%…%'` recorre la tabla de todos modos.
+`items.list` devuelve todos los resultados y la interfaz virtualiza solo el dibujado. Una prueba con 10 000 elementos comprueba los tiempos y que las tablas relacionadas se leen por sus índices. No hizo falta ninguna migración: los índices existentes cubren los `EXISTS`, y un `LIKE '%…%'` recorre la tabla de todos modos.
+
+### Cuadrícula virtualizada
+
+`LibraryGrid` (`src/renderer/features/library/`) usa TanStack Virtual (`useWindowVirtualizer`) y solo dibuja las filas cercanas a lo visible, más tres por cada lado.
+
+- **Por filas:** virtualizar filas conserva la alineación por abajo dentro de cada una. El número de columnas se calcula con el ancho disponible y la misma regla que antes (mínimo 10 rem por tarjeta).
+- **Alturas variables:** se estiman con el tamaño de las portadas (`grid-layout.ts`) y se sustituyen por la altura real al medir la fila.
+- **Posición al volver:** se guarda el primer elemento visible, no los píxeles, porque la altura de las filas no dibujadas es una estimación. Su fila queda arriba de la ventana, y se recupera también al cambiar el número de columnas. Con el ancho mínimo de la ventana (960 px) y el máximo del contenido (64 rem) hoy siempre caben 5 columnas, así que esto solo se nota si esos límites cambian.
+- **Accesibilidad:** `role="list"` y `role="listitem"` con `aria-setsize` y `aria-posinset`, porque las filas impiden usar `<ul>` y `<li>` directamente.
+
+Medido con 10 000 elementos en el mismo equipo:
+
+| Acción                       | Antes     | Después |
+| ---------------------------- | --------- | ------- |
+| Tarjetas en la página        | 10 000    | 35      |
+| Ver resultados tras escribir | 13 708 ms | 348 ms  |
+| Limpiar la búsqueda          | 6292 ms   | 354 ms  |
+| Cambiar el orden             | 9670 ms   | 98 ms   |
 
 ## Alternativas consideradas
 
-| Alternativa            | Por qué se descartó                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------ |
-| FTS5                   | No hace falta con estos volúmenes. Se puede adoptar más adelante sin cambiar la API        |
-| Paginar por IPC        | Complica el orden, el recuento y el scroll, sin necesidad demostrada                       |
-| Un `JOIN` por relación | Duplica filas y hace que dos condiciones sobre el mismo papel no signifiquen «tiene ambos» |
-| Filtrar en la interfaz | Obligaría a enviarle todas las relaciones de todos los elementos                           |
+| Alternativa              | Por qué se descartó                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------- |
+| FTS5                     | No hace falta con estos volúmenes. Se puede adoptar más adelante sin cambiar la API               |
+| Paginar por IPC          | Complica el orden, el recuento y el scroll, sin necesidad demostrada                              |
+| Un `JOIN` por relación   | Duplica filas y hace que dos condiciones sobre el mismo papel no signifiquen «tiene ambos»        |
+| Virtualización propia    | Medir alturas y corregir el scroll es lo más propenso a errores, y habría que mantenerlo          |
+| CSS `content-visibility` | React seguiría creando y revisando todas las tarjetas, así que no arregla la lentitud al escribir |
+| Filtrar en la interfaz   | Obligaría a enviarle todas las relaciones de todos los elementos                                  |
 
 ## Consecuencias
 

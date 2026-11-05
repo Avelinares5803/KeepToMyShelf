@@ -1,11 +1,10 @@
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
-import Database from 'better-sqlite3';
 import sharp from 'sharp';
-import { normalizeForSearch } from '../../src/core/text/normalize';
 import { launchApp } from './launch-app';
+import { seedItems as seedInto, type SeedItem } from './seed-items';
 
 let dataDir: string;
 let app: ElectronApplication | undefined;
@@ -17,62 +16,7 @@ const searchBox = () => page.getByRole('searchbox', { name: 'Buscar por título'
 const sortField = () => page.getByLabel('Ordenar por', { exact: true });
 const shownTitles = () => page.locator('.item-card__title');
 
-interface SeedItem {
-  readonly title?: string;
-  readonly placeholder?: number;
-  readonly kind?: string;
-  readonly rating?: number;
-  readonly startedOn?: string;
-  readonly finishedOn?: string;
-  readonly createdAt?: string;
-  readonly alternateTitle?: string;
-  readonly releaseDate?: string;
-}
-
-/**
- * Writes items straight into the open profile's database, which is much faster than filling
- * in the form for each one. The screen reads them the next time it asks for the list.
- */
-function seedItems(items: readonly SeedItem[]): void {
-  const profilesDir = join(dataDir, 'profiles');
-  const [profileId] = readdirSync(profilesDir);
-  const db = new Database(join(profilesDir, profileId!, 'library.db'));
-  const insert = db.prepare(
-    `INSERT INTO item (uuid, kind, title, title_norm, placeholder_no, rating, started_on,
-       finished_on, created_at, updated_at)
-     VALUES (@uuid, @kind, @title, @titleNorm, @placeholder, @rating, @startedOn, @finishedOn,
-       @createdAt, @createdAt)`,
-  );
-  db.transaction(() => {
-    items.forEach((item, index) => {
-      const id = insert.run({
-        uuid: `seed-${index}-${Math.random()}`,
-        kind: item.kind ?? 'game',
-        title: item.title ?? null,
-        titleNorm: item.title === undefined ? null : normalizeForSearch(item.title),
-        placeholder: item.placeholder ?? null,
-        rating: item.rating ?? null,
-        startedOn: item.startedOn ?? null,
-        finishedOn: item.finishedOn ?? null,
-        createdAt: item.createdAt ?? '2026-01-01T00:00:00.000Z',
-      }).lastInsertRowid;
-      if (item.alternateTitle !== undefined) {
-        db.prepare('INSERT INTO item_alt_title (item_id, title, title_norm) VALUES (?, ?, ?)').run(
-          id,
-          item.alternateTitle,
-          normalizeForSearch(item.alternateTitle),
-        );
-      }
-      if (item.releaseDate !== undefined) {
-        db.prepare('INSERT INTO item_release (item_id, date) VALUES (?, ?)').run(
-          id,
-          item.releaseDate,
-        );
-      }
-    });
-  })();
-  db.close();
-}
+const seedItems = (items: readonly SeedItem[]) => seedInto(dataDir, items);
 
 /** Leaves the library and returns, so it reads what was seeded. */
 async function reopenGames(): Promise<void> {
@@ -264,7 +208,7 @@ test('keeps the search and the sort per mode until the profile is closed', async
   await expectOrder(['Metroid', 'Zelda', 'Zork']);
 });
 
-test('returns to the same scroll position, and to the top with new results', async () => {
+test('returns to the same place, and to the top with new results', async () => {
   // Tall covers on the first rows: the page must keep its height before they load.
   const filesDir = join(dataDir, 'archivos del usuario');
   mkdirSync(filesDir);
@@ -300,17 +244,22 @@ test('returns to the same scroll position, and to the top with new results', asy
   await expect(heading('Videojuegos (86)')).toBeVisible();
 
   const scrollY = () => page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY);
+  // Far down, the covers above are no longer drawn: the page only knows their height.
   const last = button('Juego 79');
+  await page.locator('.item-card').last().scrollIntoViewIfNeeded();
+  await page.mouse.move(400, 400);
+  for (let tries = 0; tries < 20 && (await last.count()) === 0; tries += 1) {
+    await page.mouse.wheel(0, 1500);
+    await page.waitForTimeout(100);
+  }
   await last.scrollIntoViewIfNeeded();
-  const position = await scrollY();
-  expect(position).toBeGreaterThan(500);
+  expect(await scrollY()).toBeGreaterThan(500);
 
   await last.click();
   await expect(heading('Juego 79')).toBeVisible();
   await button('Volver').click();
   await expect(heading('Videojuegos (86)')).toBeVisible();
-  await expect.poll(scrollY).toBeGreaterThan(position - 2);
-  expect(await scrollY()).toBeLessThan(position + 2);
+  await expect(last).toBeInViewport();
 
   await sortField().selectOption({ label: 'Fecha de adición' });
   await expect.poll(scrollY).toBe(0);

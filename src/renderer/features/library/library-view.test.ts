@@ -7,7 +7,7 @@ describe('library view', () => {
     expect(libraryViewOf({}, 'game')).toEqual({
       search: '',
       sort: { field: 'title', direction: 'asc' },
-      scrollY: 0,
+      anchor: null,
     });
   });
 

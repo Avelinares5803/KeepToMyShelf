@@ -1,14 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
-import { HeartIcon, ListIcon, PlusIcon, TrashIcon } from '../../components/icons';
+import { ListIcon, PlusIcon, TrashIcon } from '../../components/icons';
 import { errorMessage } from '../../lib/ipc';
 import { useDebounced } from '../../lib/use-debounced';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
-import { Thumbnail } from '../media/Thumbnail';
 import type { LibraryView } from './library-view';
+import { LibraryGrid } from './LibraryGrid';
 import { LibraryToolbar } from './LibraryToolbar';
 
 const SEARCH_DELAY_MS = 250;
@@ -25,7 +25,7 @@ interface LibraryScreenProps {
   onOpenCatalogs: () => void;
 }
 
-/** Grid of the items of one kind, bottom-aligned like books on a shelf. */
+/** The items of one kind, with their search box and sort controls. */
 export function LibraryScreen({
   token,
   kind,
@@ -56,32 +56,13 @@ export function LibraryScreen({
   const trash = useLoad(() => window.api.items.listTrash({ token, kind }), [token, kind]);
   const trashCount = trash.data?.length ?? 0;
   const error = items.error ?? trash.error;
-  const hasItems = items.data !== null;
 
-  // The window is what scrolls. Its position is saved when leaving the screen, and restored
-  // once there is something to scroll: the first results.
-  const scrollY = useRef(view.scrollY);
-  const saveView = useRef(onViewChange);
-  useLayoutEffect(() => {
-    saveView.current = onViewChange;
-  });
-  useEffect(() => {
-    const onScroll = () => {
-      scrollY.current = window.scrollY;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      saveView.current({ scrollY: scrollY.current });
-    };
-  }, []);
-
-  const restored = useRef(false);
-  useLayoutEffect(() => {
-    if (!hasItems || restored.current) return;
-    restored.current = true;
-    window.scrollTo(0, view.scrollY);
-  }, [hasItems, view.scrollY]);
+  // Where to return to when coming back, until the user asks for different results.
+  const [restoreTo, setRestoreTo] = useState(view.anchor);
+  const changeResults = (change: Partial<LibraryView>) => {
+    setRestoreTo(null);
+    onViewChange(change);
+  };
 
   // New results start from the top.
   const shownResults = `${searchText}\n${sort.field}\n${sort.direction}`;
@@ -116,8 +97,8 @@ export function LibraryScreen({
         kind={kind}
         search={view.search}
         sort={sort}
-        onSearch={(search) => onViewChange({ search })}
-        onSort={(next) => onViewChange({ sort: next })}
+        onSearch={(search) => changeResults({ search })}
+        onSort={(next) => changeResults({ sort: next })}
       />
 
       {error !== null && (
@@ -132,7 +113,7 @@ export function LibraryScreen({
             <button
               type="button"
               className="button button--ghost"
-              onClick={() => onViewChange({ search: '' })}
+              onClick={() => changeResults({ search: '' })}
             >
               {t('library.clearSearch')}
             </button>
@@ -141,60 +122,15 @@ export function LibraryScreen({
           <p className="muted">{t('items.empty')}</p>
         ))}
       {items.data && items.data.length > 0 && (
-        <ul className="item-grid">
-          {items.data.map((item) => (
-            <li key={item.id}>
-              <ItemCard item={item} title={displayTitle(item)} onOpen={() => onOpenItem(item)} />
-            </li>
-          ))}
-        </ul>
+        <LibraryGrid
+          items={items.data}
+          label={t(`modes.${kind}`)}
+          titleOf={displayTitle}
+          restoreTo={restoreTo}
+          onLeave={(anchor) => onViewChange({ anchor })}
+          onOpenItem={onOpenItem}
+        />
       )}
     </section>
-  );
-}
-
-/**
- * An item in the grid: its cover, with its own proportions, and the title below; or just
- * the title when it has no cover (or the cover's file is missing). The cover is decorative:
- * the card's name is the title.
- */
-function ItemCard({
-  item,
-  title,
-  onOpen,
-}: {
-  item: ItemSummary;
-  title: string;
-  onOpen: () => void;
-}) {
-  const { t } = useTranslation();
-  const [coverMissing, setCoverMissing] = useState(false);
-  const cover = coverMissing ? null : item.cover;
-
-  return (
-    <button
-      type="button"
-      className={`item-card${cover ? ' item-card--cover' : ''}`}
-      onClick={onOpen}
-    >
-      {cover && (
-        <span className="item-card__image">
-          <Thumbnail
-            sha256={cover.sha256}
-            width={cover.width}
-            height={cover.height}
-            alt=""
-            whenMissing="nothing"
-            onMissing={() => setCoverMissing(true)}
-          />
-        </span>
-      )}
-      <span className="item-card__title">{title}</span>
-      {item.isFavorite && (
-        <span className="item-card__favorite" aria-label={t('items.fields.favorite')}>
-          <HeartIcon filled />
-        </span>
-      )}
-    </button>
   );
 }

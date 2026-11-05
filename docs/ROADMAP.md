@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-04, tras la F7-B.
+**Última actualización:** 2026-11-05, tras la F7-C.
 
 ---
 
@@ -40,7 +40,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F4 Elementos              | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
 | F5 Catálogos              | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
 | F6 Multimedia             | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ✅ Hecha (PR #25 a #28 y la F6-C)              |
-| **F7 Búsqueda y filtros** | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | 🚧 **En curso** (F7-A y F7-B; sigue la F7-C)   |
+| **F7 Búsqueda y filtros** | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | 🚧 **En curso** (F7-A a F7-C; sigue la F7-D)   |
 | F8 Películas y series     | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
 | F9 Colecciones            | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
 | F10 Personalización       | Fondos predeterminados e importados, desenfoque                                                                                                                | Pendiente                                      |
@@ -232,16 +232,17 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
   - «Quitar filtros» solo vacía la pestaña en uso.
 - **Valores que ofrecen los filtros** (acordado el 2026-11-04; sustituye al selector por tipo, que se queda solo en «Catálogos»): los que usa algún elemento de esa biblioteca, sin contar la papelera.
 - **Plataformas** (acordado el 2026-11-04): «Lo tengo en» pasa a llamarse **«Mis plataformas»** («My platforms») y «Publicado en», **«Plataformas de lanzamiento»** («Release platforms»), en los filtros, el formulario y la ficha. El cambio de nombre va en la F7-D.
-- **Estado de la biblioteca** (acordado el 2026-11-04): la búsqueda, los filtros, el orden y el scroll se guardan por modo hasta cerrar el perfil.
+- **Estado de la biblioteca** (acordado el 2026-11-04): la búsqueda, los filtros, el orden y la posición se guardan por modo hasta cerrar el perfil. Desde la F7-C, la posición es el primer elemento visible, y al volver su fila queda arriba de la ventana. Si ya no existe, se vuelve al lugar que ocupaba.
 - **Ordenación:** por título (los «Sin nombre» al final), fecha de adición, valoración, fecha de lanzamiento más temprana y fechas de uso. Lo que no tiene dato va siempre al final, también en orden descendente. Al elegir un criterio, el título empieza de la A a la Z y el resto de mayor a menor (acordado el 2026-11-04); un botón invierte el sentido.
 - **Cabecera:** con filtros activos, «(N)» es el número de resultados.
 - **Rendimiento:** cuadrícula virtualizada con TanStack Virtual y una prueba con 10 000 elementos. No hacen falta índices nuevos; `items.list` devuelve todos los resultados, sin paginar.
+- **Limitación conocida del teclado:** si el foco está en una tarjeta y te alejas con el ratón, esa tarjeta deja de existir y el foco se pierde. Avanzar y retroceder con Tab funciona.
 
 **Entregas (acordadas el 2026-11-04):**
 
 - F7-A: motor (árbol, registro, consulta, búsqueda, ordenación e IPC), sin cambios visibles. ✅ Hecha.
 - F7-B: buscador, selector de orden, «(N)», aviso de «sin resultados» y estado por modo. ✅ Hecha.
-- F7-C: cuadrícula virtualizada, con la prueba E2E de 10 000 elementos.
+- F7-C: cuadrícula virtualizada, con la prueba E2E de 10 000 elementos. ✅ Hecha.
 - F7-D: filtros simples y nombres nuevos de las plataformas.
 - F7-E: filtros avanzados y las dos pestañas.
 

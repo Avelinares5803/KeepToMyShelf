@@ -6,11 +6,18 @@ import {
 } from '../../../core/filters/item-sort';
 import type { ItemKind } from '../../../shared/content';
 
+/** The first item the user could see. Its place is kept in case the item is gone on return. */
+export interface LibraryAnchor {
+  readonly itemId: number;
+  readonly index: number;
+}
+
 /** How the user left a library. It lasts until the profile is closed, not across restarts. */
 export interface LibraryView {
   readonly search: string;
   readonly sort: ItemSort;
-  readonly scrollY: number;
+  /** Where to return to; null is the top of the page. */
+  readonly anchor: LibraryAnchor | null;
 }
 
 export type LibraryViews = Readonly<Partial<Record<ItemKind, LibraryView>>>;
@@ -18,7 +25,7 @@ export type LibraryViews = Readonly<Partial<Record<ItemKind, LibraryView>>>;
 export const INITIAL_LIBRARY_VIEW: LibraryView = {
   search: '',
   sort: DEFAULT_ITEM_SORT,
-  scrollY: 0,
+  anchor: null,
 };
 
 export const libraryViewOf = (views: LibraryViews, kind: ItemKind): LibraryView =>

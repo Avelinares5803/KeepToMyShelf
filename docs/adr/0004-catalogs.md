@@ -23,17 +23,17 @@ Los elementos se relacionan con valores reutilizables: plataformas, géneros, sa
 
 `item_entry` relaciona un elemento con un valor en un papel (`role`). Qué catálogo alimenta cada papel depende del tipo (`src/core/catalogs/catalogs.ts`):
 
-| Papel                                                   | Videojuegos             | Películas y series                                 |
-| ------------------------------------------------------- | ----------------------- | -------------------------------------------------- |
-| Sagas (`franchise`)                                     | Sagas                   | Sagas                                              |
-| Lo tengo en (`owned_on`) / Publicado en (`released_on`) | Plataformas             | —                                                  |
-| Géneros (`genre`)                                       | Géneros de videojuegos  | Géneros de películas y series (respetando `scope`) |
-| Desarrolladoras, distribuidoras                         | Empresas                | —                                                  |
-| Productoras                                             | —                       | Empresas                                           |
-| Directores, actores                                     | —                       | Personas (los actores en el orden elegido)         |
-| Compositores                                            | Personas                | Personas                                           |
-| Países de origen (`origin_country`)                     | Países                  | Países                                             |
-| Etiquetas                                               | Etiquetas (lista común) | Etiquetas (lista común)                            |
+| Papel                                                                     | Videojuegos             | Películas y series                                 |
+| ------------------------------------------------------------------------- | ----------------------- | -------------------------------------------------- |
+| Sagas (`franchise`)                                                       | Sagas                   | Sagas                                              |
+| Mis plataformas (`owned_on`) / Plataformas de lanzamiento (`released_on`) | Plataformas             | —                                                  |
+| Géneros (`genre`)                                                         | Géneros de videojuegos  | Géneros de películas y series (respetando `scope`) |
+| Desarrolladoras, distribuidoras                                           | Empresas                | —                                                  |
+| Productoras                                                               | —                       | Empresas                                           |
+| Directores, actores                                                       | —                       | Personas (los actores en el orden elegido)         |
+| Compositores                                                              | Personas                | Personas                                           |
+| Países de origen (`origin_country`)                                       | Países                  | Países                                             |
+| Etiquetas                                                                 | Etiquetas (lista común) | Etiquetas (lista común)                            |
 
 Las fechas de lanzamiento o estreno van en `item_release` (región + fecha parcial). Puede haber varias por elemento, sin región o repitiendo región (relanzamientos).
 
@@ -68,8 +68,8 @@ Los **países de origen** tienen su propio catálogo, separado de las regiones: 
 - **Formulario:** campos con autocompletado (también por alias, mostrando el alias que coincide). Las sugerencias nunca se eligen solas: se eligen con clic o con las flechas y Enter. Mientras no exista un valor exactamente igual a lo escrito, aparece «Crear "…"», que también hay que elegir; Enter sin sugerencia marcada solo añade un valor exactamente igual a lo escrito, así que nunca se crea un valor sin querer. Los valores nuevos se marcan como «nuevo» y se crean al guardar el elemento, en la misma transacción: si se cancela, no queda nada suelto. El reparto se ordena con botones ← →; en los demás papeles se guarda el orden en que se añaden.
 - **Orden del formulario y de la ficha:**
   - Identificación: título, títulos alternativos, descripción, sagas.
-  - Mi seguimiento: estado, valoración, fechas de uso, horas, formato, «Lo tengo en», favorito, notas.
-  - Ficha. Videojuegos: «Publicado en», géneros, distribuidoras, desarrolladoras, música, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, música, fechas de estreno.
+  - Mi seguimiento: estado, valoración, fechas de uso, horas, formato, «Mis plataformas», favorito, notas.
+  - Ficha. Videojuegos: «Plataformas de lanzamiento», géneros, distribuidoras, desarrolladoras, música, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, música, fechas de estreno.
   - Etiquetas.
 
 ## Consecuencias

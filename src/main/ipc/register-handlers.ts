@@ -66,6 +66,9 @@ export function registerIpcHandlers({
     listItems: createHandler(ipcInputSchemas.listItems, ({ token, kind, search, filter, sort }) =>
       items.list(token, kind, { search, filter, sort }),
     ),
+    listItemFilterValues: createHandler(ipcInputSchemas.listItemFilterValues, ({ token, kind }) =>
+      items.filterValues(token, kind),
+    ),
     listTrash: createHandler(ipcInputSchemas.listTrash, ({ token, kind }) =>
       items.listTrash(token, kind),
     ),

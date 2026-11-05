@@ -15,7 +15,14 @@ import type { EntryRef } from '../../core/items/item-relations';
 import { lowestFreeNumber } from '../../core/naming/lowest-free-number';
 import { normalizeForSearch } from '../../core/text/normalize';
 import type { ItemKind } from '../../shared/content';
-import type { EntryName, ItemDetails, ItemRelease, ItemSummary } from '../../shared/items';
+import type {
+  EntryName,
+  ItemDetails,
+  ItemFilterValue,
+  ItemFilterValues,
+  ItemRelease,
+  ItemSummary,
+} from '../../shared/items';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
 import { buildItemListQuery, type ItemSearch } from '../infrastructure/db/item-query';
 import type { ItemMediaPlan } from '../../shared/media';
@@ -110,6 +117,41 @@ export class ItemService {
     const query = buildItemListQuery(kind, { ...options, filter });
     const rows = db.prepare(query.sql).all(...query.parameters) as (SummaryRow & CoverColumns)[];
     return rows.map(toSummaryWithCover);
+  }
+
+  /**
+   * What the filters of a library can offer: per role, the values its items use. Items in the
+   * trash do not count, because they are not in the library: their values would find nothing.
+   */
+  filterValues(token: string, kind: ItemKind): ItemFilterValues {
+    const db = this.db(token);
+    const used = `SELECT DISTINCT item_entry.role, entry.id, entry.name, entry.name_key
+      FROM item_entry
+      JOIN item ON item.id = item_entry.item_id
+      JOIN catalog_entry entry ON entry.id = item_entry.entry_id
+      WHERE item.kind = ? AND item.deleted_at IS NULL`;
+    const rows = db.prepare(`${used} ORDER BY entry.name_key, entry.name`).all(kind) as {
+      role: ItemRole;
+      id: number;
+      name: string;
+    }[];
+    const aliasRows = db
+      .prepare(
+        `SELECT alias.entry_id, alias.name FROM catalog_entry_alias alias
+         WHERE alias.entry_id IN (SELECT id FROM (${used}))
+         ORDER BY alias.id`,
+      )
+      .all(kind) as { entry_id: number; name: string }[];
+
+    const aliases = new Map<number, string[]>();
+    for (const { entry_id, name } of aliasRows) {
+      aliases.set(entry_id, [...(aliases.get(entry_id) ?? []), name]);
+    }
+    const values: Partial<Record<ItemRole, ItemFilterValue[]>> = {};
+    for (const { role, id, name } of rows) {
+      (values[role] ??= []).push({ id, name, aliases: aliases.get(id) ?? [] });
+    }
+    return values;
   }
 
   /** Items in the trash, most recently deleted first; all kinds when `kind` is null. */

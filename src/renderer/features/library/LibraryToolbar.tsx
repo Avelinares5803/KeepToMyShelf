@@ -12,8 +12,12 @@ interface LibraryToolbarProps {
   kind: ItemKind;
   search: string;
   sort: ItemSort;
+  /** How many filters are marked, shown in the button that opens them. */
+  filterMarks: number;
+  filtersOpen: boolean;
   onSearch: (search: string) => void;
   onSort: (sort: ItemSort) => void;
+  onToggleFilters: () => void;
 }
 
 /** What each direction means depends on what is being sorted. */
@@ -22,8 +26,17 @@ const directionGroup = (field: ItemSortField) => {
   return field === 'rating' ? 'number' : 'date';
 };
 
-/** The search box and the sort controls of a library. */
-export function LibraryToolbar({ kind, search, sort, onSearch, onSort }: LibraryToolbarProps) {
+/** The search box, the button of the filters and the sort controls of a library. */
+export function LibraryToolbar({
+  kind,
+  search,
+  sort,
+  filterMarks,
+  filtersOpen,
+  onSearch,
+  onSort,
+  onToggleFilters,
+}: LibraryToolbarProps) {
   const { t } = useTranslation();
   const id = useId();
 
@@ -42,6 +55,16 @@ export function LibraryToolbar({ kind, search, sort, onSearch, onSort }: Library
         value={search}
         onChange={(event) => onSearch(event.target.value)}
       />
+      <button
+        type="button"
+        className="button button--ghost"
+        aria-expanded={filtersOpen}
+        onClick={onToggleFilters}
+      >
+        {filterMarks > 0
+          ? t('library.filters.openWithCount', { count: filterMarks })
+          : t('library.filters.open')}
+      </button>
       <div className="inline-field">
         <label htmlFor={`${id}-sort`}>{t('library.sort.label')}</label>
         <select

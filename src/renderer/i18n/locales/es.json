@@ -49,6 +49,23 @@
     "search": "Buscar por título",
     "noResults": "No se ha encontrado nada.",
     "clearSearch": "Limpiar búsqueda",
+    "filters": {
+      "open": "Filtros",
+      "openWithCount": "Filtros ({{count}})",
+      "panel": "Filtros simples",
+      "clear": "Quitar filtros",
+      "favorite": "Favoritos",
+      "replay": {
+        "game": "Rejugados",
+        "screen": "Revisionadas"
+      },
+      "atLeast": "Al menos",
+      "anyRating": "Cualquiera",
+      "unrated": "Sin valorar",
+      "searchValues": "Buscar en {{field}}",
+      "noMatches": "Ningún valor coincide.",
+      "tooMany": "Se muestran {{shown}} de {{total}}. Escribe para acotar."
+    },
     "sort": {
       "label": "Ordenar por",
       "reverse": "Invertir el orden",
@@ -167,8 +184,8 @@
     },
     "roles": {
       "franchise": "Sagas",
-      "owned_on": "Lo tengo en",
-      "released_on": "Publicado en",
+      "owned_on": "Mis plataformas",
+      "released_on": "Plataformas de lanzamiento",
       "genre": "Géneros",
       "developer": "Desarrolladoras",
       "publisher": "Distribuidoras",

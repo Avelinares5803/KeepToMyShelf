@@ -10,6 +10,13 @@ import { useItemTitle } from '../items/use-item-title';
 import type { LibraryView } from './library-view';
 import { LibraryGrid } from './LibraryGrid';
 import { LibraryToolbar } from './LibraryToolbar';
+import {
+  countMarks,
+  NO_SIMPLE_FILTERS,
+  toFilterTree,
+  withoutMissingValues,
+} from './simple-filters';
+import { SimpleFilters } from './SimpleFilters';
 
 const SEARCH_DELAY_MS = 250;
 
@@ -43,6 +50,9 @@ export function LibraryScreen({
   const isSearching = searchText.length > 0;
   // Untitled items are found by the name they show, which depends on the UI language.
   const untitledLabel = t('items.untitled', { number: '' }).trim();
+  const filter = toFilterTree(view.filters);
+  const filterKey = JSON.stringify(filter);
+  const hasFilters = filter !== undefined;
   const items = useLoad(
     () =>
       window.api.items.list({
@@ -50,12 +60,23 @@ export function LibraryScreen({
         kind,
         sort,
         ...(isSearching && { search: { text: searchText, untitledLabel } }),
+        ...(filter && { filter }),
       }),
-    [token, kind, sort.field, sort.direction, searchText, untitledLabel],
+    [token, kind, sort.field, sort.direction, searchText, untitledLabel, filterKey],
   );
   const trash = useLoad(() => window.api.items.listTrash({ token, kind }), [token, kind]);
+  const filterValues = useLoad(() => window.api.items.filterValues({ token, kind }), [token, kind]);
   const trashCount = trash.data?.length ?? 0;
-  const error = items.error ?? trash.error;
+  const error = items.error ?? trash.error ?? filterValues.error;
+
+  // A marked value may be gone when coming back (e.g. deleted from its catalog).
+  useEffect(() => {
+    if (filterValues.data === null) return;
+    const kept = withoutMissingValues(view.filters, filterValues.data);
+    if (kept !== view.filters) onViewChange({ filters: kept });
+    // Only when the values arrive: marks made after that are always of existing values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterValues.data]);
 
   // Where to return to when coming back, until the user asks for different results.
   const [restoreTo, setRestoreTo] = useState(view.anchor);
@@ -65,7 +86,7 @@ export function LibraryScreen({
   };
 
   // New results start from the top.
-  const shownResults = `${searchText}\n${sort.field}\n${sort.direction}`;
+  const shownResults = `${searchText}\n${sort.field}\n${sort.direction}\n${filterKey}`;
   const lastResults = useRef(shownResults);
   useEffect(() => {
     if (lastResults.current === shownResults) return;
@@ -97,9 +118,20 @@ export function LibraryScreen({
         kind={kind}
         search={view.search}
         sort={sort}
+        filterMarks={countMarks(view.filters)}
+        filtersOpen={view.filtersOpen}
         onSearch={(search) => changeResults({ search })}
         onSort={(next) => changeResults({ sort: next })}
+        onToggleFilters={() => onViewChange({ filtersOpen: !view.filtersOpen })}
       />
+      {view.filtersOpen && (
+        <SimpleFilters
+          kind={kind}
+          filters={view.filters}
+          values={filterValues.data}
+          onChange={(filters) => changeResults({ filters })}
+        />
+      )}
 
       {error !== null && (
         <p className="banner banner--error" role="alert">
@@ -107,16 +139,29 @@ export function LibraryScreen({
         </p>
       )}
       {items.data?.length === 0 &&
-        (isSearching ? (
+        (isSearching || hasFilters ? (
           <div className="library__no-results">
             <p className="muted">{t('library.noResults')}</p>
-            <button
-              type="button"
-              className="button button--ghost"
-              onClick={() => changeResults({ search: '' })}
-            >
-              {t('library.clearSearch')}
-            </button>
+            <div className="library__actions">
+              {isSearching && (
+                <button
+                  type="button"
+                  className="button button--ghost"
+                  onClick={() => changeResults({ search: '' })}
+                >
+                  {t('library.clearSearch')}
+                </button>
+              )}
+              {hasFilters && (
+                <button
+                  type="button"
+                  className="button button--ghost"
+                  onClick={() => changeResults({ filters: NO_SIMPLE_FILTERS })}
+                >
+                  {t('library.filters.clear')}
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <p className="muted">{t('items.empty')}</p>

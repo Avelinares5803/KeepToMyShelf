@@ -1,6 +1,6 @@
 # ADR 0006: Búsqueda, filtros y ordenación
 
-- **Estado:** aceptada; implementadas la F7-A (motor), la F7-B (buscador y orden) y la F7-C (cuadrícula virtualizada). Los filtros llegan en las entregas siguientes
+- **Estado:** aceptada; implementadas la F7-A (motor), la F7-B (buscador y orden), la F7-C (cuadrícula virtualizada) y la F7-D (filtros simples). Los filtros avanzados llegan en la F7-E
 - **Fecha:** 2026-11-04 (ampliada el 2026-11-05 con la F7-C)
 
 ## Contexto
@@ -45,6 +45,12 @@ Kysely construye la consulta y `.compile()` devuelve el SQL y sus parámetros; l
 ### Sin paginación ni índices nuevos
 
 `items.list` devuelve todos los resultados y la interfaz virtualiza solo el dibujado. Una prueba con 10 000 elementos comprueba los tiempos y que las tablas relacionadas se leen por sus índices. No hizo falta ninguna migración: los índices existentes cubren los `EXISTS`, y un `LIKE '%…%'` recorre la tabla de todos modos.
+
+### Filtros simples
+
+El estado de las casillas (`simple-filters.ts`) no es un árbol, sino lo marcado en cada atributo. `toFilterTree` lo convierte en el árbol del motor: un grupo `or` por atributo dentro de un grupo `and`. Así, el motor no sabe de dónde viene un filtro, y la F7-E podrá añadir los avanzados sin tocarlo.
+
+Los valores que ofrecen salen del canal `items.filterValues`: por papel, los que usa algún elemento de ese tipo fuera de la papelera, con sus alias. No se reutiliza la lista de «Catálogos» porque esa cuenta también la papelera y mezcla los papeles que comparten catálogo.
 
 ### Cuadrícula virtualizada
 

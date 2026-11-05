@@ -243,14 +243,14 @@ test('chooses catalog values with suggestions and shows them in the detail view'
   await page.getByLabel('Título', { exact: true }).fill('Sonic the Hedgehog');
 
   // Suggestions are found by other names too, and are only chosen when picked.
-  await field('Lo tengo en').fill('genesis');
+  await field('Mis plataformas').fill('genesis');
   await expect(suggestions()).toHaveText([
     '32X (Genesis 32X)',
     'Mega Drive (Sega Genesis)',
     'Crear «genesis»',
   ]);
   await option('Mega Drive (Sega Genesis)').click();
-  await expect(chosen('Lo tengo en')).toHaveText('Mega Drive');
+  await expect(chosen('Mis plataformas')).toHaveText('Mega Drive');
 
   // Enter alone never creates a value; "Create" must be picked.
   await field('Desarrolladoras').fill('Sega');
@@ -280,7 +280,7 @@ test('chooses catalog values with suggestions and shows them in the detail view'
 
   await button('Guardar').click();
   await expect(heading('Sonic the Hedgehog')).toBeVisible();
-  await expect(detailRow('Lo tengo en')).toContainText('Mega Drive');
+  await expect(detailRow('Mis plataformas')).toContainText('Mega Drive');
   await expect(detailRow('Desarrolladoras')).toContainText('Sega');
   await expect(detailRow('Distribuidoras')).toContainText('Sega');
   await expect(detailRow('Géneros')).toContainText('Plataformas');
@@ -314,7 +314,7 @@ test('chooses catalog values with suggestions and shows them in the detail view'
 
   // Editing keeps the chosen values.
   await page.getByRole('button', { name: 'Editar', exact: true }).click();
-  await expect(chosen('Lo tengo en')).toHaveText('Mega Drive');
+  await expect(chosen('Mis plataformas')).toHaveText('Mega Drive');
   await expect(page.getByRole('group', { name: 'Fecha 1' }).getByLabel('Año')).toHaveValue('1991');
 });
 

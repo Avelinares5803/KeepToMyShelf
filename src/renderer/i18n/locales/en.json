@@ -49,6 +49,23 @@
     "search": "Search by title",
     "noResults": "Nothing found.",
     "clearSearch": "Clear search",
+    "filters": {
+      "open": "Filters",
+      "openWithCount": "Filters ({{count}})",
+      "panel": "Simple filters",
+      "clear": "Remove filters",
+      "favorite": "Favorites",
+      "replay": {
+        "game": "Replayed",
+        "screen": "Rewatched"
+      },
+      "atLeast": "At least",
+      "anyRating": "Any",
+      "unrated": "Not rated",
+      "searchValues": "Search in {{field}}",
+      "noMatches": "No value matches.",
+      "tooMany": "Showing {{shown}} of {{total}}. Type to narrow it down."
+    },
     "sort": {
       "label": "Sort by",
       "reverse": "Reverse the order",
@@ -167,8 +184,8 @@
     },
     "roles": {
       "franchise": "Franchises",
-      "owned_on": "I own it on",
-      "released_on": "Released on",
+      "owned_on": "My platforms",
+      "released_on": "Release platforms",
       "genre": "Genres",
       "developer": "Developers",
       "publisher": "Publishers",

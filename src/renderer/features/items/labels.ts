@@ -12,6 +12,10 @@ export const statusLabel = (t: TFunction, kind: ItemKind, status: ItemStatus) =>
 /** "Replayed" for games, "Rewatched" for movies and series. */
 export const replayLabel = (t: TFunction, kind: ItemKind) => t(`items.replay.${grammar(kind)}`);
 
+/** The same, for a filter that shows several: "Replayed", "Rewatched". */
+export const replayPluralLabel = (t: TFunction, kind: ItemKind) =>
+  t(`library.filters.replay.${grammar(kind)}`);
+
 /** "Play dates" for games, "Watch dates" for movies and series. */
 export const datesLabel = (t: TFunction, kind: ItemKind) => t(`items.dates.${grammar(kind)}`);
 

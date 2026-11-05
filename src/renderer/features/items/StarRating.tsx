@@ -18,7 +18,7 @@ function Star({ position, rating }: { position: number; rating: number | null })
 }
 
 /** Star counts in the UI language: "4,5" in Spanish, "4.5" in English. */
-function useStarsText() {
+export function useStarsText() {
   const { i18n } = useTranslation();
   return (stars: number) => stars.toLocaleString(i18n.language);
 }

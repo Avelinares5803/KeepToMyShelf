@@ -106,12 +106,9 @@ test('tells assistive technology the place of each item in the whole library', a
 
 test('goes beyond the visible part with the keyboard', async () => {
   await openGames(games(500));
-  await page.getByRole('searchbox').focus();
-  // The sort field and the direction button come before the first card.
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
+  await cards().first().focus();
 
-  for (let index = 0; index < 80; index += 1) {
+  for (let index = 0; index < 79; index += 1) {
     await page.keyboard.press('Tab');
   }
   const focused = page.locator('.item-card:focus');

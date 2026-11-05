@@ -8,7 +8,7 @@
 import type { z } from 'zod';
 import type { CatalogEntrySummary } from './catalogs';
 import type { IpcInputSchemas } from './ipc-schemas';
-import type { ItemDetails, ItemSummary } from './items';
+import type { ItemDetails, ItemFilterValues, ItemSummary } from './items';
 import type { ItemMedia, PickedImports } from './media';
 import type { AppSettings } from './settings';
 
@@ -27,6 +27,7 @@ export const IpcChannels = {
   applySettingToAllProfiles: 'settings:apply-to-all',
   setNativeTheme: 'window:set-native-theme',
   listItems: 'items:list',
+  listItemFilterValues: 'items:list-filter-values',
   listTrash: 'items:list-trash',
   getItem: 'items:get',
   createItem: 'items:create',
@@ -107,6 +108,7 @@ export interface KeepToMyShelfApi {
   };
   items: {
     list(input: IpcInput<'listItems'>): Promise<IpcResult<ItemSummary[]>>;
+    filterValues(input: IpcInput<'listItemFilterValues'>): Promise<IpcResult<ItemFilterValues>>;
     listTrash(input: IpcInput<'listTrash'>): Promise<IpcResult<ItemSummary[]>>;
     get(input: IpcInput<'getItem'>): Promise<IpcResult<ItemDetails>>;
     create(input: IpcInput<'createItem'>): Promise<IpcResult<ItemDetails>>;

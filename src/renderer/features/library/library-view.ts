@@ -5,6 +5,7 @@ import {
   type SortDirection,
 } from '../../../core/filters/item-sort';
 import type { ItemKind } from '../../../shared/content';
+import { NO_SIMPLE_FILTERS, type SimpleFilters } from './simple-filters';
 
 /** The first item the user could see. Its place is kept in case the item is gone on return. */
 export interface LibraryAnchor {
@@ -16,6 +17,8 @@ export interface LibraryAnchor {
 export interface LibraryView {
   readonly search: string;
   readonly sort: ItemSort;
+  readonly filters: SimpleFilters;
+  readonly filtersOpen: boolean;
   /** Where to return to; null is the top of the page. */
   readonly anchor: LibraryAnchor | null;
 }
@@ -25,6 +28,8 @@ export type LibraryViews = Readonly<Partial<Record<ItemKind, LibraryView>>>;
 export const INITIAL_LIBRARY_VIEW: LibraryView = {
   search: '',
   sort: DEFAULT_ITEM_SORT,
+  filters: NO_SIMPLE_FILTERS,
+  filtersOpen: false,
   anchor: null,
 };
 

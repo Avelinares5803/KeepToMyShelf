@@ -31,6 +31,15 @@ export interface EntryName {
   readonly name: string;
 }
 
+/** A catalog value offered by the filters of a library. */
+export interface ItemFilterValue extends EntryName {
+  /** Other names it is known by; the filters' own search looks at them too. */
+  readonly aliases: readonly string[];
+}
+
+/** Per role, the values that the items of a library use, by name. */
+export type ItemFilterValues = Readonly<Partial<Record<ItemRole, readonly ItemFilterValue[]>>>;
+
 export interface ItemRelease {
   /** Null when no region was given or the region was deleted. */
   readonly region: EntryName | null;

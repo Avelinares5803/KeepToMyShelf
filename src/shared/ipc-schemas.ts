@@ -148,6 +148,7 @@ export const ipcInputSchemas = {
     filter: filterNodeSchema.optional(),
     sort: itemSortSchema.optional(),
   }),
+  listItemFilterValues: z.object({ token: sessionTokenSchema, kind: itemKindSchema }),
   listTrash: z.object({ token: sessionTokenSchema, kind: itemKindSchema.nullable() }),
   getItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   // `cover` is the item's cover, `images` its whole gallery and `documents` all its

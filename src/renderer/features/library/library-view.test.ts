@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { ITEM_SORT_FIELDS } from '../../../core/filters/item-sort';
 import { INITIAL_LIBRARY_VIEW, libraryViewOf, reversedSort, sortByField } from './library-view';
+import { NO_SIMPLE_FILTERS } from './simple-filters';
 
 describe('library view', () => {
   it('starts empty, in title order', () => {
     expect(libraryViewOf({}, 'game')).toEqual({
       search: '',
       sort: { field: 'title', direction: 'asc' },
+      filters: NO_SIMPLE_FILTERS,
+      filtersOpen: false,
       anchor: null,
     });
   });

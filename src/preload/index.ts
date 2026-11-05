@@ -34,6 +34,7 @@ const api: KeepToMyShelfApi = {
   },
   items: {
     list: invoke(IpcChannels.listItems),
+    filterValues: invoke(IpcChannels.listItemFilterValues),
     listTrash: invoke(IpcChannels.listTrash),
     get: invoke(IpcChannels.getItem),
     create: invoke(IpcChannels.createItem),

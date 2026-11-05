@@ -13,6 +13,20 @@ export interface SeedItem {
   readonly createdAt?: string;
   readonly alternateTitle?: string;
   readonly releaseDate?: string;
+  readonly status?: string;
+  readonly favorite?: boolean;
+  readonly replay?: boolean;
+  readonly physical?: boolean;
+  readonly digital?: boolean;
+  /** Catalog values, created if they do not exist yet. */
+  readonly entries?: readonly SeedEntry[];
+}
+
+export interface SeedEntry {
+  readonly role: string;
+  readonly catalog: string;
+  readonly name: string;
+  readonly aliases?: readonly string[];
 }
 
 /**
@@ -25,10 +39,30 @@ export function seedItems(dataDir: string, items: readonly SeedItem[]): void {
   const db = new Database(join(profilesDir, profileId!, 'library.db'));
   const insert = db.prepare(
     `INSERT INTO item (uuid, kind, title, title_norm, placeholder_no, rating, started_on,
-       finished_on, created_at, updated_at)
+       finished_on, status, is_favorite, is_replay, owns_physical, owns_digital, created_at,
+       updated_at)
      VALUES (@uuid, @kind, @title, @titleNorm, @placeholder, @rating, @startedOn, @finishedOn,
-       @createdAt, @createdAt)`,
+       @status, @favorite, @replay, @physical, @digital, @createdAt, @createdAt)`,
   );
+  const entryId = (entry: SeedEntry): number => {
+    const found = db
+      .prepare('SELECT id FROM catalog_entry WHERE catalog = ? AND name = ?')
+      .get(entry.catalog, entry.name) as { id: number } | undefined;
+    if (found) return found.id;
+    const id = Number(
+      db
+        .prepare('INSERT INTO catalog_entry (catalog, name, name_key) VALUES (?, ?, ?)')
+        .run(entry.catalog, entry.name, normalizeForSearch(entry.name)).lastInsertRowid,
+    );
+    for (const alias of entry.aliases ?? []) {
+      db.prepare('INSERT INTO catalog_entry_alias (entry_id, name, name_key) VALUES (?, ?, ?)').run(
+        id,
+        alias,
+        normalizeForSearch(alias),
+      );
+    }
+    return id;
+  };
   db.transaction(() => {
     items.forEach((item, index) => {
       const id = insert.run({
@@ -40,8 +74,20 @@ export function seedItems(dataDir: string, items: readonly SeedItem[]): void {
         rating: item.rating ?? null,
         startedOn: item.startedOn ?? null,
         finishedOn: item.finishedOn ?? null,
+        status: item.status ?? null,
+        favorite: item.favorite ? 1 : 0,
+        replay: item.replay ? 1 : 0,
+        physical: item.physical ? 1 : 0,
+        digital: item.digital ? 1 : 0,
         createdAt: item.createdAt ?? '2026-01-01T00:00:00.000Z',
       }).lastInsertRowid;
+      for (const entry of item.entries ?? []) {
+        db.prepare('INSERT INTO item_entry (item_id, entry_id, role) VALUES (?, ?, ?)').run(
+          id,
+          entryId(entry),
+          entry.role,
+        );
+      }
       if (item.alternateTitle !== undefined) {
         db.prepare('INSERT INTO item_alt_title (item_id, title, title_norm) VALUES (?, ?, ?)').run(
           id,

@@ -16,6 +16,10 @@ export const replayLabel = (t: TFunction, kind: ItemKind) => t(`items.replay.${g
 export const replayPluralLabel = (t: TFunction, kind: ItemKind) =>
   t(`library.filters.replay.${grammar(kind)}`);
 
+/** Its opposite, for the advanced filters: "Not replayed", "Not rewatched". */
+export const notReplayPluralLabel = (t: TFunction, kind: ItemKind) =>
+  t(`library.advanced.notReplay.${grammar(kind)}`);
+
 /** "Play dates" for games, "Watch dates" for movies and series. */
 export const datesLabel = (t: TFunction, kind: ItemKind) => t(`items.dates.${grammar(kind)}`);
 

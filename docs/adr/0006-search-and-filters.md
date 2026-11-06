@@ -1,7 +1,7 @@
 # ADR 0006: Búsqueda, filtros y ordenación
 
-- **Estado:** aceptada; implementadas la F7-A (motor), la F7-B (buscador y orden), la F7-C (cuadrícula virtualizada) y la F7-D (filtros simples). Los filtros avanzados llegan en la F7-E
-- **Fecha:** 2026-11-04 (ampliada el 2026-11-05 con la F7-C)
+- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples) y F7-E (filtros avanzados)
+- **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes)
 
 ## Contexto
 
@@ -48,9 +48,15 @@ Kysely construye la consulta y `.compile()` devuelve el SQL y sus parámetros; l
 
 ### Filtros simples
 
-El estado de las casillas (`simple-filters.ts`) no es un árbol, sino lo marcado en cada atributo. `toFilterTree` lo convierte en el árbol del motor: un grupo `or` por atributo dentro de un grupo `and`. Así, el motor no sabe de dónde viene un filtro, y la F7-E podrá añadir los avanzados sin tocarlo.
+El estado de las casillas (`simple-filters.ts`) no es un árbol, sino lo marcado en cada atributo. `toFilterTree` lo convierte en el árbol del motor: un grupo `or` por atributo dentro de un grupo `and`. Así, el motor no sabe de dónde viene un filtro.
 
 Los valores que ofrecen salen del canal `items.filterValues`: por papel, los que usa algún elemento de ese tipo fuera de la papelera, con sus alias. No se reutiliza la lista de «Catálogos» porque esa cuenta también la papelera y mezcla los papeles que comparten catálogo.
+
+### Filtros avanzados y modos
+
+El constructor (`advanced-filters.ts`) guarda un borrador con la misma forma que el árbol del motor, pero admite filas a medias y un identificador por fila para React. `toAdvancedTree` descarta lo incompleto y genera el árbol, sin cambios en el motor ni en el IPC. La interfaz limita los grupos a 3 niveles; el motor, a 8.
+
+Cada modo guarda su propio estado, en lugar de compartir un solo árbol. Así no hay que traducir de uno a otro, algo imposible en general: un filtro avanzado no siempre cabe en casillas. Solo se aplica el modo en uso (`activeFilterTree`) y el otro se conserva. Los modos son botones con `aria-pressed`, no pestañas ARIA, porque ese patrón cambia de pestaña con las flechas, y aquí cambiar puede abrir una confirmación.
 
 ### Cuadrícula virtualizada
 

@@ -7,16 +7,17 @@ import { errorMessage } from '../../lib/ipc';
 import { useDebounced } from '../../lib/use-debounced';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
-import type { LibraryView } from './library-view';
+import { withoutMissingAdvancedValues } from './advanced-filters';
+import { FiltersPanel } from './FiltersPanel';
+import {
+  activeFilterCount,
+  activeFilterTree,
+  clearedActiveFilter,
+  type LibraryView,
+} from './library-view';
 import { LibraryGrid } from './LibraryGrid';
 import { LibraryToolbar } from './LibraryToolbar';
-import {
-  countMarks,
-  NO_SIMPLE_FILTERS,
-  toFilterTree,
-  withoutMissingValues,
-} from './simple-filters';
-import { SimpleFilters } from './SimpleFilters';
+import { withoutMissingValues } from './simple-filters';
 
 const SEARCH_DELAY_MS = 250;
 
@@ -50,7 +51,7 @@ export function LibraryScreen({
   const isSearching = searchText.length > 0;
   // Untitled items are found by the name they show, which depends on the UI language.
   const untitledLabel = t('items.untitled', { number: '' }).trim();
-  const filter = toFilterTree(view.filters);
+  const filter = activeFilterTree(kind, view);
   const filterKey = JSON.stringify(filter);
   const hasFilters = filter !== undefined;
   const items = useLoad(
@@ -69,12 +70,15 @@ export function LibraryScreen({
   const trashCount = trash.data?.length ?? 0;
   const error = items.error ?? trash.error ?? filterValues.error;
 
-  // A marked value may be gone when coming back (e.g. deleted from its catalog).
+  // A chosen value may be gone when coming back (e.g. deleted from its catalog).
   useEffect(() => {
     if (filterValues.data === null) return;
-    const kept = withoutMissingValues(view.filters, filterValues.data);
-    if (kept !== view.filters) onViewChange({ filters: kept });
-    // Only when the values arrive: marks made after that are always of existing values.
+    const filters = withoutMissingValues(view.filters, filterValues.data);
+    const advanced = withoutMissingAdvancedValues(kind, view.advanced, filterValues.data);
+    if (filters !== view.filters || advanced !== view.advanced) {
+      onViewChange({ filters, advanced });
+    }
+    // Only when the values arrive: what is chosen after that always exists.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterValues.data]);
 
@@ -118,19 +122,14 @@ export function LibraryScreen({
         kind={kind}
         search={view.search}
         sort={sort}
-        filterMarks={countMarks(view.filters)}
+        filterMarks={activeFilterCount(kind, view)}
         filtersOpen={view.filtersOpen}
         onSearch={(search) => changeResults({ search })}
         onSort={(next) => changeResults({ sort: next })}
         onToggleFilters={() => onViewChange({ filtersOpen: !view.filtersOpen })}
       />
       {view.filtersOpen && (
-        <SimpleFilters
-          kind={kind}
-          filters={view.filters}
-          values={filterValues.data}
-          onChange={(filters) => changeResults({ filters })}
-        />
+        <FiltersPanel kind={kind} view={view} values={filterValues.data} onChange={changeResults} />
       )}
 
       {error !== null && (
@@ -156,7 +155,7 @@ export function LibraryScreen({
                 <button
                   type="button"
                   className="button button--ghost"
-                  onClick={() => changeResults({ filters: NO_SIMPLE_FILTERS })}
+                  onClick={() => changeResults(clearedActiveFilter(view))}
                 >
                   {t('library.filters.clear')}
                 </button>

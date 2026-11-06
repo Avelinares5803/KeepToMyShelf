@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-05, tras la F7-D.
+**Última actualización:** 2026-11-06, tras la F7-E (fin de la F7).
 
 ---
 
@@ -40,8 +40,8 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F4 Elementos              | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
 | F5 Catálogos              | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
 | F6 Multimedia             | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ✅ Hecha (PR #25 a #28 y la F6-C)              |
-| **F7 Búsqueda y filtros** | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | 🚧 **En curso** (F7-A a F7-D; sigue la F7-E)   |
-| F8 Películas y series     | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | Pendiente de revisión                          |
+| F7 Búsqueda y filtros     | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | ✅ Hecha (PR #33 a #36 y la F7-E)              |
+| **F8 Películas y series** | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | ⏭️ **Siguiente**: revisar si queda algo        |
 | F9 Colecciones            | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
 | F10 Personalización       | Fondos predeterminados e importados, desenfoque                                                                                                                | Pendiente                                      |
 | F11 Copias de seguridad   | Copia y restauración manual, copia antes de borrar un perfil                                                                                                   | Pendiente (la copia antes de migrar ya existe) |
@@ -228,6 +228,7 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
   - Los filtros simples son listas de casillas: OR dentro de un atributo, AND entre atributos. Están en un panel plegable encima de la cuadrícula, que se abre con el botón «Filtros (N)», y se aplican al momento.
   - **En los simples** (acordado el 2026-11-05): una casilla «Favoritos» y otra «Rejugados» («Revisionadas» en películas y series), y en la valoración «Al menos» (en pasos de media estrella) y «Sin valorar», que se suman entre sí.
   - Los avanzados son un constructor de grupos AND/OR anidados. **«No favoritos» y «No rejugados» aparecen ahí**, no en los simples.
+  - **En los avanzados** (acordado el 2026-11-06): hasta **3 niveles de grupos**, contando el principal; el motor admite 8, así que se podría ampliar. Los valores se eligen con un **desplegable normal**; el autocompletado queda como mejora anotada. Las condiciones a medias no se aplican ni cuentan.
   - Cada pestaña guarda sus propios filtros y **solo se aplica una**. La otra se ve atenuada y sus filtros se ignoran, pero no se borran.
   - Si la pestaña en uso tiene filtros, cambiar pide confirmación («Si continúas, se usarán los filtros avanzados y se ignorarán los filtros simples. No se borrarán: podrás volver a ellos.»), con el foco en «Cancelar». Si no tiene, se cambia directamente.
   - «Quitar filtros» solo vacía la pestaña en uso.
@@ -245,7 +246,7 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
 - F7-B: buscador, selector de orden, «(N)», aviso de «sin resultados» y estado por modo. ✅ Hecha.
 - F7-C: cuadrícula virtualizada, con la prueba E2E de 10 000 elementos. ✅ Hecha.
 - F7-D: filtros simples y nombres nuevos de las plataformas. ✅ Hecha.
-- F7-E: filtros avanzados y las dos pestañas.
+- F7-E: filtros avanzados y las dos pestañas. ✅ Hecha.
 
 ### 3.7 Colecciones (F9)
 
@@ -342,6 +343,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - Visor de PDF integrado (pdf.js).
 - Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.
 - Un control para agrandar o reducir las portadas de la biblioteca.
+- Elegir los valores de los filtros avanzados con autocompletado (también por alias), en lugar de un desplegable, si las listas se hacen muy largas.
 - Orden natural de los números en los títulos y los catálogos: hoy «Final Fantasy 10» va antes que «Final Fantasy 2». Necesita una columna o una función de orden propia en SQLite.
 - Añadir imágenes y documentos arrastrándolos a la ventana. Necesita `webUtils.getPathForFile` en el preload para obtener la ruta del archivo soltado.
 - Exportar e importar bibliotecas (JSON/CSV) y copias programadas.

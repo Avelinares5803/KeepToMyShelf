@@ -64,7 +64,48 @@
       "unrated": "Not rated",
       "searchValues": "Search in {{field}}",
       "noMatches": "No value matches.",
-      "tooMany": "Showing {{shown}} of {{total}}. Type to narrow it down."
+      "tooMany": "Showing {{shown}} of {{total}}. Type to narrow it down.",
+      "simple": "Simple filters",
+      "advanced": "Advanced filters",
+      "switchTitle": {
+        "simple": "Use the simple filters?",
+        "advanced": "Use the advanced filters?"
+      },
+      "switchText": {
+        "simple": "If you continue, the simple filters will be used and the advanced filters will be ignored. They will not be deleted: you can go back to them.",
+        "advanced": "If you continue, the advanced filters will be used and the simple filters will be ignored. They will not be deleted: you can go back to them."
+      },
+      "switchConfirm": {
+        "simple": "Use simple filters",
+        "advanced": "Use advanced filters"
+      }
+    },
+    "advanced": {
+      "match": "Match",
+      "all": "all of these conditions",
+      "any": "any of these conditions",
+      "field": "Field",
+      "operator": "Operator",
+      "value": "Value",
+      "chooseField": "Choose a field",
+      "chooseValue": "Choose a value",
+      "addCondition": "Add condition",
+      "addGroup": "Add group",
+      "removeGroup": "Remove group",
+      "removeCondition": "Remove condition",
+      "notFavorite": "Not favorites",
+      "notReplay": {
+        "game": "Not replayed",
+        "screen": "Not rewatched"
+      },
+      "operators": {
+        "is": "is",
+        "isNot": "is not",
+        "gte": "at least",
+        "lte": "at most",
+        "isEmpty": "not rated"
+      },
+      "hint": "Conditions that are not complete do not apply."
     },
     "sort": {
       "label": "Sort by",

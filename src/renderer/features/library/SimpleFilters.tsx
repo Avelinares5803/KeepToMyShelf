@@ -8,13 +8,7 @@ import type { ItemKind } from '../../../shared/content';
 import type { ItemFilterValue, ItemFilterValues } from '../../../shared/items';
 import { replayPluralLabel, roleLabel, statusLabel } from '../items/labels';
 import { useStarsText } from '../items/StarRating';
-import {
-  countMarks,
-  FORMAT_OPTIONS,
-  NO_SIMPLE_FILTERS,
-  toggled,
-  type SimpleFilters as Filters,
-} from './simple-filters';
+import { FORMAT_OPTIONS, toggled, type SimpleFilters as Filters } from './simple-filters';
 
 /** With more values than this, an attribute gets its own search box. */
 const SEARCH_FROM_VALUES = 10;
@@ -55,14 +49,6 @@ export function SimpleFilters({ kind, filters, values, onChange }: SimpleFilters
           checked={filters.replay}
           onChange={() => change({ replay: !filters.replay })}
         />
-        <button
-          type="button"
-          className="button button--ghost simple-filters__clear"
-          disabled={countMarks(filters) === 0}
-          onClick={() => onChange(NO_SIMPLE_FILTERS)}
-        >
-          {t('library.filters.clear')}
-        </button>
       </div>
 
       <div className="simple-filters__sections">

@@ -64,7 +64,48 @@
       "unrated": "Sin valorar",
       "searchValues": "Buscar en {{field}}",
       "noMatches": "Ningún valor coincide.",
-      "tooMany": "Se muestran {{shown}} de {{total}}. Escribe para acotar."
+      "tooMany": "Se muestran {{shown}} de {{total}}. Escribe para acotar.",
+      "simple": "Filtros simples",
+      "advanced": "Filtros avanzados",
+      "switchTitle": {
+        "simple": "¿Usar los filtros simples?",
+        "advanced": "¿Usar los filtros avanzados?"
+      },
+      "switchText": {
+        "simple": "Si continúas, se usarán los filtros simples y se ignorarán los filtros avanzados. No se borrarán: podrás volver a ellos.",
+        "advanced": "Si continúas, se usarán los filtros avanzados y se ignorarán los filtros simples. No se borrarán: podrás volver a ellos."
+      },
+      "switchConfirm": {
+        "simple": "Usar filtros simples",
+        "advanced": "Usar filtros avanzados"
+      }
+    },
+    "advanced": {
+      "match": "Cumple",
+      "all": "todas estas condiciones",
+      "any": "alguna de estas condiciones",
+      "field": "Campo",
+      "operator": "Operador",
+      "value": "Valor",
+      "chooseField": "Elige un campo",
+      "chooseValue": "Elige un valor",
+      "addCondition": "Añadir condición",
+      "addGroup": "Añadir grupo",
+      "removeGroup": "Quitar grupo",
+      "removeCondition": "Quitar condición",
+      "notFavorite": "No favoritos",
+      "notReplay": {
+        "game": "No rejugados",
+        "screen": "No revisionadas"
+      },
+      "operators": {
+        "is": "es",
+        "isNot": "no es",
+        "gte": "al menos",
+        "lte": "como mucho",
+        "isEmpty": "sin valorar"
+      },
+      "hint": "Las condiciones sin completar no se aplican."
     },
     "sort": {
       "label": "Ordenar por",

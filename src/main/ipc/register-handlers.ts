@@ -2,6 +2,7 @@ import { app, ipcMain, nativeTheme } from 'electron';
 import { IpcChannels } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
 import type { CatalogService } from '../application/catalog-service';
+import type { CollectionService } from '../application/collection-service';
 import type { ItemService } from '../application/item-service';
 import type { MediaService } from '../application/media-service';
 import type { ProfileService } from '../application/profile-service';
@@ -17,6 +18,7 @@ export interface Services {
   readonly items: ItemService;
   readonly catalogs: CatalogService;
   readonly media: MediaService;
+  readonly collections: CollectionService;
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
@@ -27,6 +29,7 @@ export function registerIpcHandlers({
   items,
   catalogs,
   media,
+  collections,
 }: Services): void {
   const handlers: Record<keyof typeof IpcChannels, (input: unknown) => unknown> = {
     getAppInfo: createHandler(ipcInputSchemas.getAppInfo, () => ({
@@ -137,6 +140,38 @@ export function registerIpcHandlers({
     ),
     listItemMedia: createHandler(ipcInputSchemas.listItemMedia, ({ token, itemId }) =>
       media.list(token, itemId),
+    ),
+    listCollections: createHandler(ipcInputSchemas.listCollections, ({ token }) =>
+      collections.list(token),
+    ),
+    getCollection: createHandler(ipcInputSchemas.getCollection, ({ token, id }) =>
+      collections.get(token, id),
+    ),
+    createCollection: createHandler(ipcInputSchemas.createCollection, ({ token, name, cover }) =>
+      collections.create(token, { name, cover }),
+    ),
+    updateCollection: createHandler(
+      ipcInputSchemas.updateCollection,
+      ({ token, id, name, cover }) => collections.update(token, id, { name, cover }),
+    ),
+    deleteCollection: createHandler(ipcInputSchemas.deleteCollection, ({ token, id }) =>
+      collections.delete(token, id),
+    ),
+    listCollectionItems: createHandler(
+      ipcInputSchemas.listCollectionItems,
+      ({ token, id, kind, search, sort }) =>
+        collections.listItems(token, id, { kind, search, sort }),
+    ),
+    listCollectionMemberIds: createHandler(
+      ipcInputSchemas.listCollectionMemberIds,
+      ({ token, id }) => collections.memberIds(token, id),
+    ),
+    listItemCollections: createHandler(ipcInputSchemas.listItemCollections, ({ token, itemId }) =>
+      collections.forItem(token, itemId),
+    ),
+    changeCollectionMemberships: createHandler(
+      ipcInputSchemas.changeCollectionMemberships,
+      ({ token, add, remove }) => collections.changeMemberships(token, { add, remove }),
     ),
   };
 

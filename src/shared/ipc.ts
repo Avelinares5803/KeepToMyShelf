@@ -7,6 +7,7 @@
  */
 import type { z } from 'zod';
 import type { CatalogEntrySummary } from './catalogs';
+import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
 import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemFilterValues, ItemSummary } from './items';
 import type { ItemMedia, PickedImports } from './media';
@@ -46,6 +47,15 @@ export const IpcChannels = {
   openDocument: 'media:open-document',
   discardImports: 'media:discard-imports',
   listItemMedia: 'media:list',
+  listCollections: 'collections:list',
+  getCollection: 'collections:get',
+  createCollection: 'collections:create',
+  updateCollection: 'collections:update',
+  deleteCollection: 'collections:delete',
+  listCollectionItems: 'collections:list-items',
+  listCollectionMemberIds: 'collections:list-member-ids',
+  listItemCollections: 'collections:list-for-item',
+  changeCollectionMemberships: 'collections:change-memberships',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -142,5 +152,24 @@ export interface KeepToMyShelfApi {
     openDocument(input: IpcInput<'openDocument'>): Promise<IpcResult<void>>;
     discardImports(input: IpcInput<'discardImports'>): Promise<IpcResult<void>>;
     list(input: IpcInput<'listItemMedia'>): Promise<IpcResult<ItemMedia>>;
+  };
+  collections: {
+    list(input: IpcInput<'listCollections'>): Promise<IpcResult<CollectionSummary[]>>;
+    get(input: IpcInput<'getCollection'>): Promise<IpcResult<CollectionDetails>>;
+    create(input: IpcInput<'createCollection'>): Promise<IpcResult<CollectionDetails>>;
+    update(input: IpcInput<'updateCollection'>): Promise<IpcResult<CollectionDetails>>;
+    /** Deletes the collection for good; its items are never deleted. */
+    delete(input: IpcInput<'deleteCollection'>): Promise<IpcResult<void>>;
+    /** Its items without those in the trash, of one kind or all, searched and sorted. */
+    listItems(input: IpcInput<'listCollectionItems'>): Promise<IpcResult<ItemSummary[]>>;
+    /** The ids of its items without those in the trash, to mark them when choosing. */
+    memberIds(input: IpcInput<'listCollectionMemberIds'>): Promise<IpcResult<number[]>>;
+    /** The collections an item belongs to. */
+    forItem(input: IpcInput<'listItemCollections'>): Promise<IpcResult<CollectionName[]>>;
+    /**
+     * Adds and removes items. Only the changes are sent: memberships of items in the trash,
+     * which the UI does not show, are kept.
+     */
+    changeMemberships(input: IpcInput<'changeCollectionMemberships'>): Promise<IpcResult<void>>;
   };
 }

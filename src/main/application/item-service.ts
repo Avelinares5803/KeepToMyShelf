@@ -93,7 +93,10 @@ const toSummary = (row: SummaryRow): Omit<ItemSummary, 'cover'> => ({
   deletedAt: row.deleted_at,
 });
 
-const toSummaryWithCover = (row: SummaryRow & CoverColumns): ItemSummary => ({
+/** A row of the library query (`buildItemListQuery`): an item with its cover. */
+export type ItemSummaryRow = SummaryRow & CoverColumns;
+
+export const toItemSummary = (row: ItemSummaryRow): ItemSummary => ({
   ...toSummary(row),
   cover:
     row.cover_sha256 === null
@@ -115,8 +118,8 @@ export class ItemService {
     const db = this.db(token);
     const filter = options.filter ? validateFilter(kind, options.filter) : null;
     const query = buildItemListQuery(kind, { ...options, filter });
-    const rows = db.prepare(query.sql).all(...query.parameters) as (SummaryRow & CoverColumns)[];
-    return rows.map(toSummaryWithCover);
+    const rows = db.prepare(query.sql).all(...query.parameters) as ItemSummaryRow[];
+    return rows.map(toItemSummary);
   }
 
   /**
@@ -162,8 +165,8 @@ export class ItemService {
          WHERE item.deleted_at IS NOT NULL AND (? IS NULL OR item.kind = ?)
          ORDER BY item.deleted_at DESC, item.id DESC`,
       )
-      .all(kind, kind) as (SummaryRow & CoverColumns)[];
-    return rows.map(toSummaryWithCover);
+      .all(kind, kind) as ItemSummaryRow[];
+    return rows.map(toItemSummary);
   }
 
   get(token: string, id: number): ItemDetails {

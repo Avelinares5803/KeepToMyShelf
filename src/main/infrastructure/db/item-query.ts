@@ -41,6 +41,7 @@ interface LibrarySchema {
   item_alt_title: { item_id: number; title_norm: string };
   item_release: { item_id: number; date: string };
   media_file: { id: number; sha256: string; width: number | null; height: number | null };
+  collection_item: { collection_id: number; item_id: number };
 }
 
 type ItemExpressions = ExpressionBuilder<LibrarySchema, 'item'>;
@@ -53,9 +54,11 @@ export interface ItemSearch {
 
 export interface ItemListOptions {
   readonly search?: ItemSearch | undefined;
-  /** Must have passed validateFilter for the same kind. */
+  /** Must have passed validateFilter for the same kind; only with a kind. */
   readonly filter?: FilterNode | null | undefined;
   readonly sort?: ItemSort | undefined;
+  /** Only the items of this collection. */
+  readonly collectionId?: number | undefined;
 }
 
 // Kysely only writes the SQL here: better-sqlite3 runs it, because Kysely's own execution is
@@ -142,14 +145,17 @@ function searchExpression(eb: ItemExpressions, text: string, label: string): Exp
 }
 
 /**
- * The library's items of one kind, without those in the trash. Whatever the direction, items
- * with nothing to sort by go last: untitled, not rated, without a date or with an unknown one.
- * Items that tie follow the title order, so the result is always the same.
+ * The library's items of one kind (or of every kind when `kind` is null), without those in
+ * the trash, optionally only those of a collection. Whatever the direction, items with nothing
+ * to sort by go last: untitled, not rated, without a date or with an unknown one. Items that
+ * tie follow the title order, so the result is always the same.
  */
-export function buildItemListQuery(kind: ItemKind, options: ItemListOptions): CompiledQuery {
-  const { search, filter, sort = DEFAULT_ITEM_SORT } = options;
+export function buildItemListQuery(kind: ItemKind | null, options: ItemListOptions): CompiledQuery {
+  const { search, filter, sort = DEFAULT_ITEM_SORT, collectionId } = options;
   const text = search ? normalizeForSearch(search.text) : '';
   const { direction } = sort;
+  // Filter fields depend on the kind: without one, there is no field to check them against.
+  if (filter != null && kind === null) throw new Error('A filter needs an item kind');
 
   const sorted = builder
     .selectFrom('item')
@@ -167,12 +173,23 @@ export function buildItemListQuery(kind: ItemKind, options: ItemListOptions): Co
       'cover.width as cover_width',
       'cover.height as cover_height',
     ])
-    .where('item.kind', '=', kind)
+    .$if(kind !== null, (query) => query.where('item.kind', '=', kind!))
     .where('item.deleted_at', 'is', null)
+    .$if(collectionId !== undefined, (query) =>
+      query.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('collection_item')
+            .select('collection_item.item_id')
+            .whereRef('collection_item.item_id', '=', 'item.id')
+            .where('collection_item.collection_id', '=', collectionId!),
+        ),
+      ),
+    )
     .$if(text.length > 0, (query) =>
       query.where((eb) => searchExpression(eb, text, search!.untitledLabel)),
     )
-    .$if(filter != null, (query) => query.where((eb) => filterExpression(eb, kind, filter!)))
+    .$if(filter != null, (query) => query.where((eb) => filterExpression(eb, kind!, filter!)))
     .orderBy(sortExpression(sort), (order) =>
       direction === 'asc' ? order.asc().nullsLast() : order.desc().nullsLast(),
     );

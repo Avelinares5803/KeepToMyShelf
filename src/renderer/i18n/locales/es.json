@@ -459,6 +459,14 @@
       "scope_not_allowed": "Solo los géneros de películas y series pueden limitarse a un tipo.",
       "too_many_aliases": "No se pueden añadir más de 50 nombres alternativos."
     },
+    "collection": {
+      "name_empty": "Escribe un nombre.",
+      "name_invalid_characters": "El nombre contiene caracteres no válidos.",
+      "name_too_long": "El nombre no puede tener más de 100 caracteres.",
+      "duplicate_name": "Ya existe una colección con ese nombre.",
+      "not_found": "Esa colección ya no existe.",
+      "invalid_change": "No se puede añadir y quitar a la vez el mismo elemento de una colección."
+    },
     "date": {
       "invalid_format": "La fecha no tiene un formato válido.",
       "invalid_year": "El año no es válido.",

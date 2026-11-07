@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-06, tras la F7-E (fin de la F7).
+**Última actualización:** 2026-11-07, tras la revisión de la F8 y la F9-A.
 
 ---
 
@@ -31,21 +31,21 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 
 ## 2. Estado de las fases
 
-| Fase                      | Contenido                                                                                                                                                      | Estado                                         |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| F0 Fundaciones            | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»                          | ✅ Hecha                                       |
-| F1 Núcleo                 | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                                     | ✅ Hecha                                       |
-| F2 Perfiles               | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                                        | ✅ Hecha                                       |
-| F3 Estructura de la UI    | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                                          | ✅ Hecha                                       |
-| F4 Elementos              | Los tres tipos: alta, ficha, edición, papelera                                                                                                                 | ✅ Hecha                                       |
-| F5 Catálogos              | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                                        | ✅ Hecha (PR #12 a #19 y #23)                  |
-| F6 Multimedia             | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                           | ✅ Hecha (PR #25 a #28 y la F6-C)              |
-| F7 Búsqueda y filtros     | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                                  | ✅ Hecha (PR #33 a #36 y la F7-E)              |
-| **F8 Películas y series** | Absorbida casi por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Al llegar aquí, revisar si queda algo específico | ⏭️ **Siguiente**: revisar si queda algo        |
-| F9 Colecciones            | Colecciones mixtas con portada                                                                                                                                 | Pendiente                                      |
-| F10 Personalización       | Fondos predeterminados e importados, desenfoque                                                                                                                | Pendiente                                      |
-| F11 Copias de seguridad   | Copia y restauración manual, copia antes de borrar un perfil                                                                                                   | Pendiente (la copia antes de migrar ya existe) |
-| F12 Distribución v1.0     | Workflow de release, instalador y portable, documentación final                                                                                                | Pendiente                                      |
+| Fase                    | Contenido                                                                                                                                        | Estado                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| F0 Fundaciones          | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                                       |
+| F1 Núcleo               | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                                       |
+| F2 Perfiles             | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                                       |
+| F3 Estructura de la UI  | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                                       |
+| F4 Elementos            | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                                       |
+| F5 Catálogos            | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)                  |
+| F6 Multimedia           | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)              |
+| F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)              |
+| F8 Películas y series   | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                |
+| **F9 Colecciones**      | Colecciones mixtas con portada                                                                                                                   | 🚧 **En curso**: F9-A hecha                    |
+| F10 Personalización     | Fondos predeterminados e importados, desenfoque                                                                                                  | Pendiente                                      |
+| F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | Pendiente (la copia antes de migrar ya existe) |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                      |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -223,7 +223,7 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
   - Todos los tipos: Estado, Rejugado/Revisionada, Formato, Valoración (≥, ≤ y «sin valorar»), Favorito, Sagas, Géneros, Países de origen, Etiquetas y Música.
   - Videojuegos: Mis plataformas, Plataformas de lanzamiento, Distribuidoras y Desarrolladoras.
   - Películas y series: Productoras, Dirección y Reparto.
-  - Más adelante, sin tocar el motor: año de lanzamiento, horas, temporadas.
+  - Más adelante: año de lanzamiento, horas, temporadas. Corregido en la revisión de la F8: el registro aún no tiene campos numéricos, y las temporadas están en otra tabla (`series_details`), así que hará falta un tipo de campo nuevo en el motor.
 - **Interfaz: dos pestañas, «Filtros simples» y «Filtros avanzados»** (acordado el 2026-11-04; sustituye a que el panel y el constructor compartieran un solo árbol):
   - Los filtros simples son listas de casillas: OR dentro de un atributo, AND entre atributos. Están en un panel plegable encima de la cuadrícula, que se abre con el botón «Filtros (N)», y se aplican al momento.
   - **En los simples** (acordado el 2026-11-05): una casilla «Favoritos» y otra «Rejugados» («Revisionadas» en películas y series), y en la valoración «Al menos» (en pasos de media estrella) y «Sin valorar», que se suman entre sí.
@@ -250,13 +250,33 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
 
 ### 3.7 Colecciones (F9)
 
+El detalle técnico está en el [ADR 0007](adr/0007-collections.md).
+
 - **Mixtas:** pueden contener videojuegos, películas y series, y se filtran por tipo.
 - **Contenido:** nombre, portada opcional y modificable, y elementos añadidos a mano.
 - **Integridad:**
   - Las colecciones guardan referencias, nunca copias de los elementos.
   - Un elemento en la papelera desaparece de sus colecciones, pero vuelve al restaurarlo.
   - Borrar una colección pide confirmación y nunca borra elementos.
-- Se propuso que las colecciones sean una cuarta opción en la pantalla de modos. Hay que confirmarlo en la F9.
+
+**Acordado para la F9 (2026-11-07):**
+
+1. **Entrada:** una cuarta tarjeta, «Colecciones», en la pantalla de modos.
+2. **Nombre:** obligatorio, de 1 a 100 caracteres. Se rechaza si ya existe otro igual sin distinguir mayúsculas ni tildes.
+3. **Orden:** los mismos criterios que la biblioteca, sin orden manual.
+4. **Dentro de la colección:** selector de tipo (Todo, Videojuegos, Películas, Series), buscador y orden. Sin filtros por atributo, porque dependen del tipo.
+5. **Añadir y quitar:** una ventana con casillas desde la colección y otra desde la ficha del elemento, con Guardar y Cancelar. Guardar hace de confirmación, porque quitar no borra el elemento.
+6. **Borrar una colección:** definitivo, sin papelera, con confirmación y el foco en «Cancelar».
+7. **Ficha del elemento:** una fila «Colecciones» solo si pertenece a alguna, y un botón para gestionarlas.
+
+- **La interfaz envía solo los cambios** (qué añadir y qué quitar), nunca la lista completa: si no, se perderían las pertenencias de los elementos en la papelera, que no se muestran.
+- **Ventana de una colección:** igual que la de un catálogo, no tiene aviso de cambios sin guardar.
+
+**Entregas (acordadas el 2026-11-07):**
+
+- F9-A: migración 0006, servicio, portada y barrido, consulta de elementos de una colección e IPC, sin cambios visibles. ✅ Hecha.
+- F9-B: pantallas: tarjeta de modo, lista de colecciones, crear, editar y borrar, y la colección con su tipo, búsqueda, orden y posición recordada hasta cerrar el perfil. Cuando se vea «Todo», la tarjeta de cada elemento indicará su tipo.
+- F9-C: pertenencias: la ventana de casillas desde la colección (con tipo y buscador, como mucho 100 filas dibujadas) y la ventana y la fila «Colecciones» en la ficha.
 
 ### 3.8 Personalización (F10)
 
@@ -327,6 +347,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - **Países de origen:** atributo añadido en la F5, que no estaba en la especificación.
 - **Portada:** primero era la primera imagen de la lista (F6-B); desde la F6-B3 es un campo propio, independiente de la galería, porque la regla implícita resultaba poco intuitiva.
 - **Selector por tipo en los filtros:** previsto en el ADR 0004 y descartado en la F7, porque cada biblioteca es de un solo tipo.
+- **F8 sin entregas propias:** su contenido se hizo en la F4 y la F5.
 
 ---
 
@@ -346,6 +367,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - Elegir los valores de los filtros avanzados con autocompletado (también por alias), en lugar de un desplegable, si las listas se hacen muy largas.
 - Orden natural de los números en los títulos y los catálogos: hoy «Final Fantasy 10» va antes que «Final Fantasy 2». Necesita una columna o una función de orden propia en SQLite.
 - Añadir imágenes y documentos arrastrándolos a la ventana. Necesita `webUtils.getPathForFile` en el preload para obtener la ruta del archivo soltado.
+- Colecciones: orden manual, usar la portada de uno de sus elementos, filtros por atributo al elegir un tipo, un filtro «Colección» en las bibliotecas y ordenar por la fecha en que se añadió (ya se guarda).
 - Exportar e importar bibliotecas (JSON/CSV) y copias programadas.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.
 - Integración opcional con APIs (IGDB, TMDB) e importación masiva.

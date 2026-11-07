@@ -115,6 +115,7 @@
       "rating": "Rating",
       "releaseDate": "Release date",
       "premiereDate": "Premiere date",
+      "releaseOrPremiereDate": "Release or premiere date",
       "startedOn": "Start date",
       "finishedOn": "End date",
       "direction": {
@@ -276,6 +277,25 @@
     "emptyTrash": "Empty trash",
     "emptyConfirm_one": "1 item from “{{scope}}” will be deleted permanently. This cannot be undone.",
     "emptyConfirm_other": "{{count}} items from “{{scope}}” will be deleted permanently. This cannot be undone."
+  },
+  "collections": {
+    "title": "Collections",
+    "new": "New collection",
+    "empty": "There are no collections yet. Click “New collection” to create the first one.",
+    "itemCount_one": "1 item",
+    "itemCount_other": "{{count}} items",
+    "emptyCollection": "This collection is empty.",
+    "show": "Show",
+    "all": "All",
+    "showAll": "Show all",
+    "edit": "Edit collection",
+    "delete": "Delete collection",
+    "deleteConfirm": "Are you sure you want to delete the collection “{{name}}”? Its items are not deleted.",
+    "editDialog": "Edit “{{name}}”",
+    "fields": {
+      "name": "Name",
+      "cover": "Cover"
+    }
   },
   "catalogs": {
     "title": "Catalogs",

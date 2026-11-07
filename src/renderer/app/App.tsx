@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ImageStorageChoice } from '../../core/media/import-rules';
 import type { SessionInfo } from '../../shared/ipc';
+import type { ItemSummary } from '../../shared/items';
 import type { AppSettings, SettingUpdate } from '../../shared/settings';
 import { CatalogsScreen } from '../features/catalogs/CatalogsScreen';
+import {
+  collectionViewOf,
+  withCollectionView,
+  withoutCollectionView,
+  type CollectionViews,
+} from '../features/collections/collection-view';
+import { CollectionScreen } from '../features/collections/CollectionScreen';
+import { CollectionsScreen } from '../features/collections/CollectionsScreen';
 import { ItemDetailScreen } from '../features/items/ItemDetailScreen';
 import { ItemEditScreen, type EditorGuard } from '../features/items/ItemEditScreen';
 import { UnsavedChangesDialog } from '../features/items/UnsavedChangesDialog';
@@ -36,6 +46,7 @@ export function App({ initialSettings }: AppProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [libraryViews, setLibraryViews] = useState<LibraryViews>({});
+  const [collectionViews, setCollectionViews] = useState<CollectionViews>({});
 
   // The item editor registers a guard; leaving it with unsaved changes asks first.
   const editorGuard = useRef<EditorGuard | null>(null);
@@ -98,6 +109,7 @@ export function App({ initialSettings }: AppProps) {
       await applySettings(unwrap(await window.api.settings.getForProfile({ token: opened.token })));
       dispatch({ type: 'reset' });
       setLibraryViews({});
+      setCollectionViews({});
       setSession(opened);
     });
 
@@ -115,6 +127,19 @@ export function App({ initialSettings }: AppProps) {
 
   const relabel = useCallback((label: string) => dispatch({ type: 'relabel', label }), []);
 
+  // The image import preferences of the open profile, for covers and galleries.
+  const imageImport = {
+    importChoice: settings.imageImportChoice,
+    optimizedMaxSide: settings.optimizedMaxSide,
+    onRememberChoice: (choice: ImageStorageChoice) =>
+      void updateSetting({ key: 'imageImportChoice', value: choice }),
+  };
+  const openItem = (item: ItemSummary) =>
+    dispatch({
+      type: 'open',
+      screen: { name: 'item', kind: item.kind, itemId: item.id, label: '' },
+    });
+
   const screenLabel = (screen: Screen): string => {
     switch (screen.name) {
       case 'modes':
@@ -129,6 +154,10 @@ export function App({ initialSettings }: AppProps) {
         return t('trash.title');
       case 'catalogs':
         return t('catalogs.title');
+      case 'collections':
+        return t('collections.title');
+      case 'collection':
+        return screen.label;
     }
   };
 
@@ -151,6 +180,7 @@ export function App({ initialSettings }: AppProps) {
         return (
           <ModeSelectionScreen
             onSelect={(kind) => dispatch({ type: 'open', screen: { name: 'library', kind } })}
+            onOpenCollections={() => dispatch({ type: 'open', screen: { name: 'collections' } })}
             onOpenCatalogs={() =>
               dispatch({ type: 'open', screen: { name: 'catalogs', kind: null } })
             }
@@ -177,12 +207,7 @@ export function App({ initialSettings }: AppProps) {
             onOpenCatalogs={() =>
               dispatch({ type: 'open', screen: { name: 'catalogs', kind: screen.kind } })
             }
-            onOpenItem={(item) =>
-              dispatch({
-                type: 'open',
-                screen: { name: 'item', kind: item.kind, itemId: item.id, label: '' },
-              })
-            }
+            onOpenItem={openItem}
           />
         );
       case 'item':
@@ -209,10 +234,9 @@ export function App({ initialSettings }: AppProps) {
             kind={screen.kind}
             itemId={screen.itemId}
             imageImport={{
-              choice: settings.imageImportChoice,
-              optimizedMaxSide: settings.optimizedMaxSide,
-              onRemember: (choice) =>
-                void updateSetting({ key: 'imageImportChoice', value: choice }),
+              choice: imageImport.importChoice,
+              optimizedMaxSide: imageImport.optimizedMaxSide,
+              onRemember: imageImport.onRememberChoice,
             }}
             registerGuard={registerGuard}
             onCancel={goBack}
@@ -231,6 +255,38 @@ export function App({ initialSettings }: AppProps) {
         return <TrashScreen token={token} initialKind={screen.kind} />;
       case 'catalogs':
         return <CatalogsScreen token={token} initialKind={screen.kind} />;
+      case 'collections':
+        return (
+          <CollectionsScreen
+            token={token}
+            imageImport={imageImport}
+            onOpen={({ id, name }) =>
+              dispatch({
+                type: 'open',
+                screen: { name: 'collection', collectionId: id, label: name },
+              })
+            }
+          />
+        );
+      case 'collection':
+        return (
+          <CollectionScreen
+            key={screen.collectionId}
+            token={token}
+            collectionId={screen.collectionId}
+            view={collectionViewOf(collectionViews, screen.collectionId)}
+            onViewChange={(change) =>
+              setCollectionViews((views) => withCollectionView(views, screen.collectionId, change))
+            }
+            imageImport={imageImport}
+            onTitle={relabel}
+            onOpenItem={openItem}
+            onDeleted={() => {
+              setCollectionViews((views) => withoutCollectionView(views, screen.collectionId));
+              dispatch({ type: 'back' });
+            }}
+          />
+        );
     }
   }
 

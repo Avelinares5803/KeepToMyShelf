@@ -102,6 +102,28 @@ describe('navigationReducer', () => {
     ]);
   });
 
+  it('tells collections apart by id, not by their label, and relabels them', () => {
+    const favorites = { name: 'collection', collectionId: 1, label: 'Favoritos' } as const;
+    const state = run(
+      { type: 'open', screen: { name: 'collections' } },
+      { type: 'open', screen: favorites },
+      { type: 'open', screen: { ...favorites, label: 'Otro nombre' } },
+      { type: 'relabel', label: 'Favoritas' },
+    );
+
+    expect(state.stack).toEqual([
+      { name: 'modes' },
+      { name: 'collections' },
+      { ...favorites, label: 'Favoritas' },
+    ]);
+    expect(
+      run(
+        { type: 'open', screen: favorites },
+        { type: 'open', screen: { ...favorites, collectionId: 2 } },
+      ).stack,
+    ).toHaveLength(3);
+  });
+
   it('resets to the mode selection screen', () => {
     expect(run({ type: 'open', screen: games }, { type: 'reset' })).toEqual(initialNavigation);
   });

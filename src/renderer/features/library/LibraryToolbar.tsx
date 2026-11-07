@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ITEM_SORT_FIELDS,
@@ -9,15 +9,21 @@ import type { ItemKind } from '../../../shared/content';
 import { reversedSort, sortByField } from './library-view';
 
 interface LibraryToolbarProps {
-  kind: ItemKind;
+  /** The kind listed; null when every kind is (e.g. in a collection). */
+  kind: ItemKind | null;
   search: string;
   sort: ItemSort;
-  /** How many filters are marked, shown in the button that opens them. */
-  filterMarks: number;
-  filtersOpen: boolean;
+  /** The button of the filters; left out where there are none (e.g. in a collection). */
+  filters?: {
+    /** How many filters are marked, shown in the button that opens them. */
+    readonly marks: number;
+    readonly open: boolean;
+    readonly onToggle: () => void;
+  };
+  /** More controls, between the search box and the sort controls. */
+  children?: ReactNode;
   onSearch: (search: string) => void;
   onSort: (sort: ItemSort) => void;
-  onToggleFilters: () => void;
 }
 
 /** What each direction means depends on what is being sorted. */
@@ -26,24 +32,27 @@ const directionGroup = (field: ItemSortField) => {
   return field === 'rating' ? 'number' : 'date';
 };
 
+/** "Release date" for games, "premiere date" for movies and series, both for every kind. */
+function releaseDateKey(kind: ItemKind | null): string {
+  if (kind === null) return 'library.sort.releaseOrPremiereDate';
+  return kind === 'game' ? 'library.sort.releaseDate' : 'library.sort.premiereDate';
+}
+
 /** The search box, the button of the filters and the sort controls of a library. */
 export function LibraryToolbar({
   kind,
   search,
   sort,
-  filterMarks,
-  filtersOpen,
+  filters,
+  children,
   onSearch,
   onSort,
-  onToggleFilters,
 }: LibraryToolbarProps) {
   const { t } = useTranslation();
   const id = useId();
 
   const fieldLabel = (field: ItemSortField) =>
-    field === 'releaseDate' && kind !== 'game'
-      ? t('library.sort.premiereDate')
-      : t(`library.sort.${field}`);
+    field === 'releaseDate' ? t(releaseDateKey(kind)) : t(`library.sort.${field}`);
 
   return (
     <div className="library__toolbar inline-field">
@@ -55,16 +64,19 @@ export function LibraryToolbar({
         value={search}
         onChange={(event) => onSearch(event.target.value)}
       />
-      <button
-        type="button"
-        className="button button--ghost"
-        aria-expanded={filtersOpen}
-        onClick={onToggleFilters}
-      >
-        {filterMarks > 0
-          ? t('library.filters.openWithCount', { count: filterMarks })
-          : t('library.filters.open')}
-      </button>
+      {filters && (
+        <button
+          type="button"
+          className="button button--ghost"
+          aria-expanded={filters.open}
+          onClick={filters.onToggle}
+        >
+          {filters.marks > 0
+            ? t('library.filters.openWithCount', { count: filters.marks })
+            : t('library.filters.open')}
+        </button>
+      )}
+      {children}
       <div className="inline-field">
         <label htmlFor={`${id}-sort`}>{t('library.sort.label')}</label>
         <select

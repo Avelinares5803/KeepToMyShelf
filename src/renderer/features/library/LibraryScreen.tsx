@@ -122,11 +122,13 @@ export function LibraryScreen({
         kind={kind}
         search={view.search}
         sort={sort}
-        filterMarks={activeFilterCount(kind, view)}
-        filtersOpen={view.filtersOpen}
+        filters={{
+          marks: activeFilterCount(kind, view),
+          open: view.filtersOpen,
+          onToggle: () => onViewChange({ filtersOpen: !view.filtersOpen }),
+        }}
         onSearch={(search) => changeResults({ search })}
         onSort={(next) => changeResults({ sort: next })}
-        onToggleFilters={() => onViewChange({ filtersOpen: !view.filtersOpen })}
       />
       {view.filtersOpen && (
         <FiltersPanel kind={kind} view={view} values={filterValues.data} onChange={changeResults} />

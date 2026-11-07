@@ -14,7 +14,9 @@ export type Screen =
   | { readonly name: 'edit'; readonly kind: ItemKind; readonly itemId: number | null }
   | { readonly name: 'trash'; readonly kind: ItemKind }
   /** `kind` is the library it was opened from, or null from the mode selection. */
-  | { readonly name: 'catalogs'; readonly kind: ItemKind | null };
+  | { readonly name: 'catalogs'; readonly kind: ItemKind | null }
+  | { readonly name: 'collections' }
+  | { readonly name: 'collection'; readonly collectionId: number; readonly label: string };
 
 export interface NavigationState {
   /** History of visited screens; the last one is shown. Never empty. */
@@ -27,7 +29,7 @@ export type NavigationAction =
   | { readonly type: 'goTo'; readonly index: number }
   /** Swaps the current screen, e.g. the editor of a new item for its detail view. */
   | { readonly type: 'replace'; readonly screen: Screen }
-  /** Updates the breadcrumb label of the current item screen (e.g. after renaming). */
+  /** Updates the breadcrumb label of the current item or collection (e.g. after renaming). */
   | { readonly type: 'relabel'; readonly label: string }
   | { readonly type: 'reset' };
 
@@ -43,6 +45,10 @@ function screenKey(screen: Screen): string {
       return `${screen.name}:${screen.kind}`;
     case 'catalogs':
       return 'catalogs';
+    case 'collections':
+      return 'collections';
+    case 'collection':
+      return `collection:${screen.collectionId}`;
     case 'item':
     case 'edit':
       return `${screen.name}:${screen.kind}:${screen.itemId ?? 'new'}`;
@@ -76,7 +82,8 @@ export function navigationReducer(
       return { stack: [...state.stack.slice(0, -1), action.screen] };
     case 'relabel': {
       const current = currentScreen(state);
-      if (current.name !== 'item' || current.label === action.label) return state;
+      if (current.name !== 'item' && current.name !== 'collection') return state;
+      if (current.label === action.label) return state;
       return { stack: [...state.stack.slice(0, -1), { ...current, label: action.label }] };
     }
     case 'reset':

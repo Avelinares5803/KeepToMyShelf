@@ -32,6 +32,8 @@ interface LibraryGridProps {
   /** Told when the grid goes away, with the item to return to. */
   onLeave: (anchor: LibraryAnchor | null) => void;
   onOpenItem: (item: ItemSummary) => void;
+  /** Shows each item's kind under its title, when items of several kinds are listed. */
+  showKind?: boolean;
 }
 
 interface GridBox {
@@ -58,6 +60,7 @@ export function LibraryGrid({
   restoreTo,
   onLeave,
   onOpenItem,
+  showKind = false,
 }: LibraryGridProps) {
   const container = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<GridBox | null>(null);
@@ -172,7 +175,12 @@ export function LibraryGrid({
               aria-setsize={items.length}
               aria-posinset={row.index * columns + position + 1}
             >
-              <ItemCard item={item} title={titleOf(item)} onOpen={() => onOpenItem(item)} />
+              <ItemCard
+                item={item}
+                title={titleOf(item)}
+                showKind={showKind}
+                onOpen={() => onOpenItem(item)}
+              />
             </div>
           ))}
         </div>
@@ -189,10 +197,12 @@ export function LibraryGrid({
 function ItemCard({
   item,
   title,
+  showKind,
   onOpen,
 }: {
   item: ItemSummary;
   title: string;
+  showKind: boolean;
   onOpen: () => void;
 }) {
   const { t } = useTranslation();
@@ -218,6 +228,7 @@ function ItemCard({
         </span>
       )}
       <span className="item-card__title">{title}</span>
+      {showKind && <span className="item-card__meta">{t(`items.kind.${item.kind}`)}</span>}
       {item.isFavorite && (
         <span className="item-card__favorite" aria-label={t('items.fields.favorite')}>
           <HeartIcon filled />

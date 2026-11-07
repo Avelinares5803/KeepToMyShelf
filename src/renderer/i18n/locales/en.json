@@ -295,6 +295,24 @@
     "fields": {
       "name": "Name",
       "cover": "Cover"
+    },
+    "items": {
+      "manage": "Add or remove items",
+      "addFirst": "Add items",
+      "title": "Items of “{{name}}”",
+      "kind": "Kind",
+      "noneOfKind": "There are no items of this kind yet.",
+      "added_one": "1 added",
+      "added_other": "{{count}} added",
+      "removed_one": "1 removed",
+      "removed_other": "{{count}} removed"
+    },
+    "forItem": {
+      "manage": "Choose collections",
+      "title": "Collections of “{{title}}”",
+      "none": "There are no collections yet. Type a name to create the first one.",
+      "create": "Create",
+      "newBadge": "new"
     }
   },
   "catalogs": {

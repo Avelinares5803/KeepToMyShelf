@@ -29,14 +29,59 @@ export interface SeedEntry {
   readonly aliases?: readonly string[];
 }
 
+export interface SeedCollection {
+  readonly name: string;
+  /** Titles of items already seeded. */
+  readonly items?: readonly string[];
+}
+
+/** The open profile's library database. */
+function openLibrary(dataDir: string): Database.Database {
+  const profilesDir = join(dataDir, 'profiles');
+  const [profileId] = readdirSync(profilesDir);
+  return new Database(join(profilesDir, profileId!, 'library.db'));
+}
+
+/**
+ * Writes collections straight into the open profile's database, with the items of the given
+ * titles, until adding items has its own screen.
+ */
+export function seedCollections(dataDir: string, collections: readonly SeedCollection[]): void {
+  const db = openLibrary(dataDir);
+  const now = '2026-01-01T00:00:00.000Z';
+  db.transaction(() => {
+    collections.forEach((collection, index) => {
+      const id = db
+        .prepare(
+          `INSERT INTO collection (uuid, name, name_key, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?)`,
+        )
+        .run(
+          `seed-${index}-${Math.random()}`,
+          collection.name,
+          normalizeForSearch(collection.name),
+          now,
+          now,
+        ).lastInsertRowid;
+      for (const title of collection.items ?? []) {
+        const item = db.prepare('SELECT id FROM item WHERE title = ?').get(title) as
+          { id: number } | undefined;
+        if (item === undefined) throw new Error(`No seeded item is called ${title}`);
+        db.prepare(
+          'INSERT INTO collection_item (collection_id, item_id, added_at) VALUES (?, ?, ?)',
+        ).run(id, item.id, now);
+      }
+    });
+  })();
+  db.close();
+}
+
 /**
  * Writes items straight into the open profile's database, which is much faster than filling
  * in the form for each one. The screen reads them the next time it asks for the list.
  */
 export function seedItems(dataDir: string, items: readonly SeedItem[]): void {
-  const profilesDir = join(dataDir, 'profiles');
-  const [profileId] = readdirSync(profilesDir);
-  const db = new Database(join(profilesDir, profileId!, 'library.db'));
+  const db = openLibrary(dataDir);
   const insert = db.prepare(
     `INSERT INTO item (uuid, kind, title, title_norm, placeholder_no, rating, started_on,
        finished_on, status, is_favorite, is_replay, owns_physical, owns_digital, created_at,

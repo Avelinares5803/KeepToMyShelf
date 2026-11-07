@@ -147,6 +147,7 @@ h1 {
 .library,
 .trash,
 .catalogs,
+.collections,
 .item-detail,
 .item-edit {
   width: 100%;
@@ -734,6 +735,17 @@ html:has(.library) {
   overflow-wrap: anywhere;
 }
 
+/* A second, quieter line: the kind of an item in a collection, or a collection's size. */
+.item-card__meta {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.item-card--cover .item-card__meta {
+  margin-top: -0.3rem;
+}
+
 .item-card__favorite {
   position: absolute;
   top: 0.4rem;
@@ -792,6 +804,26 @@ html:has(.library) {
   height: 1.8rem;
   border-radius: 999px;
   background: rgb(0 0 0 / 45%);
+}
+
+/* Collections: few of them, so a plain grid, bottom-aligned like the libraries. */
+.collections {
+  text-align: center;
+}
+
+/* Its window lives inside centred screens, but a form reads better aligned to the left. */
+.collection-form {
+  text-align: left;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  align-items: end;
+  gap: 1.5rem 1rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 /* Item detail */

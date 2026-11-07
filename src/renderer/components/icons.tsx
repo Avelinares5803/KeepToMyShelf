@@ -120,6 +120,14 @@ export const FilmIcon = () => (
   </Icon>
 );
 
+/** Two stacked frames: several things kept together. */
+export const CollectionIcon = () => (
+  <Icon size={40}>
+    <rect x="7" y="3" width="14" height="14" rx="2" />
+    <path d="M3 7v12a2 2 0 0 0 2 2h12" />
+  </Icon>
+);
+
 export const TvIcon = () => (
   <Icon size={40}>
     <rect x="2" y="6" width="20" height="13" rx="2" />

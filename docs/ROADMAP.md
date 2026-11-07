@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-07, tras la revisión de la F8 y la F9-A.
+**Última actualización:** 2026-11-07, tras la F9-B.
 
 ---
 
@@ -42,7 +42,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F6 Multimedia           | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)              |
 | F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)              |
 | F8 Películas y series   | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                |
-| **F9 Colecciones**      | Colecciones mixtas con portada                                                                                                                   | 🚧 **En curso**: F9-A hecha                    |
+| **F9 Colecciones**      | Colecciones mixtas con portada                                                                                                                   | 🚧 **En curso**: F9-A y F9-B hechas            |
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque                                                                                                  | Pendiente                                      |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | Pendiente (la copia antes de migrar ya existe) |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                      |
@@ -275,7 +275,11 @@ El detalle técnico está en el [ADR 0007](adr/0007-collections.md).
 **Entregas (acordadas el 2026-11-07):**
 
 - F9-A: migración 0006, servicio, portada y barrido, consulta de elementos de una colección e IPC, sin cambios visibles. ✅ Hecha.
-- F9-B: pantallas: tarjeta de modo, lista de colecciones, crear, editar y borrar, y la colección con su tipo, búsqueda, orden y posición recordada hasta cerrar el perfil. Cuando se vea «Todo», la tarjeta de cada elemento indicará su tipo.
+- F9-B: pantallas: tarjeta de modo, lista de colecciones, crear, editar y borrar, y la colección con su tipo, búsqueda, orden y posición recordada hasta cerrar el perfil. Cuando se vea «Todo», la tarjeta de cada elemento indicará su tipo. ✅ Hecha.
+  - Una colección nueva se abre al crearla, igual que un elemento nuevo abre su ficha.
+  - La tarjeta de cada colección indica cuántos elementos tiene, sin contar la papelera.
+  - Con «Todo», el orden por fecha se llama «Fecha de lanzamiento o estreno».
+  - Las ventanas anidadas (la de importación sobre la de la colección) se cierran por separado: Esc cierra solo la de arriba.
 - F9-C: pertenencias: la ventana de casillas desde la colección (con tipo y buscador, como mucho 100 filas dibujadas) y la ventana y la fila «Colecciones» en la ficha.
 
 ### 3.8 Personalización (F10)

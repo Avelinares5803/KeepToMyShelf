@@ -9,7 +9,8 @@ interface DialogProps {
 
 /**
  * Modal dialog built on the native <dialog> element, which traps focus while open
- * and closes with Escape.
+ * and closes with Escape. A dialog opened inside another one (e.g. the image import window
+ * over a collection's window) closes alone.
  */
 export function Dialog({ open, title, onClose, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -23,7 +24,16 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
   }, [open]);
 
   return (
-    <dialog ref={ref} className="dialog" aria-labelledby={titleId} onClose={onClose}>
+    <dialog
+      ref={ref}
+      className="dialog"
+      aria-labelledby={titleId}
+      // The browser does not pass "close" on to outer elements, but React does: a dialog
+      // inside this one would close this one too.
+      onClose={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <h2 id={titleId} className="dialog__title">
         {title}
       </h2>

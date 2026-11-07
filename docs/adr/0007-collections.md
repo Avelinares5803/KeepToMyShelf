@@ -1,6 +1,6 @@
 # ADR 0007: Colecciones
 
-- **Estado:** aceptada; implementada la F9-A (motor, sin cambios visibles)
+- **Estado:** aceptada; implementadas la F9-A (motor, sin cambios visibles) y la F9-B (pantallas)
 - **Fecha:** 2026-11-07
 
 ## Contexto
@@ -52,6 +52,13 @@ La misma operación sirve para la ventana de la colección (un elemento en varia
 ### Borrar una colección
 
 Es definitivo, sin papelera, con confirmación en la interfaz. Solo contiene un nombre, una portada y referencias, así que una papelera no compensa su complejidad.
+
+### Pantallas (F9-B)
+
+- **Navegación:** dos pantallas nuevas, `collections` (la lista) y `collection` (una colección, identificada por su id; su nombre solo sirve para la miga de pan y se actualiza al renombrarla). Al abrir un elemento desde una colección se apila su ficha, así que «Volver» regresa a la colección.
+- **Reutilización:** la colección usa `LibraryToolbar` (sin el botón de filtros, que pasa a ser opcional, y con el selector de tipo) y `LibraryGrid` (con `showKind` para indicar el tipo en cada tarjeta cuando se ven todos). La ventana de la colección reutiliza `CoverField` y la ventana de importación.
+- **Estado de la vista:** la búsqueda, el tipo, el orden y la posición se guardan por colección en `App` hasta cerrar el perfil, como las bibliotecas. Al borrar una colección se olvida su estado.
+- **Ventanas anidadas:** el `<dialog>` nativo no propaga `close` a sus elementos padre, pero React propaga sus eventos sintéticos por el árbol de componentes. Así, cerrar la ventana de importación cerraba también la de la colección. `Dialog` atiende ahora solo el cierre de su propio elemento (`event.target === event.currentTarget`).
 
 ## Alternativas descartadas
 

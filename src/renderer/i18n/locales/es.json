@@ -115,6 +115,7 @@
       "rating": "Valoración",
       "releaseDate": "Fecha de lanzamiento",
       "premiereDate": "Fecha de estreno",
+      "releaseOrPremiereDate": "Fecha de lanzamiento o estreno",
       "startedOn": "Fecha de inicio",
       "finishedOn": "Fecha de fin",
       "direction": {
@@ -276,6 +277,25 @@
     "emptyTrash": "Vaciar papelera",
     "emptyConfirm_one": "Se eliminará definitivamente 1 elemento de «{{scope}}». Esta acción no se puede deshacer.",
     "emptyConfirm_other": "Se eliminarán definitivamente {{count}} elementos de «{{scope}}». Esta acción no se puede deshacer."
+  },
+  "collections": {
+    "title": "Colecciones",
+    "new": "Nueva colección",
+    "empty": "Todavía no hay colecciones. Pulsa «Nueva colección» para crear la primera.",
+    "itemCount_one": "1 elemento",
+    "itemCount_other": "{{count}} elementos",
+    "emptyCollection": "Esta colección está vacía.",
+    "show": "Mostrar",
+    "all": "Todo",
+    "showAll": "Mostrar todo",
+    "edit": "Editar colección",
+    "delete": "Eliminar colección",
+    "deleteConfirm": "¿Seguro que quieres eliminar la colección «{{name}}»? Sus elementos no se eliminan.",
+    "editDialog": "Editar «{{name}}»",
+    "fields": {
+      "name": "Nombre",
+      "cover": "Portada"
+    }
   },
   "catalogs": {
     "title": "Catálogos",

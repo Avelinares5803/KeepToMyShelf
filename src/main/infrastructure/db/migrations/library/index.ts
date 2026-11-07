@@ -4,6 +4,7 @@ import catalogs from './0002_catalogs.sql?raw';
 import originCountries from './0003_origin_countries.sql?raw';
 import media from './0004_media.sql?raw';
 import cover from './0005_cover.sql?raw';
+import collections from './0006_collections.sql?raw';
 
 // Append new migrations at the end. Never edit or reorder a migration once it is released.
 export const libraryMigrations: readonly Migration[] = [
@@ -12,4 +13,5 @@ export const libraryMigrations: readonly Migration[] = [
   { version: 3, name: 'origin countries', sql: originCountries },
   { version: 4, name: 'media', sql: media },
   { version: 5, name: 'cover', sql: cover },
+  { version: 6, name: 'collections', sql: collections },
 ];

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { CatalogService } from '../../src/main/application/catalog-service';
+import { CollectionService } from '../../src/main/application/collection-service';
 import { ItemService } from '../../src/main/application/item-service';
 import { DEFAULT_MEDIA_LIMITS } from '../../src/core/media/import-rules';
 import { MediaService } from '../../src/main/application/media-service';
@@ -28,6 +29,7 @@ export interface ProfileFixture {
   readonly profiles: ProfileService;
   readonly items: ItemService;
   readonly catalogs: CatalogService;
+  readonly collections: CollectionService;
   readonly media: MediaService;
   /** Temporary folder for test files outside the app's data folder (e.g. files to import). */
   readonly scratchDir: string;
@@ -89,9 +91,11 @@ export function createProfileFixture(): ProfileFixture {
   });
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
+  const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
 
   return {
     catalogs,
+    collections,
     media,
     scratchDir,
     openedDocumentsDir,

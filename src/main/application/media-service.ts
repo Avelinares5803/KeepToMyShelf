@@ -70,11 +70,22 @@ export interface MediaForItems {
 }
 
 /**
- * An item's new cover, gallery and documents, with their files already in place. `write`
- * runs inside the item's transaction; then `finish` if it was committed, or `abort` if not.
+ * What `CollectionService` needs: saving a collection's cover together with the collection,
+ * reading it, and removing the files nothing uses after a collection is deleted.
+ */
+export interface MediaForCollections {
+  stageCollectionCover(token: string, cover: ImagePlanEntry | null): StagedMedia;
+  collectionCover(token: string, collectionId: number): MediaAttachment | null;
+  sweep(token: string): void;
+}
+
+/**
+ * The new files of an item (its cover, gallery and documents) or of a collection (its cover),
+ * already in place. `write` runs inside the owner's transaction, with the owner's id; then
+ * `finish` if it was committed, or `abort` if not.
  */
 export interface StagedMedia {
-  write(db: SqliteDatabase, itemId: number): void;
+  write(db: SqliteDatabase, ownerId: number): void;
   finish(): void;
   abort(): void;
 }
@@ -147,7 +158,7 @@ const LOCKED_FILE_CODES = new Set(['EBUSY', 'EPERM']);
  * folder (the chosen file is never modified) and the database decides which files exist:
  * rows are deleted first and a sweep then removes the files no row refers to.
  */
-export class MediaService implements MediaForItems {
+export class MediaService implements MediaForItems, MediaForCollections {
   private readonly preparations = new Map<string, Preparation>();
 
   constructor(private readonly deps: MediaServiceDeps) {}
@@ -327,41 +338,15 @@ export class MediaService implements MediaForItems {
   /** The cover and the gallery of `stageMedia`. */
   private stageImages(token: string, plan: ItemMediaPlan): StagedMedia {
     const session = this.deps.sessions.require(token);
-    const { db } = session;
     const store = this.store(session);
-    const copy = (file: PreparedFile | StoredFile, storeName: MediaStoreName) =>
-      store.copyIn(file.path, store.filePath(storeName, file.sha256, file.format));
 
     // Everything is checked and resolved before any file is copied.
-    const resolve = (entry: ImagePlanEntry): StagedEntry => {
-      if (entry.kind === 'existing') return { kind: 'existing', mediaId: entry.mediaId };
-      if (entry.kind === 'use_original') {
-        return {
-          kind: 'use_original',
-          mediaId: entry.mediaId,
-          original: keptOriginal(db, store, entry.mediaId),
-        };
-      }
-      const preparation = this.preparationOf(token, entry.preparedId);
-      if (preparation.summary.kind !== 'image') {
-        throw new ValidationError('media.not_an_image', `${entry.preparedId} is not an image`);
-      }
-      return { kind: 'prepared', preparation, ...filesFor(preparation, entry.choice) };
-    };
+    const resolve = (entry: ImagePlanEntry) => this.resolveImage(token, session.db, store, entry);
     const gallery = plan.images?.map(resolve);
     const cover =
       plan.cover === undefined || plan.cover === null ? plan.cover : resolve(plan.cover);
     const resolved = [...(gallery ?? []), ...(cover ? [cover] : [])];
-
-    for (const entry of resolved) {
-      if (entry.kind === 'use_original') copy(entry.original, 'files');
-      if (entry.kind !== 'prepared') continue;
-      copy(entry.used, 'files');
-      if (entry.original !== null) copy(entry.original, 'originals');
-      for (const [size, path] of entry.preparation.thumbnails) {
-        store.copyIn(path, store.thumbnailPath(entry.used.sha256, size));
-      }
-    }
+    placeImageFiles(store, resolved);
 
     let removesFiles = false;
     return {
@@ -370,39 +355,8 @@ export class MediaService implements MediaForItems {
         const currentCover = coverIdOf(writeDb, itemId);
         // An image the item already has: its cover or one of its gallery images.
         const current = [...currentGallery, ...(currentCover === null ? [] : [currentCover])];
-        const idOf = (entry: StagedEntry): number => {
-          if (entry.kind !== 'prepared' && !current.includes(entry.mediaId)) {
-            throw new NotFoundError(
-              'media.not_attached',
-              `Item ${itemId} has no file ${entry.mediaId}`,
-            );
-          }
-          switch (entry.kind) {
-            case 'existing':
-              return entry.mediaId;
-            case 'use_original':
-              return this.findOrInsertFile(
-                writeDb,
-                entry.original,
-                'files',
-                null,
-                entry.original.isAnimated,
-              );
-            case 'prepared': {
-              const originalId =
-                entry.original === null
-                  ? null
-                  : this.findOrInsertFile(writeDb, entry.original, 'originals', null, false);
-              return this.findOrInsertFile(
-                writeDb,
-                entry.used,
-                'files',
-                originalId,
-                entry.preparation.summary.isAnimated,
-              );
-            }
-          }
-        };
+        const idOf = (entry: StagedEntry) =>
+          this.storedImageId(writeDb, entry, current, `Item ${itemId}`);
 
         const galleryIds = gallery?.map(idOf) ?? currentGallery;
         const coverId = cover === undefined ? currentCover : cover === null ? null : idOf(cover);
@@ -428,16 +382,128 @@ export class MediaService implements MediaForItems {
           writeDb.prepare('UPDATE item SET cover_media_id = ? WHERE id = ?').run(coverId, itemId);
         }
       },
-      finish: () => {
-        const used = resolved.flatMap((entry) =>
-          entry.kind === 'prepared' ? [entry.preparation.summary.id] : [],
-        );
-        this.discardImports(token, used);
-        if (removesFiles) this.sweepSession(session);
-      },
+      finish: () => this.finishImages(token, session, resolved, removesFiles),
       // The rows were not written: the sweep removes the files that were just copied.
       abort: () => this.sweepSession(session),
     };
+  }
+
+  /**
+   * Puts in place the file of a collection's new cover (null: none). Like `stageMedia`,
+   * nothing is written to the database until `write`, in the collection's transaction.
+   */
+  stageCollectionCover(token: string, cover: ImagePlanEntry | null): StagedMedia {
+    const session = this.deps.sessions.require(token);
+    const store = this.store(session);
+    const entry = cover === null ? null : this.resolveImage(token, session.db, store, cover);
+    const resolved = entry === null ? [] : [entry];
+    placeImageFiles(store, resolved);
+
+    let removesFiles = false;
+    return {
+      write: (db, collectionId) => {
+        const current = collectionCoverIdOf(db, collectionId);
+        const coverId =
+          entry === null
+            ? null
+            : this.storedImageId(
+                db,
+                entry,
+                current === null ? [] : [current],
+                `Collection ${collectionId}`,
+              );
+        removesFiles = current !== null && current !== coverId;
+        db.prepare('UPDATE collection SET cover_media_id = ? WHERE id = ?').run(
+          coverId,
+          collectionId,
+        );
+      },
+      finish: () => this.finishImages(token, session, resolved, removesFiles),
+      abort: () => this.sweepSession(session),
+    };
+  }
+
+  /** A collection's cover, or null when it has none. */
+  collectionCover(token: string, collectionId: number): MediaAttachment | null {
+    const session = this.deps.sessions.require(token);
+    const row = session.db
+      .prepare(
+        `SELECT f.*, NULL AS label FROM collection c JOIN media_file f ON f.id = c.cover_media_id
+         WHERE c.id = ?`,
+      )
+      .get(collectionId) as AttachmentRow | undefined;
+    return row === undefined ? null : toAttachment(this.store(session), row);
+  }
+
+  /** Checks a new cover or gallery image and finds its files, without copying anything. */
+  private resolveImage(
+    token: string,
+    db: SqliteDatabase,
+    store: MediaStore,
+    entry: ImagePlanEntry,
+  ): StagedEntry {
+    if (entry.kind === 'existing') return { kind: 'existing', mediaId: entry.mediaId };
+    if (entry.kind === 'use_original') {
+      return {
+        kind: 'use_original',
+        mediaId: entry.mediaId,
+        original: keptOriginal(db, store, entry.mediaId),
+      };
+    }
+    const preparation = this.preparationOf(token, entry.preparedId);
+    if (preparation.summary.kind !== 'image') {
+      throw new ValidationError('media.not_an_image', `${entry.preparedId} is not an image`);
+    }
+    return { kind: 'prepared', preparation, ...filesFor(preparation, entry.choice) };
+  }
+
+  /**
+   * The row of the file a resolved image ends up using, written inside the owner's
+   * transaction. `current` holds the images the owner already has: only those can be kept
+   * or replaced by their original.
+   */
+  private storedImageId(
+    db: SqliteDatabase,
+    entry: StagedEntry,
+    current: readonly number[],
+    owner: string,
+  ): number {
+    if (entry.kind !== 'prepared' && !current.includes(entry.mediaId)) {
+      throw new NotFoundError('media.not_attached', `${owner} has no file ${entry.mediaId}`);
+    }
+    switch (entry.kind) {
+      case 'existing':
+        return entry.mediaId;
+      case 'use_original':
+        return this.findOrInsertFile(db, entry.original, 'files', null, entry.original.isAnimated);
+      case 'prepared': {
+        const originalId =
+          entry.original === null
+            ? null
+            : this.findOrInsertFile(db, entry.original, 'originals', null, false);
+        return this.findOrInsertFile(
+          db,
+          entry.used,
+          'files',
+          originalId,
+          entry.preparation.summary.isAnimated,
+        );
+      }
+    }
+  }
+
+  /** After a committed save: releases the imports used, and sweeps if a file was dropped. */
+  private finishImages(
+    token: string,
+    session: ProfileSession,
+    resolved: readonly StagedEntry[],
+    removesFiles: boolean,
+  ): void {
+    const used = resolved.flatMap((entry) =>
+      entry.kind === 'prepared' ? [entry.preparation.summary.id] : [],
+    );
+    this.discardImports(token, used);
+    if (removesFiles) this.sweepSession(session);
   }
 
   /** The documents of `stageMedia`: PDFs are stored as they are, with the name given. */
@@ -834,8 +900,8 @@ export class MediaService implements MediaForItems {
 
   /**
    * Deletes the rows of files nothing uses (no item's gallery, documents or cover, trash
-   * included, and not the original of a used copy), then every stored file and thumbnail
-   * without a row.
+   * included, no collection's cover, and not the original of a used copy), then every stored
+   * file and thumbnail without a row.
    */
   private sweepSession(session: ProfileSession): void {
     const { db } = session;
@@ -845,6 +911,8 @@ export class MediaService implements MediaForItems {
         `DELETE FROM media_file
          WHERE id NOT IN (SELECT media_id FROM item_media)
            AND id NOT IN (SELECT cover_media_id FROM item WHERE cover_media_id IS NOT NULL)
+           AND id NOT IN
+             (SELECT cover_media_id FROM collection WHERE cover_media_id IS NOT NULL)
            AND id NOT IN (SELECT original_id FROM media_file WHERE original_id IS NOT NULL)`,
       );
       while (deleteUnused.run().changes > 0);
@@ -899,6 +967,28 @@ function coverIdOf(db: SqliteDatabase, itemId: number): number | null {
     (db.prepare('SELECT cover_media_id FROM item WHERE id = ?').pluck().get(itemId) as
       number | null | undefined) ?? null
   );
+}
+
+function collectionCoverIdOf(db: SqliteDatabase, collectionId: number): number | null {
+  return (
+    (db.prepare('SELECT cover_media_id FROM collection WHERE id = ?').pluck().get(collectionId) as
+      number | null | undefined) ?? null
+  );
+}
+
+/** Copies the files of new cover or gallery images to their place, with their thumbnails. */
+function placeImageFiles(store: MediaStore, entries: readonly StagedEntry[]): void {
+  const copy = (file: PreparedFile | StoredFile, storeName: MediaStoreName) =>
+    store.copyIn(file.path, store.filePath(storeName, file.sha256, file.format));
+  for (const entry of entries) {
+    if (entry.kind === 'use_original') copy(entry.original, 'files');
+    if (entry.kind !== 'prepared') continue;
+    copy(entry.used, 'files');
+    if (entry.original !== null) copy(entry.original, 'originals');
+    for (const [size, path] of entry.preparation.thumbnails) {
+      store.copyIn(path, store.thumbnailPath(entry.used.sha256, size));
+    }
+  }
 }
 
 /** The kept original of an optimized image, for "Use the original". */

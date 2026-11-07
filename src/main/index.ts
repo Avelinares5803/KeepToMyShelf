@@ -5,6 +5,7 @@ import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
 import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
 import { MEDIA_SETTING_DEFAULTS, type AppSettings } from '../shared/settings';
 import { CatalogService } from './application/catalog-service';
+import { CollectionService } from './application/collection-service';
 import { ItemService } from './application/item-service';
 import { MediaService } from './application/media-service';
 import { ProfileService } from './application/profile-service';
@@ -64,9 +65,10 @@ function startApp(): void {
   media.clearOpenedDocuments();
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
+  const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
 
   profiles.removeDeletedProfileFolders();
-  registerIpcHandlers({ profiles, sessions, settings, items, catalogs, media });
+  registerIpcHandlers({ profiles, sessions, settings, items, catalogs, media, collections });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
   protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media));
 

@@ -126,6 +126,18 @@ const documentPlanSchema = z
   .max(1_000)
   .readonly();
 
+// The name is checked by the service (normalizeCollectionName); here only its size is bounded.
+const collectionIdSchema = z.number().int().positive();
+const collectionInputSchema = {
+  name: z.string().max(1_000),
+  // null removes the cover; left out, it does not change.
+  cover: coverPlanSchema.optional(),
+};
+const membershipsSchema = z
+  .array(z.object({ collectionId: collectionIdSchema, itemId: itemIdSchema }))
+  .max(100_000)
+  .readonly();
+
 export const ipcInputSchemas = {
   getAppInfo: z.undefined(),
   listProfiles: z.undefined(),
@@ -204,6 +216,30 @@ export const ipcInputSchemas = {
     preparedIds: z.array(preparedIdSchema).max(1_000).readonly(),
   }),
   listItemMedia: z.object({ token: sessionTokenSchema, itemId: itemIdSchema }),
+  listCollections: z.object({ token: sessionTokenSchema }),
+  getCollection: z.object({ token: sessionTokenSchema, id: collectionIdSchema }),
+  createCollection: z.object({ token: sessionTokenSchema, ...collectionInputSchema }),
+  updateCollection: z.object({
+    token: sessionTokenSchema,
+    id: collectionIdSchema,
+    ...collectionInputSchema,
+  }),
+  deleteCollection: z.object({ token: sessionTokenSchema, id: collectionIdSchema }),
+  // `kind` null shows every kind; filters by attribute are not offered in collections.
+  listCollectionItems: z.object({
+    token: sessionTokenSchema,
+    id: collectionIdSchema,
+    kind: itemKindSchema.nullable(),
+    search: itemSearchSchema.optional(),
+    sort: itemSortSchema.optional(),
+  }),
+  listCollectionMemberIds: z.object({ token: sessionTokenSchema, id: collectionIdSchema }),
+  listItemCollections: z.object({ token: sessionTokenSchema, itemId: itemIdSchema }),
+  changeCollectionMemberships: z.object({
+    token: sessionTokenSchema,
+    add: membershipsSchema,
+    remove: membershipsSchema,
+  }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

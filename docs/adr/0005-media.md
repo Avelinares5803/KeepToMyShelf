@@ -80,7 +80,7 @@ Los elementos tienen portada, galería de imágenes y documentos PDF (manuales, 
 
 ### La base de datos manda
 
-- Primero se borran las filas y después un **barrido** elimina las filas de archivos que nadie usa (ni una galería, ni unos documentos, ni una portada) y los archivos y miniaturas sin fila.
+- Primero se borran las filas y después un **barrido** elimina las filas de archivos que nadie usa (ni una galería, ni unos documentos, ni una portada de elemento o, desde la F9, de colección: ver el [ADR 0007](0007-collections.md)) y los archivos y miniaturas sin fila.
   - Un original se conserva mientras lo use una copia; el barrido repite hasta que no queda nada que borrar.
   - Solo toca archivos con el nombre de un archivo guardado: un archivo del usuario en esas carpetas no se borra nunca.
 - El barrido se ejecuta tras quitar un archivo, tras eliminar definitivamente un elemento, tras vaciar la papelera y al abrir el perfil.

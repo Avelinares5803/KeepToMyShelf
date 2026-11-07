@@ -121,8 +121,8 @@ export const FilmIcon = () => (
 );
 
 /** Two stacked frames: several things kept together. */
-export const CollectionIcon = () => (
-  <Icon size={40}>
+export const CollectionIcon = ({ size = 40 }: { size?: number }) => (
+  <Icon size={size}>
     <rect x="7" y="3" width="14" height="14" rx="2" />
     <path d="M3 7v12a2 2 0 0 0 2 2h12" />
   </Icon>

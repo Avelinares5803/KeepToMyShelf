@@ -1,6 +1,6 @@
 # ADR 0007: Colecciones
 
-- **Estado:** aceptada; implementadas la F9-A (motor, sin cambios visibles) y la F9-B (pantallas)
+- **Estado:** aceptada e implementada: F9-A (motor), F9-B (pantallas) y F9-C (pertenencias)
 - **Fecha:** 2026-11-07
 
 ## Contexto
@@ -59,6 +59,12 @@ Es definitivo, sin papelera, con confirmación en la interfaz. Solo contiene un 
 - **Reutilización:** la colección usa `LibraryToolbar` (sin el botón de filtros, que pasa a ser opcional, y con el selector de tipo) y `LibraryGrid` (con `showKind` para indicar el tipo en cada tarjeta cuando se ven todos). La ventana de la colección reutiliza `CoverField` y la ventana de importación.
 - **Estado de la vista:** la búsqueda, el tipo, el orden y la posición se guardan por colección en `App` hasta cerrar el perfil, como las bibliotecas. Al borrar una colección se olvida su estado.
 - **Ventanas anidadas:** el `<dialog>` nativo no propaga `close` a sus elementos padre, pero React propaga sus eventos sintéticos por el árbol de componentes. Así, cerrar la ventana de importación cerraba también la de la colección. `Dialog` atiende ahora solo el cierre de su propio elemento (`event.target === event.currentTarget`).
+
+### Pertenencias en la interfaz (F9-C)
+
+- **Marcas:** las dos ventanas (desde la colección y desde la ficha) guardan lo que había al abrirlas y lo marcado ahora (`membership-changes.ts`). Al guardar envían solo la diferencia por `changeMemberships`. Marcar y desmarcar lo mismo no es un cambio, y lo que la ventana no muestra (la papelera, otros tipos) nunca se toca.
+- **Desde la colección:** la lista sale de `items.list` del tipo elegido, con su búsqueda, y se dibujan como mucho 100 filas, como en los filtros. No hace falta un canal nuevo.
+- **Desde la ficha, con colecciones nuevas:** se crean al guardar y después se añade el elemento, en dos llamadas. Un nombre repetido se comprueba antes con las mismas reglas que el proceso principal (`normalizeCollectionName` y `collectionNameKey`). Si un guardado falla a medias, las colecciones ya creadas se recuerdan para no crearlas dos veces al reintentar; en el peor caso queda una colección vacía, sin pérdida de datos.
 
 ## Alternativas descartadas
 

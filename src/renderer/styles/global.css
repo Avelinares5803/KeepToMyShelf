@@ -816,6 +816,87 @@ html:has(.library) {
   text-align: left;
 }
 
+/* Names listed one after the other, separated by commas (an item's collections). */
+.inline-list {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inline-list li {
+  display: inline;
+}
+
+.inline-list li + li::before {
+  content: ', ';
+}
+
+/* A link inside running text: the size and colour of the text around it, underlined. */
+.link-button--inline {
+  padding: 0;
+  color: var(--color-accent);
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+/* Windows to add items to a collection, or an item to collections. */
+/* Two classes: .inline-field, defined further down, would otherwise win. */
+.inline-field.membership__controls {
+  align-items: center;
+}
+
+.membership__search {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.membership__list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: min(24rem, 50vh);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.membership__option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0.35rem;
+  border-radius: calc(var(--radius) / 2);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.membership__option:hover {
+  background: var(--color-bg);
+}
+
+/* Covers have their own shapes: each fits in the same small box. */
+.membership__cover {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2.5rem;
+}
+
+.membership__cover img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.membership__changes {
+  min-height: 1.2em;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 .collection-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));

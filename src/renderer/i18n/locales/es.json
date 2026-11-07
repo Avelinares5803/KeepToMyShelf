@@ -295,6 +295,24 @@
     "fields": {
       "name": "Nombre",
       "cover": "Portada"
+    },
+    "items": {
+      "manage": "Añadir o quitar elementos",
+      "addFirst": "Añadir elementos",
+      "title": "Elementos de «{{name}}»",
+      "kind": "Tipo",
+      "noneOfKind": "Todavía no hay elementos de este tipo.",
+      "added_one": "1 añadido",
+      "added_other": "{{count}} añadidos",
+      "removed_one": "1 quitado",
+      "removed_other": "{{count}} quitados"
+    },
+    "forItem": {
+      "manage": "Elegir colecciones",
+      "title": "Colecciones de «{{title}}»",
+      "none": "Todavía no hay colecciones. Escribe un nombre para crear la primera.",
+      "create": "Crear",
+      "newBadge": "nueva"
     }
   },
   "catalogs": {

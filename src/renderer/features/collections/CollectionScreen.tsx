@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ITEM_KINDS, type ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { PencilIcon, TrashIcon } from '../../components/icons';
+import { PencilIcon, PlusIcon, TrashIcon } from '../../components/icons';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useDebounced } from '../../lib/use-debounced';
 import { useLoad } from '../../lib/use-load';
@@ -12,6 +12,7 @@ import { LibraryGrid } from '../library/LibraryGrid';
 import { LibraryToolbar } from '../library/LibraryToolbar';
 import type { ImageImportOptions } from '../media/use-image-import';
 import { CollectionDialog } from './CollectionDialog';
+import { CollectionItemsDialog } from './CollectionItemsDialog';
 import type { CollectionView } from './collection-view';
 
 const SEARCH_DELAY_MS = 250;
@@ -66,6 +67,7 @@ export function CollectionScreen({
   );
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [choosingItems, setChoosingItems] = useState(false);
   const name = details.data?.name ?? '';
   const error = details.error ?? items.error;
 
@@ -100,6 +102,14 @@ export function CollectionScreen({
           {items.data && <span className="library__count"> ({items.data.length})</span>}
         </h1>
         <div className="item-detail__actions">
+          <button
+            type="button"
+            className="button button--ghost"
+            disabled={details.data === null}
+            onClick={() => setChoosingItems(true)}
+          >
+            <PlusIcon /> {t('collections.items.manage')}
+          </button>
           <button
             type="button"
             className="icon-button"
@@ -158,7 +168,18 @@ export function CollectionScreen({
           {errorMessage(t, error)}
         </p>
       )}
-      {isEmpty && <p className="muted">{t('collections.emptyCollection')}</p>}
+      {isEmpty && (
+        <div className="library__no-results">
+          <p className="muted">{t('collections.emptyCollection')}</p>
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={() => setChoosingItems(true)}
+          >
+            {t('collections.items.addFirst')}
+          </button>
+        </div>
+      )}
       {!isEmpty && items.data?.length === 0 && (
         <div className="library__no-results">
           <p className="muted">{t('library.noResults')}</p>
@@ -205,6 +226,21 @@ export function CollectionScreen({
           onSaved={() => {
             setEditing(false);
             details.reload();
+          }}
+        />
+      )}
+      {choosingItems && (
+        <CollectionItemsDialog
+          token={token}
+          collectionId={collectionId}
+          collectionName={name}
+          // The kind being looked at; with every kind shown, the first one.
+          initialKind={kind ?? ITEM_KINDS[0]}
+          onClose={() => setChoosingItems(false)}
+          onSaved={() => {
+            setChoosingItems(false);
+            details.reload();
+            items.reload();
           }}
         />
       )}

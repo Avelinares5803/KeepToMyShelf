@@ -224,6 +224,12 @@ export function App({ initialSettings }: AppProps) {
               })
             }
             onTrashed={() => dispatch({ type: 'back' })}
+            onOpenCollection={({ id, name }) =>
+              dispatch({
+                type: 'open',
+                screen: { name: 'collection', collectionId: id, label: name },
+              })
+            }
           />
         );
       case 'edit':

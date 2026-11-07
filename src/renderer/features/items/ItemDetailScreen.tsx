@@ -15,7 +15,9 @@ import { DocumentList } from '../media/DocumentList';
 import { ImageStrip } from '../media/ImageStrip';
 import { ImageViewer } from '../media/ImageViewer';
 import { Thumbnail } from '../media/Thumbnail';
-import { HeartIcon, PencilIcon, TrashIcon } from '../../components/icons';
+import type { CollectionName } from '../../../shared/collections';
+import { CollectionIcon, HeartIcon, PencilIcon, TrashIcon } from '../../components/icons';
+import { ItemCollectionsDialog } from '../collections/ItemCollectionsDialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { toFormState, toItemDraft } from './item-form';
@@ -38,6 +40,7 @@ interface ItemDetailScreenProps {
   onTrashed: () => void;
   /** Reports the visible title so the breadcrumbs can show it. */
   onTitle: (title: string) => void;
+  onOpenCollection: (collection: CollectionName) => void;
 }
 
 export function ItemDetailScreen(props: ItemDetailScreenProps) {
@@ -45,8 +48,12 @@ export function ItemDetailScreen(props: ItemDetailScreenProps) {
   const { token, itemId } = props;
   const loaded = useLoad(() => window.api.items.get({ token, id: itemId }), [token, itemId]);
   const media = useLoad(() => window.api.media.list({ token, itemId }), [token, itemId]);
+  const collections = useLoad(
+    () => window.api.collections.forItem({ token, itemId }),
+    [token, itemId],
+  );
 
-  const error = loaded.error ?? media.error;
+  const error = loaded.error ?? media.error ?? collections.error;
   if (error !== null) {
     return (
       <p className="banner banner--error" role="alert">
@@ -54,7 +61,7 @@ export function ItemDetailScreen(props: ItemDetailScreenProps) {
       </p>
     );
   }
-  if (loaded.data === null || media.data === null) return null;
+  if (loaded.data === null || media.data === null || collections.data === null) return null;
   return (
     <ItemDetail
       {...props}
@@ -62,7 +69,9 @@ export function ItemDetailScreen(props: ItemDetailScreenProps) {
       cover={media.data.cover}
       images={media.data.images}
       documents={media.data.documents}
+      collections={collections.data}
       onChanged={loaded.reload}
+      onCollectionsChanged={collections.reload}
     />
   );
 }
@@ -74,16 +83,21 @@ function ItemDetail({
   cover,
   images,
   documents,
+  collections,
   onEdit,
   onTrashed,
   onTitle,
   onChanged,
+  onOpenCollection,
+  onCollectionsChanged,
 }: ItemDetailScreenProps & {
   item: ItemDetails;
   cover: MediaAttachment | null;
   images: readonly MediaAttachment[];
   documents: readonly MediaAttachment[];
+  collections: readonly CollectionName[];
   onChanged: () => void;
+  onCollectionsChanged: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const displayTitle = useItemTitle();
@@ -96,6 +110,7 @@ function ItemDetail({
     index: number;
   } | null>(null);
   const [seeingAll, setSeeingAll] = useState(false);
+  const [choosingCollections, setChoosingCollections] = useState(false);
   const viewGallery = (index: number) => setViewing({ images, index });
   const language = i18n.language as Language;
   const formatDate = (value: UsageDate) =>
@@ -146,6 +161,15 @@ function ItemDetail({
             onClick={() => void toggleFavorite()}
           >
             <HeartIcon filled={item.isFavorite} />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label={t('collections.forItem.manage')}
+            title={t('collections.forItem.manage')}
+            onClick={() => setChoosingCollections(true)}
+          >
+            <CollectionIcon size={18} />
           </button>
           <button
             type="button"
@@ -274,6 +298,23 @@ function ItemDetail({
             </Row>
           )}
           {relationRow('tag')}
+          {collections.length > 0 && (
+            <Row label={t('collections.title')}>
+              <ul className="inline-list">
+                {collections.map((collection) => (
+                  <li key={collection.id}>
+                    <button
+                      type="button"
+                      className="link-button link-button--inline"
+                      onClick={() => onOpenCollection(collection)}
+                    >
+                      {collection.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Row>
+          )}
         </dl>
       </div>
 
@@ -323,6 +364,18 @@ function ItemDetail({
         />
       )}
 
+      {choosingCollections && (
+        <ItemCollectionsDialog
+          token={token}
+          itemId={item.id}
+          title={title}
+          onClose={() => setChoosingCollections(false)}
+          onSaved={() => {
+            setChoosingCollections(false);
+            onCollectionsChanged();
+          }}
+        />
+      )}
       {confirmingDelete && (
         <ConfirmDialog
           title={t('items.delete')}

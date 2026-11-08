@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-07, tras la F9-C (fin de la F9).
+**Última actualización:** 2026-11-08, con la mejora «Seleccionar» acordada para antes de la F10.
 
 ---
 
@@ -48,6 +48,8 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                      |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
+
+**Antes de la F10:** la mejora «Seleccionar» (seleccionar varios elementos o colecciones y enviarlos a la papelera, eliminarlos o quitarlos de una colección), acordada el 2026-11-08. Ver el final del apartado 3.7.
 
 ---
 
@@ -285,6 +287,25 @@ El detalle técnico está en el [ADR 0007](adr/0007-collections.md).
   - La ventana de la ficha permite **crear colecciones solo con el nombre**. Se crean al pulsar Guardar, así que Cancelar no deja nada; la portada se pone luego desde la colección. Un nombre repetido se avisa al momento.
   - La ventana de la colección empieza en el **tipo que se está viendo**; con «Todo», en Videojuegos. Las marcas se conservan al cambiar de tipo o de búsqueda, y un contador indica los cambios pendientes.
   - Los botones: «Añadir o quitar elementos» en la colección (y «Añadir elementos» si está vacía), y «Elegir colecciones», con el icono de colecciones, en la ficha.
+
+**Mejora acordada tras la F9 (2026-11-08): seleccionar varios y actuar sobre ellos.** Pendiente; se hará en su propia entrega (`feat/select-and-delete`), antes de la F10.
+
+- **Motivo:** hasta ahora, un elemento o una colección solo se puede borrar desde dentro (su ficha o la pantalla de la colección). Los catálogos ya se borran desde su lista y no cambian.
+- **Modo «Seleccionar»** (elegido frente a un icono de papelera en cada tarjeta, que quedaba junto a donde se hace clic para abrir, añadía una parada de teclado por tarjeta y borraba de una en una):
+  - Un botón «Seleccionar» en la barra de herramientas. En el modo, cada tarjeta muestra una casilla y hacer clic en ella la marca o desmarca, en lugar de abrirla.
+  - Una barra fija abajo: «N seleccionados · Seleccionar todo · [Acción] · Cancelar». «Seleccionar todo» marca todos los resultados de la búsqueda y los filtros actuales.
+  - La acción pide confirmación con el foco en «Cancelar». Esc o «Cancelar» salen del modo sin cambiar nada.
+  - La selección se guarda por identificador (funciona con la cuadrícula virtualizada) y se vacía al cambiar de pantalla, de búsqueda o de filtros.
+  - Fuera del modo no cambia nada: no hay botones de borrar junto a las tarjetas. Borrar uno solo sigue pudiéndose desde su ficha o su pantalla.
+- **Acción en cada pantalla:**
+
+  | Pantalla                | Acción                                           | Confirmación                                             |
+  | ----------------------- | ------------------------------------------------ | -------------------------------------------------------- |
+  | Biblioteca              | Enviar a la papelera (se puede deshacer)         | «¿Enviar 3 elementos a la papelera?»                     |
+  | Lista de colecciones    | Eliminar (definitivo)                            | «¿Eliminar 2 colecciones? Sus elementos no se eliminan.» |
+  | Dentro de una colección | Quitar de la colección (siguen en la biblioteca) | «¿Quitar 4 elementos de «Favoritos»?»                    |
+
+- **Por dentro:** canales nuevos para enviar varios elementos a la papelera y eliminar varias colecciones, cada uno en una sola transacción y con un solo barrido de archivos. Quitar de una colección usa `collections.changeMemberships`, que ya existe. Sin migraciones ni dependencias nuevas.
 
 ### 3.8 Personalización (F10)
 

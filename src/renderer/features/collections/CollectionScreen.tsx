@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ITEM_KINDS, type ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { PencilIcon, PlusIcon, TrashIcon } from '../../components/icons';
+import { CheckSquareIcon, PencilIcon, PlusIcon, TrashIcon } from '../../components/icons';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useDebounced } from '../../lib/use-debounced';
 import { useLoad } from '../../lib/use-load';
@@ -11,6 +11,9 @@ import { useItemTitle } from '../items/use-item-title';
 import { LibraryGrid } from '../library/LibraryGrid';
 import { LibraryToolbar } from '../library/LibraryToolbar';
 import type { ImageImportOptions } from '../media/use-image-import';
+import { isAllSelected, selectedAmong } from '../selection/selection';
+import { SelectionBar } from '../selection/SelectionBar';
+import { useSelection } from '../selection/use-selection';
 import { CollectionDialog } from './CollectionDialog';
 import { CollectionItemsDialog } from './CollectionItemsDialog';
 import type { CollectionView } from './collection-view';
@@ -82,6 +85,12 @@ export function CollectionScreen({
     onViewChange(change);
   };
 
+  // Sorting shows the same items, so it keeps the selection; searching or the kind do not.
+  const selection = useSelection(`${searchText}\n${kind}`);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const shownIds = items.data?.map((item) => item.id) ?? [];
+  const selectedIds = selectedAmong(selection.selected, shownIds);
+
   // New results start from the top.
   const shownResults = `${searchText}\n${kind}\n${sort.field}\n${sort.direction}`;
   const lastResults = useRef(shownResults);
@@ -95,7 +104,7 @@ export function CollectionScreen({
 
   return (
     // "library" shares the layout of the libraries, scrollbar space included.
-    <section className="library collection">
+    <section className={`library collection${selection.active ? ' library--selecting' : ''}`}>
       <header className="library__header">
         <h1>
           {name}
@@ -110,6 +119,11 @@ export function CollectionScreen({
           >
             <PlusIcon /> {t('collections.items.manage')}
           </button>
+          {!selection.active && shownIds.length > 0 && (
+            <button type="button" className="button button--ghost" onClick={selection.start}>
+              <CheckSquareIcon /> {t('selection.start')}
+            </button>
+          )}
           <button
             type="button"
             className="icon-button"
@@ -214,7 +228,47 @@ export function CollectionScreen({
           showKind={kind === null}
           onLeave={(anchor) => onViewChange({ anchor })}
           onOpenItem={onOpenItem}
+          selection={
+            selection.active
+              ? { selected: selection.selected, onToggle: selection.toggle }
+              : undefined
+          }
         />
+      )}
+
+      {selection.active && (
+        <SelectionBar
+          countLabel={t('selection.items', { count: selectedIds.length })}
+          count={selectedIds.length}
+          allSelected={isAllSelected(selection.selected, shownIds)}
+          actionLabel={t('selection.removeFromCollection')}
+          onToggleAll={() => selection.toggleAll(shownIds)}
+          onAction={() => setConfirmingRemove(true)}
+          onCancel={selection.stop}
+        />
+      )}
+      {confirmingRemove && (
+        <ConfirmDialog
+          title={t('selection.removeFromCollection')}
+          confirmLabel={t('selection.removeFromCollection')}
+          danger
+          onClose={() => setConfirmingRemove(false)}
+          onConfirm={async () => {
+            unwrap(
+              await window.api.collections.changeMemberships({
+                token,
+                add: [],
+                remove: selectedIds.map((itemId) => ({ collectionId, itemId })),
+              }),
+            );
+            setConfirmingRemove(false);
+            selection.stop();
+            details.reload();
+            items.reload();
+          }}
+        >
+          <p>{t('selection.removeConfirm', { count: selectedIds.length, name })}</p>
+        </ConfirmDialog>
       )}
 
       {editing && details.data && (

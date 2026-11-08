@@ -278,6 +278,25 @@
     "emptyConfirm_one": "Se eliminará definitivamente 1 elemento de «{{scope}}». Esta acción no se puede deshacer.",
     "emptyConfirm_other": "Se eliminarán definitivamente {{count}} elementos de «{{scope}}». Esta acción no se puede deshacer."
   },
+  "selection": {
+    "start": "Seleccionar",
+    "bar": "Selección",
+    "selectAll": "Seleccionar todo",
+    "clearAll": "Quitar la selección",
+    "items_one": "1 elemento seleccionado",
+    "items_other": "{{count}} elementos seleccionados",
+    "collections_one": "1 colección seleccionada",
+    "collections_other": "{{count}} colecciones seleccionadas",
+    "trash": "Enviar a la papelera",
+    "trashConfirm_one": "¿Enviar 1 elemento a la papelera?",
+    "trashConfirm_other": "¿Enviar {{count}} elementos a la papelera?",
+    "deleteCollections": "Eliminar",
+    "deleteCollectionsConfirm_one": "¿Eliminar 1 colección? Sus elementos no se eliminan.",
+    "deleteCollectionsConfirm_other": "¿Eliminar {{count}} colecciones? Sus elementos no se eliminan.",
+    "removeFromCollection": "Quitar de la colección",
+    "removeConfirm_one": "¿Quitar 1 elemento de «{{name}}»? Seguirá en la biblioteca.",
+    "removeConfirm_other": "¿Quitar {{count}} elementos de «{{name}}»? Seguirán en la biblioteca."
+  },
   "collections": {
     "title": "Colecciones",
     "new": "Nueva colección",

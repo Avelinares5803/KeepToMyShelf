@@ -278,6 +278,25 @@
     "emptyConfirm_one": "1 item from “{{scope}}” will be deleted permanently. This cannot be undone.",
     "emptyConfirm_other": "{{count}} items from “{{scope}}” will be deleted permanently. This cannot be undone."
   },
+  "selection": {
+    "start": "Select",
+    "bar": "Selection",
+    "selectAll": "Select all",
+    "clearAll": "Clear selection",
+    "items_one": "1 item selected",
+    "items_other": "{{count}} items selected",
+    "collections_one": "1 collection selected",
+    "collections_other": "{{count}} collections selected",
+    "trash": "Move to the trash",
+    "trashConfirm_one": "Move 1 item to the trash?",
+    "trashConfirm_other": "Move {{count}} items to the trash?",
+    "deleteCollections": "Delete",
+    "deleteCollectionsConfirm_one": "Delete 1 collection? Its items are not deleted.",
+    "deleteCollectionsConfirm_other": "Delete {{count}} collections? Their items are not deleted.",
+    "removeFromCollection": "Remove from the collection",
+    "removeConfirm_one": "Remove 1 item from “{{name}}”? It stays in the library.",
+    "removeConfirm_other": "Remove {{count}} items from “{{name}}”? They stay in the library."
+  },
   "collections": {
     "title": "Collections",
     "new": "New collection",

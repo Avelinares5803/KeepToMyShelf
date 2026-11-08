@@ -162,6 +162,38 @@ test('deletes the selected collections, never their items', async () => {
   await expect(shownTitles()).toHaveText(['Sonic']);
 });
 
+test('creating a collection while selecting leaves the mode', async () => {
+  seedCollections(dataDir, [{ name: 'Favoritos' }]);
+  await button('Colecciones').click();
+  await button('Seleccionar').click();
+  await card('Favoritos 0 elementos').click();
+
+  // Escape in the creation window closes only the window: the mode and the marks stay.
+  await button('Nueva colección').click();
+  const form = page.getByRole('dialog', { name: 'Nueva colección', exact: true });
+  await page.keyboard.press('Escape');
+  await expect(form).toBeHidden();
+  await expect(bar()).toContainText('1 colección seleccionada');
+
+  // The new collection opens at once, without the bar.
+  await button('Nueva colección').click();
+  await form.getByLabel('Nombre', { exact: true }).fill('Retro');
+  await form.getByRole('button', { name: 'Guardar', exact: true }).click();
+  await expect(heading('Retro (0)')).toBeVisible();
+  await expect(bar()).toBeHidden();
+
+  // Back in the list, nothing is selected and a card opens its collection again.
+  await page
+    .getByRole('navigation', { name: 'Ruta de navegación' })
+    .getByRole('button', { name: 'Colecciones', exact: true })
+    .click();
+  await expect(heading('Colecciones (2)')).toBeVisible();
+  await expect(bar()).toBeHidden();
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+  await button('Favoritos 0 elementos').click();
+  await expect(heading('Favoritos (0)')).toBeVisible();
+});
+
 test('removes the selected items from a collection; they stay in the library', async () => {
   seedItems(dataDir, [{ title: 'Sonic' }, { title: 'Tails' }, { title: 'Alien', kind: 'movie' }]);
   seedCollections(dataDir, [{ name: 'Favoritos', items: ['Sonic', 'Tails', 'Alien'] }]);

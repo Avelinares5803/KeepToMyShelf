@@ -182,6 +182,10 @@ export const ipcInputSchemas = {
     documents: documentPlanSchema.optional(),
   }),
   moveItemToTrash: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
+  moveItemsToTrash: z.object({
+    token: sessionTokenSchema,
+    ids: z.array(itemIdSchema).min(1).max(100_000).readonly(),
+  }),
   restoreItem: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   deleteItemPermanently: z.object({ token: sessionTokenSchema, id: itemIdSchema }),
   emptyTrash: z.object({ token: sessionTokenSchema, kind: itemKindSchema.nullable() }),
@@ -225,6 +229,10 @@ export const ipcInputSchemas = {
     ...collectionInputSchema,
   }),
   deleteCollection: z.object({ token: sessionTokenSchema, id: collectionIdSchema }),
+  deleteCollections: z.object({
+    token: sessionTokenSchema,
+    ids: z.array(collectionIdSchema).min(1).max(100_000).readonly(),
+  }),
   // `kind` null shows every kind; filters by attribute are not offered in collections.
   listCollectionItems: z.object({
     token: sessionTokenSchema,

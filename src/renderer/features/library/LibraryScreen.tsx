@@ -2,11 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
-import { ListIcon, PlusIcon, TrashIcon } from '../../components/icons';
-import { errorMessage } from '../../lib/ipc';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { CheckSquareIcon, ListIcon, PlusIcon, TrashIcon } from '../../components/icons';
+import { errorMessage, unwrap } from '../../lib/ipc';
 import { useDebounced } from '../../lib/use-debounced';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
+import { isAllSelected, selectedAmong } from '../selection/selection';
+import { SelectionBar } from '../selection/SelectionBar';
+import { useSelection } from '../selection/use-selection';
 import { withoutMissingAdvancedValues } from './advanced-filters';
 import { FiltersPanel } from './FiltersPanel';
 import {
@@ -89,6 +93,12 @@ export function LibraryScreen({
     onViewChange(change);
   };
 
+  // Sorting shows the same items, so it keeps the selection; searching or filtering does not.
+  const selection = useSelection(`${searchText}\n${filterKey}`);
+  const [confirmingTrash, setConfirmingTrash] = useState(false);
+  const shownIds = items.data?.map((item) => item.id) ?? [];
+  const selectedIds = selectedAmong(selection.selected, shownIds);
+
   // New results start from the top.
   const shownResults = `${searchText}\n${sort.field}\n${sort.direction}\n${filterKey}`;
   const lastResults = useRef(shownResults);
@@ -99,7 +109,7 @@ export function LibraryScreen({
   }, [shownResults]);
 
   return (
-    <section className="library">
+    <section className={`library${selection.active ? ' library--selecting' : ''}`}>
       <header className="library__header">
         <h1>
           {t(`modes.${kind}`)}
@@ -109,6 +119,11 @@ export function LibraryScreen({
           <button type="button" className="button button--primary" onClick={onAdd}>
             <PlusIcon /> {t('items.add')}
           </button>
+          {!selection.active && shownIds.length > 0 && (
+            <button type="button" className="button button--ghost" onClick={selection.start}>
+              <CheckSquareIcon /> {t('selection.start')}
+            </button>
+          )}
           <button type="button" className="button button--ghost" onClick={onOpenTrash}>
             <TrashIcon /> {t('trash.openWithCount', { count: trashCount })}
           </button>
@@ -175,7 +190,43 @@ export function LibraryScreen({
           restoreTo={restoreTo}
           onLeave={(anchor) => onViewChange({ anchor })}
           onOpenItem={onOpenItem}
+          selection={
+            selection.active
+              ? { selected: selection.selected, onToggle: selection.toggle }
+              : undefined
+          }
         />
+      )}
+
+      {selection.active && (
+        <SelectionBar
+          countLabel={t('selection.items', { count: selectedIds.length })}
+          count={selectedIds.length}
+          allSelected={isAllSelected(selection.selected, shownIds)}
+          actionLabel={t('selection.trash')}
+          onToggleAll={() => selection.toggleAll(shownIds)}
+          onAction={() => setConfirmingTrash(true)}
+          onCancel={selection.stop}
+        />
+      )}
+      {confirmingTrash && (
+        <ConfirmDialog
+          title={t('selection.trash')}
+          confirmLabel={t('selection.trash')}
+          danger
+          onClose={() => setConfirmingTrash(false)}
+          onConfirm={async () => {
+            unwrap(await window.api.items.moveManyToTrash({ token, ids: selectedIds }));
+            setConfirmingTrash(false);
+            selection.stop();
+            items.reload();
+            trash.reload();
+            // A value used only by the items moved is no longer offered.
+            filterValues.reload();
+          }}
+        >
+          <p>{t('selection.trashConfirm', { count: selectedIds.length })}</p>
+        </ConfirmDialog>
       )}
     </section>
   );

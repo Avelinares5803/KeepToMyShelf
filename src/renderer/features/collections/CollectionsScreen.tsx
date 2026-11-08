@@ -1,11 +1,21 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CollectionDetails, CollectionSummary } from '../../../shared/collections';
-import { PlusIcon } from '../../components/icons';
-import { errorMessage } from '../../lib/ipc';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { CheckSquareIcon, PlusIcon } from '../../components/icons';
+import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { Thumbnail } from '../media/Thumbnail';
 import type { ImageImportOptions } from '../media/use-image-import';
+import {
+  cardClassName,
+  isAllSelected,
+  selectableProps,
+  selectedAmong,
+} from '../selection/selection';
+import { SelectionBar } from '../selection/SelectionBar';
+import { SelectionMark } from '../selection/SelectionMark';
+import { useSelection } from '../selection/use-selection';
 import { CollectionDialog } from './CollectionDialog';
 
 interface CollectionsScreenProps {
@@ -19,9 +29,14 @@ export function CollectionsScreen({ token, imageImport, onOpen }: CollectionsScr
   const { t } = useTranslation();
   const collections = useLoad(() => window.api.collections.list({ token }), [token]);
   const [creating, setCreating] = useState(false);
+  // The list has no search: the selection only goes when the screen or the mode is left.
+  const selection = useSelection('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const shownIds = collections.data?.map((collection) => collection.id) ?? [];
+  const selectedIds = selectedAmong(selection.selected, shownIds);
 
   return (
-    <section className="collections">
+    <section className={`collections${selection.active ? ' library--selecting' : ''}`}>
       <header className="library__header">
         <h1>
           {t('collections.title')}
@@ -35,6 +50,11 @@ export function CollectionsScreen({ token, imageImport, onOpen }: CollectionsScr
           >
             <PlusIcon /> {t('collections.new')}
           </button>
+          {!selection.active && shownIds.length > 0 && (
+            <button type="button" className="button button--ghost" onClick={selection.start}>
+              <CheckSquareIcon /> {t('selection.start')}
+            </button>
+          )}
         </div>
       </header>
 
@@ -48,10 +68,44 @@ export function CollectionsScreen({ token, imageImport, onOpen }: CollectionsScr
         <ul className="collection-grid" aria-label={t('collections.title')}>
           {collections.data.map((collection) => (
             <li key={collection.id}>
-              <CollectionCard collection={collection} onOpen={() => onOpen(collection)} />
+              <CollectionCard
+                collection={collection}
+                selected={selection.active ? selection.selected.has(collection.id) : null}
+                onOpen={() =>
+                  selection.active ? selection.toggle(collection.id) : onOpen(collection)
+                }
+              />
             </li>
           ))}
         </ul>
+      )}
+
+      {selection.active && (
+        <SelectionBar
+          countLabel={t('selection.collections', { count: selectedIds.length })}
+          count={selectedIds.length}
+          allSelected={isAllSelected(selection.selected, shownIds)}
+          actionLabel={t('selection.deleteCollections')}
+          onToggleAll={() => selection.toggleAll(shownIds)}
+          onAction={() => setConfirmingDelete(true)}
+          onCancel={selection.stop}
+        />
+      )}
+      {confirmingDelete && (
+        <ConfirmDialog
+          title={t('selection.deleteCollections')}
+          confirmLabel={t('selection.deleteCollections')}
+          danger
+          onClose={() => setConfirmingDelete(false)}
+          onConfirm={async () => {
+            unwrap(await window.api.collections.deleteMany({ token, ids: selectedIds }));
+            setConfirmingDelete(false);
+            selection.stop();
+            collections.reload();
+          }}
+        >
+          <p>{t('selection.deleteCollectionsConfirm', { count: selectedIds.length })}</p>
+        </ConfirmDialog>
       )}
 
       {creating && (
@@ -74,9 +128,12 @@ export function CollectionsScreen({ token, imageImport, onOpen }: CollectionsScr
 /** A collection: its cover with the name below, or just the name, and how many items. */
 function CollectionCard({
   collection,
+  selected,
   onOpen,
 }: {
   collection: CollectionSummary;
+  /** Whether it is marked, in "Select" mode; null outside it. */
+  selected: boolean | null;
   onOpen: () => void;
 }) {
   const { t } = useTranslation();
@@ -86,9 +143,11 @@ function CollectionCard({
   return (
     <button
       type="button"
-      className={`item-card${cover ? ' item-card--cover' : ''}`}
+      className={cardClassName(cover !== null, selected)}
+      {...selectableProps(selected)}
       onClick={onOpen}
     >
+      {selected !== null && <SelectionMark />}
       {cover && (
         <span className="item-card__image">
           <Thumbnail

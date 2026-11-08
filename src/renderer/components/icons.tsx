@@ -84,6 +84,21 @@ export const TrashIcon = () => (
   </Icon>
 );
 
+/** A ticked box: the "Select" mode. */
+export const CheckSquareIcon = () => (
+  <Icon>
+    <rect x="3" y="3" width="18" height="18" rx="3" />
+    <path d="M8 12l3 3 5-6" />
+  </Icon>
+);
+
+/** Just the tick, drawn inside the box of a selected card. */
+export const CheckIcon = () => (
+  <Icon size={14}>
+    <path d="M5 12l5 5 9-10" />
+  </Icon>
+);
+
 export const HeartIcon = ({ filled = false }: { filled?: boolean }) => (
   <Icon filled={filled}>
     <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />

@@ -6,6 +6,7 @@ import { AppError } from '../../../src/core/errors';
 import { EMPTY_ITEM_DRAFT } from '../../../src/core/items/item-draft';
 import type { ImageStorageChoice } from '../../../src/core/media/import-rules';
 import type { ItemKind } from '../../../src/shared/content';
+import { ipcInputSchemas } from '../../../src/shared/ipc-schemas';
 import type { ImagePlanEntry, PreparedImport } from '../../../src/shared/media';
 import { PDF_BYTES, pngImage, writeFile } from '../../support/media-files';
 import { createProfileFixture, type ProfileFixture } from '../../support/profile-fixture';
@@ -191,6 +192,42 @@ describe('CollectionService', () => {
       expectCode(() => fx.collections.get(token, id), 'collection.not_found');
     });
 
+    it('deletes several collections at once without deleting their items', () => {
+      const favorites = collection('Favoritos');
+      const pending = collection('Pendientes');
+      const kept = collection('Otra');
+      const sonic = item('game', 'Sonic');
+      add(favorites, sonic);
+      add(kept, sonic);
+
+      // Repeated ids count once.
+      expect(fx.collections.deleteMany(token, [favorites, pending, pending])).toBe(2);
+
+      expect(fx.collections.list(token).map((c) => c.id)).toEqual([kept]);
+      expect(fx.items.get(token, sonic).title).toBe('Sonic');
+      expect(fx.collections.forItem(token, sonic)).toEqual([{ id: kept, name: 'Otra' }]);
+    });
+
+    it('deletes none of the collections when one of them does not exist', () => {
+      const id = collection('Favoritos');
+
+      expectCode(() => fx.collections.deleteMany(token, [id, 999]), 'collection.not_found');
+
+      expect(fx.collections.list(token).map((c) => c.id)).toEqual([id]);
+    });
+
+    it('accepts a list of collection ids and rejects an empty list or invalid ids', () => {
+      const parse = (ids: unknown) =>
+        ipcInputSchemas.deleteCollections.safeParse({
+          token: '4f8a2a1e-3c55-4b7e-9a10-0d6c7f1b2e3a',
+          ids,
+        }).success;
+
+      expect(parse([1, 2])).toBe(true);
+      expect(parse([])).toBe(false);
+      expect(parse([-1])).toBe(false);
+    });
+
     it('tells the collections of an item, by name', () => {
       const sonic = item('game', 'Sonic');
       const pending = collection('Pendientes');
@@ -347,6 +384,31 @@ describe('CollectionService', () => {
 
       fx.collections.delete(token, again);
       expect(storedFiles()).toEqual([]);
+    });
+
+    it('deleting several collections removes the covers nothing else uses', async () => {
+      fx.items.create(
+        token,
+        'game',
+        { ...EMPTY_ITEM_DRAFT, title: 'Sonic' },
+        { cover: prepared(await prepare('ancha.png', wide)) },
+      );
+      const shared = fx.collections.create(token, {
+        name: 'Favoritos',
+        cover: prepared(await prepare('ancha.png', wide)),
+      }).id;
+      const own = fx.collections.create(token, {
+        name: 'Pendientes',
+        cover: prepared(await prepare('alta.png', tall)),
+      }).id;
+      const plain = collection('Sin portada');
+      expect(storedFiles()).toEqual([`${sha256(wide)}.png`, `${sha256(tall)}.png`].sort());
+
+      fx.collections.deleteMany(token, [shared, own, plain]);
+
+      expect(fx.collections.list(token)).toEqual([]);
+      // The item still uses the wide image; the tall one was only a collection cover.
+      expect(storedFiles()).toEqual([`${sha256(wide)}.png`]);
     });
 
     it('keeps collection covers when the profile is opened again', async () => {

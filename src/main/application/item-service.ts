@@ -278,6 +278,28 @@ export class ItemService {
     );
   }
 
+  /**
+   * Moves several items to the trash in one transaction and returns how many were moved.
+   * Items already in the trash are left as they are. If one does not exist, nothing changes.
+   * Their files stay: an item in the trash keeps them, so there is nothing to sweep.
+   */
+  moveManyToTrash(token: string, ids: readonly number[]): number {
+    const db = this.db(token);
+    const exists = db.prepare('SELECT 1 FROM item WHERE id = ?');
+    const trash = db.prepare('UPDATE item SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL');
+    const timestamp = this.deps.now().toISOString();
+    return db.transaction(() => {
+      let moved = 0;
+      for (const id of new Set(ids)) {
+        if (exists.get(id) === undefined) {
+          throw new NotFoundError('item.not_found', `Item ${id} does not exist`);
+        }
+        moved += trash.run(timestamp, id).changes;
+      }
+      return moved;
+    })();
+  }
+
   restore(token: string, id: number): void {
     const db = this.db(token);
     this.read(db, id);

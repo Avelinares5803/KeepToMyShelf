@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import type { ItemSummary } from '../../../shared/items';
 import { HeartIcon } from '../../components/icons';
 import { Thumbnail } from '../media/Thumbnail';
+import { cardClassName, selectableProps } from '../selection/selection';
+import { SelectionMark } from '../selection/SelectionMark';
 import {
   cardWidthFor,
   columnCountFor,
@@ -34,6 +36,13 @@ interface LibraryGridProps {
   onOpenItem: (item: ItemSummary) => void;
   /** Shows each item's kind under its title, when items of several kinds are listed. */
   showKind?: boolean;
+  /** In "Select" mode: clicking a card marks it instead of opening it. */
+  selection?: CardSelection | undefined;
+}
+
+export interface CardSelection {
+  readonly selected: ReadonlySet<number>;
+  readonly onToggle: (id: number) => void;
 }
 
 interface GridBox {
@@ -61,6 +70,7 @@ export function LibraryGrid({
   onLeave,
   onOpenItem,
   showKind = false,
+  selection,
 }: LibraryGridProps) {
   const container = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<GridBox | null>(null);
@@ -179,7 +189,8 @@ export function LibraryGrid({
                 item={item}
                 title={titleOf(item)}
                 showKind={showKind}
-                onOpen={() => onOpenItem(item)}
+                selected={selection ? selection.selected.has(item.id) : null}
+                onOpen={() => (selection ? selection.onToggle(item.id) : onOpenItem(item))}
               />
             </div>
           ))}
@@ -198,11 +209,14 @@ function ItemCard({
   item,
   title,
   showKind,
+  selected,
   onOpen,
 }: {
   item: ItemSummary;
   title: string;
   showKind: boolean;
+  /** Whether it is marked, in "Select" mode; null outside it. */
+  selected: boolean | null;
   onOpen: () => void;
 }) {
   const { t } = useTranslation();
@@ -212,9 +226,11 @@ function ItemCard({
   return (
     <button
       type="button"
-      className={`item-card${cover ? ' item-card--cover' : ''}`}
+      className={cardClassName(cover !== null, selected)}
+      {...selectableProps(selected)}
       onClick={onOpen}
     >
+      {selected !== null && <SelectionMark />}
       {cover && (
         <span className="item-card__image">
           <Thumbnail

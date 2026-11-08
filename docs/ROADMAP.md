@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-08, con la mejora «Seleccionar» acordada para antes de la F10.
+**Última actualización:** 2026-11-08, con la mejora «Seleccionar» terminada antes de la F10.
 
 ---
 
@@ -49,7 +49,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
-**Antes de la F10:** la mejora «Seleccionar» (seleccionar varios elementos o colecciones y enviarlos a la papelera, eliminarlos o quitarlos de una colección), acordada el 2026-11-08. Ver el final del apartado 3.7.
+**Antes de la F10:** la mejora «Seleccionar» (seleccionar varios elementos o colecciones y enviarlos a la papelera, eliminarlos o quitarlos de una colección), acordada el 2026-11-08. ✅ Hecha. Ver el final del apartado 3.7.
 
 ---
 
@@ -288,7 +288,7 @@ El detalle técnico está en el [ADR 0007](adr/0007-collections.md).
   - La ventana de la colección empieza en el **tipo que se está viendo**; con «Todo», en Videojuegos. Las marcas se conservan al cambiar de tipo o de búsqueda, y un contador indica los cambios pendientes.
   - Los botones: «Añadir o quitar elementos» en la colección (y «Añadir elementos» si está vacía), y «Elegir colecciones», con el icono de colecciones, en la ficha.
 
-**Mejora acordada tras la F9 (2026-11-08): seleccionar varios y actuar sobre ellos.** Pendiente; se hará en su propia entrega (`feat/select-and-delete`), antes de la F10.
+**Mejora acordada tras la F9 (2026-11-08): seleccionar varios y actuar sobre ellos.** ✅ Hecha en su propia entrega (`feat/select-and-delete`), antes de la F10.
 
 - **Motivo:** hasta ahora, un elemento o una colección solo se puede borrar desde dentro (su ficha o la pantalla de la colección). Los catálogos ya se borran desde su lista y no cambian.
 - **Modo «Seleccionar»** (elegido frente a un icono de papelera en cada tarjeta, que quedaba junto a donde se hace clic para abrir, añadía una parada de teclado por tarjeta y borraba de una en una):
@@ -305,7 +305,14 @@ El detalle técnico está en el [ADR 0007](adr/0007-collections.md).
   | Lista de colecciones    | Eliminar (definitivo)                            | «¿Eliminar 2 colecciones? Sus elementos no se eliminan.» |
   | Dentro de una colección | Quitar de la colección (siguen en la biblioteca) | «¿Quitar 4 elementos de «Favoritos»?»                    |
 
-- **Por dentro:** canales nuevos para enviar varios elementos a la papelera y eliminar varias colecciones, cada uno en una sola transacción y con un solo barrido de archivos. Quitar de una colección usa `collections.changeMemberships`, que ya existe. Sin migraciones ni dependencias nuevas.
+- **Por dentro:** canales nuevos para enviar varios elementos a la papelera (`items:move-many-to-trash`) y eliminar varias colecciones (`collections:delete-many`), cada uno en una sola transacción. Enviar a la papelera no borra archivos, así que no hay barrido; eliminar colecciones hace uno solo, si alguna tenía portada. Quitar de una colección usa `collections.changeMemberships`, que ya existe. Sin migraciones ni dependencias nuevas.
+- **Acordado al implementarla (2026-11-08):**
+  - **Todo o nada:** si un identificador no existe, la acción falla con el error traducido de siempre y no cambia nada. En el uso normal no ocurre; sirve para que un fallo de la interfaz no pase desapercibido.
+  - Con todo marcado, «Seleccionar todo» pasa a ser **«Quitar la selección»**.
+  - El botón «Seleccionar» va en la cabecera, junto a las demás acciones de la pantalla (la lista de colecciones no tiene barra de herramientas), y no aparece si no hay nada que seleccionar.
+  - Cambiar solo el **orden** conserva la selección, porque los resultados son los mismos. Buscar, filtrar o cambiar de tipo la vacían, pero no salen del modo.
+  - Esc sale del modo solo si no hay ningún diálogo abierto; con la confirmación abierta, solo la cierra.
+  - En la colección, el texto de confirmación añade «Seguirán en la biblioteca».
 
 ### 3.8 Personalización (F10)
 

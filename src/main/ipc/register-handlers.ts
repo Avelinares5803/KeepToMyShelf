@@ -89,6 +89,9 @@ export function registerIpcHandlers({
     moveItemToTrash: createHandler(ipcInputSchemas.moveItemToTrash, ({ token, id }) =>
       items.moveToTrash(token, id),
     ),
+    moveItemsToTrash: createHandler(ipcInputSchemas.moveItemsToTrash, ({ token, ids }) =>
+      items.moveManyToTrash(token, ids),
+    ),
     restoreItem: createHandler(ipcInputSchemas.restoreItem, ({ token, id }) =>
       items.restore(token, id),
     ),
@@ -156,6 +159,9 @@ export function registerIpcHandlers({
     ),
     deleteCollection: createHandler(ipcInputSchemas.deleteCollection, ({ token, id }) =>
       collections.delete(token, id),
+    ),
+    deleteCollections: createHandler(ipcInputSchemas.deleteCollections, ({ token, ids }) =>
+      collections.deleteMany(token, ids),
     ),
     listCollectionItems: createHandler(
       ipcInputSchemas.listCollectionItems,

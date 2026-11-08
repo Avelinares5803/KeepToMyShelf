@@ -148,6 +148,28 @@ export class CollectionService {
     if (hadCover) this.deps.media.sweep(token);
   }
 
+  /**
+   * Deletes several collections in one transaction and returns how many. Their items are not
+   * touched. If one does not exist, nothing changes. One sweep removes the unused covers.
+   */
+  deleteMany(token: string, ids: readonly number[]): number {
+    const db = this.db(token);
+    const coverOf = db.prepare('SELECT cover_media_id FROM collection WHERE id = ?').pluck();
+    const remove = db.prepare('DELETE FROM collection WHERE id = ?');
+    let hadCover = false;
+    const deleted = db.transaction(() => {
+      let count = 0;
+      for (const id of new Set(ids)) {
+        assertCollectionExists(db, id);
+        if (coverOf.get(id) !== null) hadCover = true;
+        count += remove.run(id).changes;
+      }
+      return count;
+    })();
+    if (hadCover) this.deps.media.sweep(token);
+    return deleted;
+  }
+
   /** The items of a collection, without those in the trash, narrowed and sorted. */
   listItems(token: string, id: number, request: CollectionItemsRequest): ItemSummary[] {
     const db = this.db(token);

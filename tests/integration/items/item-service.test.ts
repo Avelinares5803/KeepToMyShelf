@@ -4,6 +4,7 @@ import { knownUsageDate, UNKNOWN_USAGE_DATE } from '../../../src/core/dates/usag
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../../src/core/errors';
 import { EMPTY_ITEM_DRAFT, type ItemDraft } from '../../../src/core/items/item-draft';
 import type { ItemKind } from '../../../src/shared/content';
+import { ipcInputSchemas } from '../../../src/shared/ipc-schemas';
 import { createProfileFixture, type ProfileFixture } from '../../support/profile-fixture';
 
 const draft = (overrides: Partial<ItemDraft> = {}): ItemDraft => ({
@@ -279,9 +280,53 @@ describe('ItemService', () => {
       expect(fx.items.list(token, 'game').map((i) => i.id)).toEqual([kept.id]);
     });
 
+    it('moves several items to the trash at once and reports how many were moved', () => {
+      const [first, second, third] = [create('game'), create('game'), create('game')];
+      const kept = create('game', { title: 'Kept' });
+      fx.items.moveToTrash(token, third.id);
+
+      // Repeated ids count once; the one already in the trash is not counted again.
+      expect(fx.items.moveManyToTrash(token, [first.id, second.id, second.id, third.id])).toBe(2);
+
+      expect(fx.items.list(token, 'game').map((i) => i.id)).toEqual([kept.id]);
+      expect(
+        fx.items
+          .listTrash(token, 'game')
+          .map((i) => i.id)
+          .sort(),
+      ).toEqual([first.id, second.id, third.id].sort());
+    });
+
+    it('moves none of the items when one of them does not exist', () => {
+      const item = create('game');
+
+      expectCode(
+        () => fx.items.moveManyToTrash(token, [item.id, 999]),
+        NotFoundError,
+        'item.not_found',
+      );
+      expect(fx.items.get(token, item.id).deletedAt).toBeNull();
+    });
+
     it('fails for items that do not exist', () => {
       expectCode(() => fx.items.moveToTrash(token, 999), NotFoundError, 'item.not_found');
       expectCode(() => fx.items.restore(token, 999), NotFoundError, 'item.not_found');
+    });
+  });
+
+  describe('IPC input for several items', () => {
+    const parse = (ids: unknown) =>
+      ipcInputSchemas.moveItemsToTrash.safeParse({
+        token: '4f8a2a1e-3c55-4b7e-9a10-0d6c7f1b2e3a',
+        ids,
+      }).success;
+
+    it('accepts a list of ids and rejects an empty list or invalid ids', () => {
+      expect(parse([1, 2, 3])).toBe(true);
+      expect(parse([])).toBe(false);
+      expect(parse([0])).toBe(false);
+      expect(parse([1.5])).toBe(false);
+      expect(parse(['1'])).toBe(false);
     });
   });
 

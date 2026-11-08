@@ -34,6 +34,7 @@ export const IpcChannels = {
   createItem: 'items:create',
   updateItem: 'items:update',
   moveItemToTrash: 'items:move-to-trash',
+  moveItemsToTrash: 'items:move-many-to-trash',
   restoreItem: 'items:restore',
   deleteItemPermanently: 'items:delete-permanently',
   emptyTrash: 'items:empty-trash',
@@ -52,6 +53,7 @@ export const IpcChannels = {
   createCollection: 'collections:create',
   updateCollection: 'collections:update',
   deleteCollection: 'collections:delete',
+  deleteCollections: 'collections:delete-many',
   listCollectionItems: 'collections:list-items',
   listCollectionMemberIds: 'collections:list-member-ids',
   listItemCollections: 'collections:list-for-item',
@@ -124,6 +126,11 @@ export interface KeepToMyShelfApi {
     create(input: IpcInput<'createItem'>): Promise<IpcResult<ItemDetails>>;
     update(input: IpcInput<'updateItem'>): Promise<IpcResult<ItemDetails>>;
     moveToTrash(input: IpcInput<'moveItemToTrash'>): Promise<IpcResult<void>>;
+    /**
+     * All of them or none, in one transaction; resolves to how many were moved (those already
+     * in the trash are not counted).
+     */
+    moveManyToTrash(input: IpcInput<'moveItemsToTrash'>): Promise<IpcResult<number>>;
     restore(input: IpcInput<'restoreItem'>): Promise<IpcResult<void>>;
     deletePermanently(input: IpcInput<'deleteItemPermanently'>): Promise<IpcResult<void>>;
     /** Resolves to the number of items deleted. */
@@ -160,6 +167,8 @@ export interface KeepToMyShelfApi {
     update(input: IpcInput<'updateCollection'>): Promise<IpcResult<CollectionDetails>>;
     /** Deletes the collection for good; its items are never deleted. */
     delete(input: IpcInput<'deleteCollection'>): Promise<IpcResult<void>>;
+    /** All of them or none, in one transaction; resolves to how many were deleted. */
+    deleteMany(input: IpcInput<'deleteCollections'>): Promise<IpcResult<number>>;
     /** Its items without those in the trash, of one kind or all, searched and sorted. */
     listItems(input: IpcInput<'listCollectionItems'>): Promise<IpcResult<ItemSummary[]>>;
     /** The ids of its items without those in the trash, to mark them when choosing. */

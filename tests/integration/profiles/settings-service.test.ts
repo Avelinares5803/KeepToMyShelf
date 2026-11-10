@@ -79,10 +79,41 @@ describe('SettingsService', () => {
     expect(fx.settings.getForProfile(beaId).imageImportChoice).toBe('ask');
   });
 
+  it('stores the background preferences, by default no background and 3840 px', () => {
+    expect(fx.settings.getGlobal()).toMatchObject({
+      background: { kind: 'none' },
+      backgroundBlur: 8,
+      backgroundImportChoice: 'ask',
+      backgroundMaxSide: 3840,
+    });
+    fx.settings.setForProfile(anaId, { key: 'background', value: { kind: 'preset', id: 'dusk' } });
+    fx.settings.setForProfile(anaId, { key: 'backgroundBlur', value: 0 });
+    fx.settings.setForProfile(anaId, { key: 'backgroundImportChoice', value: 'optimized_only' });
+    fx.settings.setForProfile(anaId, { key: 'backgroundMaxSide', value: 5120 });
+
+    expect(fx.settings.getForProfile(anaId)).toMatchObject({
+      background: { kind: 'preset', id: 'dusk' },
+      backgroundBlur: 0,
+      backgroundImportChoice: 'optimized_only',
+      backgroundMaxSide: 5120,
+      // The import choice of covers is a separate preference.
+      imageImportChoice: 'ask',
+    });
+    expect(fx.settings.getForProfile(beaId).background).toEqual({ kind: 'none' });
+  });
+
   it.each([
     { key: 'imageImportChoice', value: 'always' },
     { key: 'optimizedMaxSide', value: 2001 },
     { key: 'optimizedMaxSide', value: '2000' },
+    { key: 'background', value: { kind: 'preset', id: 'unknown' } },
+    { key: 'background', value: { kind: 'imported', id: 0 } },
+    { key: 'background', value: 'none' },
+    { key: 'backgroundBlur', value: -1 },
+    { key: 'backgroundBlur', value: 41 },
+    { key: 'backgroundBlur', value: 2.5 },
+    { key: 'backgroundMaxSide', value: 4000 },
+    { key: 'backgroundImportChoice', value: 'always' },
   ])('rejects the invalid value %j', (update) => {
     expect(() => fx.settings.setGlobal(update as unknown as SettingUpdate)).toThrow(
       ValidationError,

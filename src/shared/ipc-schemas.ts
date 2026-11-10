@@ -248,6 +248,20 @@ export const ipcInputSchemas = {
     add: membershipsSchema,
     remove: membershipsSchema,
   }),
+  listBackgrounds: z.undefined(),
+  // Backgrounds can be imported with no profile open (token null).
+  pickBackgrounds: z.object({
+    token: sessionTokenSchema.nullable(),
+    filterName: z.string().min(1).max(100),
+  }),
+  importBackground: z.object({
+    preparedId: preparedIdSchema,
+    choice: z.enum(IMAGE_STORAGE_CHOICES),
+  }),
+  discardBackgroundImports: z.object({
+    preparedIds: z.array(preparedIdSchema).max(1_000).readonly(),
+  }),
+  deleteBackground: z.object({ id: z.number().int().positive() }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

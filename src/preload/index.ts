@@ -71,6 +71,13 @@ const api: KeepToMyShelfApi = {
     forItem: invoke(IpcChannels.listItemCollections),
     changeMemberships: invoke(IpcChannels.changeCollectionMemberships),
   },
+  backgrounds: {
+    list: invoke(IpcChannels.listBackgrounds),
+    pick: invoke(IpcChannels.pickBackgrounds),
+    import: invoke(IpcChannels.importBackground),
+    discardImports: invoke(IpcChannels.discardBackgroundImports),
+    delete: invoke(IpcChannels.deleteBackground),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

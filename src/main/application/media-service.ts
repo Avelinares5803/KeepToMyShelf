@@ -1,6 +1,6 @@
-import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { copyFile, open, readFile, stat } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { copyFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import {
@@ -9,20 +9,15 @@ import {
   labelFromFileName,
 } from '../../core/media/document-label';
 import {
-  assertChoiceAllowed,
-  assertWithinSizeLimit,
   DEFAULT_MEDIA_LIMITS,
-  fitsWithin,
   THUMBNAIL_SIZES,
   type ImageStorageChoice,
   type MediaLimits,
   type ThumbnailSize,
 } from '../../core/media/import-rules';
 import {
-  detectMediaFormat,
   mediaKindOf,
   mimeTypeOf,
-  SIGNATURE_BYTES,
   type MediaFormat,
   type MediaKind,
 } from '../../core/media/media-format';
@@ -36,12 +31,17 @@ import type {
   PreparedImport,
 } from '../../shared/media';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
-import {
-  createThumbnail,
-  inspectImage,
-  optimizeImage,
-} from '../infrastructure/media/image-processor';
+import { createThumbnail } from '../infrastructure/media/image-processor';
 import { MediaStore, type MediaStoreName } from '../infrastructure/media/media-store';
+import {
+  filesForChoice,
+  LOCKED_FILE_CODES,
+  readIfExists,
+  readImport,
+  removeFile,
+  writeImport,
+  type PreparedFile,
+} from '../infrastructure/media/prepared-import';
 import type { DataPaths } from '../infrastructure/paths';
 import type { ProfileSession, SessionManager } from './session-manager';
 
@@ -90,16 +90,7 @@ export interface StagedMedia {
   abort(): void;
 }
 
-/** A file waiting in media/.tmp until the user confirms how to keep it. */
-interface PreparedFile {
-  readonly path: string;
-  readonly sha256: string;
-  readonly format: MediaFormat;
-  readonly byteSize: number;
-  readonly width: number | null;
-  readonly height: number | null;
-}
-
+/** An import waiting in media/.tmp until the user confirms how to keep it. */
 interface Preparation {
   readonly token: string;
   readonly folder: string;
@@ -148,11 +139,6 @@ interface AttachmentRow extends FileRow {
   label: string | null;
 }
 
-const sha256Of = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
-
-// Windows refuses to delete a file another program has open; the next sweep retries.
-const LOCKED_FILE_CODES = new Set(['EBUSY', 'EPERM']);
-
 /**
  * Images and documents of the open profile. Files are copied into the profile's media
  * folder (the chosen file is never modified) and the database decides which files exist:
@@ -198,91 +184,14 @@ export class MediaService implements MediaForItems, MediaForCollections {
     expected?: MediaKind,
   ): Promise<PreparedImport> {
     const limits = this.limitsOf(this.deps.sessions.require(token));
-    const fileName = basename(sourcePath);
-    const format = await readFormat(sourcePath);
-    const kind = mediaKindOf(format);
-    if (expected !== undefined && kind !== expected) {
-      throw new ValidationError(
-        expected === 'image' ? 'media.not_an_image' : 'media.not_a_document',
-        `${fileName} is a ${kind}, not a ${expected}`,
-      );
-    }
-    // Checked before reading, so a huge file is never loaded into memory; and again after,
-    // in case it grew in between.
-    assertWithinSizeLimit(kind, (await stat(sourcePath)).size, limits);
-    // The bytes are read once and copied from memory, so the file the user changes or
-    // replaces afterwards is never the one stored.
-    const bytes = await readFile(sourcePath);
-    assertWithinSizeLimit(kind, bytes.length, limits);
-
-    let info = null;
-    let optimized = null;
-    const thumbnails = new Map<ThumbnailSize, Buffer>();
-    if (format !== 'pdf') {
-      info = await inspectImage(bytes, format);
-      if (!info.isAnimated) optimized = await optimizeImage(bytes, limits.optimizedMaxSide);
-      for (const size of THUMBNAIL_SIZES) {
-        thumbnails.set(size, (await createThumbnail(bytes, size)).bytes);
-      }
-    }
+    const read = await readImport(sourcePath, limits, expected);
 
     // The profile may have been closed while the image was being processed.
     const session = this.deps.sessions.require(token);
-    const store = this.store(session);
-    const folder = store.createTempFolder();
-    const write = (name: string, data: Uint8Array) => {
-      const path = join(folder, name);
-      writeFileSync(path, data);
-      return path;
-    };
-
-    const source: PreparedFile = {
-      path: write('source', bytes),
-      sha256: sha256Of(bytes),
-      format,
-      byteSize: bytes.length,
-      width: info?.width ?? null,
-      height: info?.height ?? null,
-    };
-    const optimizedFile: PreparedFile | null = optimized && {
-      path: write('optimized', optimized.bytes),
-      sha256: sha256Of(optimized.bytes),
-      format: 'webp',
-      byteSize: optimized.bytes.length,
-      width: optimized.width,
-      height: optimized.height,
-    };
-    const thumbnailPaths = new Map(
-      [...thumbnails].map(([size, data]) => [size, write(`thumb-${size}`, data)] as const),
-    );
-
-    const id = basename(folder);
-    const summary: PreparedImport = {
-      id,
-      fileName,
-      kind,
-      format,
-      byteSize: source.byteSize,
-      width: source.width,
-      height: source.height,
-      isAnimated: info?.isAnimated ?? false,
-      fitsOptimizedSize:
-        info !== null && fitsWithin(info.width, info.height, limits.optimizedMaxSide),
-      optimized: optimizedFile && {
-        byteSize: optimizedFile.byteSize,
-        width: optimizedFile.width!,
-        height: optimizedFile.height!,
-      },
-    };
-    this.preparations.set(id, {
-      token,
-      folder,
-      summary,
-      source,
-      optimized: optimizedFile,
-      thumbnails: thumbnailPaths,
-    });
-    return summary;
+    const folder = this.store(session).createTempFolder();
+    const written = writeImport(folder, read);
+    this.preparations.set(written.summary.id, { token, folder, ...written });
+    return written.summary;
   }
 
   /** Forgets a prepared import the user cancelled. */
@@ -454,7 +363,7 @@ export class MediaService implements MediaForItems, MediaForCollections {
     if (preparation.summary.kind !== 'image') {
       throw new ValidationError('media.not_an_image', `${entry.preparedId} is not an image`);
     }
-    return { kind: 'prepared', preparation, ...filesFor(preparation, entry.choice) };
+    return { kind: 'prepared', preparation, ...filesForChoice(preparation, entry.choice) };
   }
 
   /**
@@ -643,7 +552,7 @@ export class MediaService implements MediaForItems, MediaForCollections {
       if (choice === null) {
         throw new ValidationError('media.choice_required', 'Choose how to keep the image');
       }
-      ({ used, original } = filesFor(preparation, choice));
+      ({ used, original } = filesForChoice(preparation, choice));
     }
 
     // Files go to their place first and rows are written after, in one go: nothing here
@@ -934,18 +843,6 @@ export class MediaService implements MediaForItems, MediaForCollections {
   }
 }
 
-/** Which prepared files a choice keeps: the one items use, and the original kept apart. */
-function filesFor(
-  preparation: Preparation,
-  choice: ImageStorageChoice,
-): { used: PreparedFile; original: PreparedFile | null } {
-  assertChoiceAllowed(choice, preparation.summary.isAnimated);
-  const { source, optimized } = preparation;
-  if (choice === 'original') return { used: source, original: null };
-  // Only animated images have no optimized copy, and they only allow 'original'.
-  return { used: optimized!, original: choice === 'optimized_with_original' ? source : null };
-}
-
 function toAttachment(store: MediaStore, row: AttachmentRow): MediaAttachment {
   return {
     mediaId: row.id,
@@ -1015,46 +912,6 @@ function keptOriginal(db: SqliteDatabase, store: MediaStore, mediaId: number): S
     height: row.height,
     isAnimated: row.is_animated === 1,
   };
-}
-
-async function readFormat(path: string): Promise<MediaFormat> {
-  let header: Uint8Array;
-  try {
-    const file = await open(path, 'r');
-    try {
-      const buffer = new Uint8Array(SIGNATURE_BYTES);
-      const { bytesRead } = await file.read(buffer, 0, SIGNATURE_BYTES, 0);
-      header = buffer.subarray(0, bytesRead);
-    } finally {
-      await file.close();
-    }
-  } catch (error) {
-    throw new NotFoundError('media.source_unreadable', `Cannot read ${path}`, { cause: error });
-  }
-  const format = detectMediaFormat(header);
-  if (format === null) {
-    throw new ValidationError('media.unsupported_format', `${path} is not an accepted format`);
-  }
-  return format;
-}
-
-async function readIfExists(path: string): Promise<Buffer | null> {
-  try {
-    return await readFile(path);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
-    throw error;
-  }
-}
-
-function removeFile(path: string): void {
-  try {
-    rmSync(path, { force: true });
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === undefined || !LOCKED_FILE_CODES.has(code)) throw error;
-    console.warn(`Could not remove unused media file ${path} (${code}); will retry later`);
-  }
 }
 
 function assertItemExists(db: SqliteDatabase, itemId: number): { deleted_at: string | null } {

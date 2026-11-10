@@ -8,11 +8,13 @@ import { join } from 'node:path';
  *   profiles/<id>/media/        imported images and documents
  *   profiles/<id>/cache/        thumbnails, which can always be regenerated
  *   profiles/.deleted-<id>/     folder of a deleted profile awaiting removal
+ *   backgrounds/                imported backgrounds, shared by every profile
  */
 export interface DataPaths {
   readonly root: string;
   readonly appDatabase: string;
   readonly profilesDir: string;
+  readonly backgroundsDir: string;
   profileDir(profileId: string): string;
   libraryDatabase(profileId: string): string;
   mediaDir(profileId: string): string;
@@ -39,6 +41,7 @@ export function createDataPaths(root: string): DataPaths {
     root,
     appDatabase: join(root, 'app.db'),
     profilesDir,
+    backgroundsDir: join(root, 'backgrounds'),
     profileDir,
     libraryDatabase: (profileId) => join(profileDir(profileId), 'library.db'),
     mediaDir: (profileId) => join(profileDir(profileId), 'media'),

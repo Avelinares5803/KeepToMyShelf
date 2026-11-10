@@ -1,6 +1,7 @@
 import { app, ipcMain, nativeTheme } from 'electron';
 import { IpcChannels } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
+import type { BackgroundService } from '../application/background-service';
 import type { CatalogService } from '../application/catalog-service';
 import type { CollectionService } from '../application/collection-service';
 import type { ItemService } from '../application/item-service';
@@ -19,6 +20,7 @@ export interface Services {
   readonly catalogs: CatalogService;
   readonly media: MediaService;
   readonly collections: CollectionService;
+  readonly backgrounds: BackgroundService;
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
@@ -30,6 +32,7 @@ export function registerIpcHandlers({
   catalogs,
   media,
   collections,
+  backgrounds,
 }: Services): void {
   const handlers: Record<keyof typeof IpcChannels, (input: unknown) => unknown> = {
     getAppInfo: createHandler(ipcInputSchemas.getAppInfo, () => ({
@@ -178,6 +181,26 @@ export function registerIpcHandlers({
     changeCollectionMemberships: createHandler(
       ipcInputSchemas.changeCollectionMemberships,
       ({ token, add, remove }) => collections.changeMemberships(token, { add, remove }),
+    ),
+    listBackgrounds: createHandler(ipcInputSchemas.listBackgrounds, () => backgrounds.list()),
+    pickBackgrounds: createAsyncHandler(
+      ipcInputSchemas.pickBackgrounds,
+      async ({ token, filterName }) => {
+        // A stale session is reported before the dialog opens, not after the user chose.
+        if (token !== null) sessions.require(token);
+        const paths = await chooseImageFiles(filterName, true);
+        return paths === null ? null : backgrounds.prepareMany(token, paths);
+      },
+    ),
+    importBackground: createHandler(ipcInputSchemas.importBackground, ({ preparedId, choice }) =>
+      backgrounds.commitImport(preparedId, choice),
+    ),
+    discardBackgroundImports: createHandler(
+      ipcInputSchemas.discardBackgroundImports,
+      ({ preparedIds }) => backgrounds.discardImports(preparedIds),
+    ),
+    deleteBackground: createHandler(ipcInputSchemas.deleteBackground, ({ id }) =>
+      backgrounds.delete(id),
     ),
   };
 

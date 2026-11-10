@@ -6,6 +6,7 @@
  * input validation lives in ipc-schemas.ts and runs in the main process.
  */
 import type { z } from 'zod';
+import type { ImportedBackground } from './backgrounds';
 import type { CatalogEntrySummary } from './catalogs';
 import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
 import type { IpcInputSchemas } from './ipc-schemas';
@@ -58,6 +59,11 @@ export const IpcChannels = {
   listCollectionMemberIds: 'collections:list-member-ids',
   listItemCollections: 'collections:list-for-item',
   changeCollectionMemberships: 'collections:change-memberships',
+  listBackgrounds: 'backgrounds:list',
+  pickBackgrounds: 'backgrounds:pick',
+  importBackground: 'backgrounds:import',
+  discardBackgroundImports: 'backgrounds:discard-imports',
+  deleteBackground: 'backgrounds:delete',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -180,5 +186,19 @@ export interface KeepToMyShelfApi {
      * which the UI does not show, are kept.
      */
     changeMemberships(input: IpcInput<'changeCollectionMemberships'>): Promise<IpcResult<void>>;
+  };
+  /** The gallery of imported backgrounds, shared by every profile; no profile needs to be open. */
+  backgrounds: {
+    list(): Promise<IpcResult<ImportedBackground[]>>;
+    /**
+     * Opens the file dialog and prepares the chosen images; null if the dialog was cancelled.
+     * `token` is the open profile, whose optimized size applies; null uses the global one.
+     */
+    pick(input: IpcInput<'pickBackgrounds'>): Promise<IpcResult<PickedImports | null>>;
+    /** Adds a prepared image to the gallery; the same image is never added twice. */
+    import(input: IpcInput<'importBackground'>): Promise<IpcResult<ImportedBackground>>;
+    discardImports(input: IpcInput<'discardBackgroundImports'>): Promise<IpcResult<void>>;
+    /** Deletes it; every preference that used it goes back to no background. */
+    delete(input: IpcInput<'deleteBackground'>): Promise<IpcResult<void>>;
   };
 }

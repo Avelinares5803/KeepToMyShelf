@@ -3,7 +3,12 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
 import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
-import { MEDIA_SETTING_DEFAULTS, type AppSettings } from '../shared/settings';
+import {
+  BACKGROUND_SETTING_DEFAULTS,
+  MEDIA_SETTING_DEFAULTS,
+  type AppSettings,
+} from '../shared/settings';
+import { BackgroundService } from './application/background-service';
 import { CatalogService } from './application/catalog-service';
 import { CollectionService } from './application/collection-service';
 import { ItemService } from './application/item-service';
@@ -26,6 +31,7 @@ function startApp(): void {
     language: app.getLocale().startsWith('es') ? 'es' : 'en',
     theme: 'system',
     ...MEDIA_SETTING_DEFAULTS,
+    ...BACKGROUND_SETTING_DEFAULTS,
   };
   const now = () => new Date();
   const settings = new SettingsService(appDb, defaults);
@@ -66,11 +72,29 @@ function startApp(): void {
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
   const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
+  const backgrounds = new BackgroundService({
+    appDb,
+    dir: paths.backgroundsDir,
+    sessions,
+    settings,
+    now,
+  });
+  // Imports left half-way by the last run, and files no background uses.
+  backgrounds.onStartup();
 
   profiles.removeDeletedProfileFolders();
-  registerIpcHandlers({ profiles, sessions, settings, items, catalogs, media, collections });
+  registerIpcHandlers({
+    profiles,
+    sessions,
+    settings,
+    items,
+    catalogs,
+    media,
+    collections,
+    backgrounds,
+  });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
-  protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media));
+  protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media, backgrounds));
 
   // The app has its own top bar; the default Electron menu (File, Edit, View...) is removed.
   // Editing shortcuts (copy, paste, undo...) keep working in text fields on Windows and Linux.

@@ -27,6 +27,19 @@ describe('parseMediaUrl', () => {
     });
   });
 
+  it('reads backgrounds and their thumbnails', () => {
+    expect(parseMediaUrl(`ktms-media://background/${SHA}`)).toEqual({
+      type: 'background',
+      sha256: SHA,
+      size: null,
+    });
+    expect(parseMediaUrl(`ktms-media://background/${SHA}/640`)).toEqual({
+      type: 'background',
+      sha256: SHA,
+      size: 640,
+    });
+  });
+
   it.each([
     ['a prepared import that is not a UUID', 'ktms-media://prepared/..%2F..%2Flibrary.db/320'],
     ['a prepared import named by a hash', `ktms-media://prepared/${SHA}/320`],
@@ -48,6 +61,10 @@ describe('parseMediaUrl', () => {
     ['a fragment', `ktms-media://file/${SHA}#x`],
     ['credentials', `ktms-media://user:pass@file/${SHA}`],
     ['a port', `ktms-media://file:8080/${SHA}`],
+    ['a background named by a UUID', `ktms-media://background/${PREPARED}`],
+    ['a background with a size that is not made', `ktms-media://background/${SHA}/1280`],
+    ['a background with an extra part', `ktms-media://background/${SHA}/320/x`],
+    ['a background parent folder', 'ktms-media://background/../app.db'],
     ['nonsense', 'not a url'],
   ])('rejects %s', (_label, url) => {
     expect(parseMediaUrl(url)).toBeNull();
@@ -86,7 +103,7 @@ describe('ktms-media:// handler', () => {
     fx = createProfileFixture();
     profileId = fx.profiles.create({ name: 'Ana' }).profile.id;
     token = fx.sessions.open(profileId).token;
-    handle = createMediaProtocolHandler(fx.media);
+    handle = createMediaProtocolHandler(fx.media, fx.backgrounds);
     imageBytes = await pngImage(800, 400);
     image = await attach('portada.png', imageBytes, 'original');
   });
@@ -180,6 +197,65 @@ describe('ktms-media:// handler', () => {
 
     fx.media.discardImports(token, [preparation.id]);
     expect((await get(url)).status).toBe(404);
+  });
+
+  describe('backgrounds', () => {
+    const importBackground = async (
+      name: string,
+      bytes: Buffer,
+      choice: 'original' | 'optimized_with_original',
+    ) => {
+      const { prepared } = await fx.backgrounds.prepareMany(null, [
+        writeFile(fx.scratchDir, name, bytes),
+      ]);
+      return fx.backgrounds.commitImport(prepared[0]!.id, choice);
+    };
+
+    it('serves a background and its thumbnails with or without an open profile', async () => {
+      const bytes = await pngImage(800, 400);
+      const background = await importBackground('fondo.png', bytes, 'original');
+
+      for (const open of [true, false]) {
+        if (!open) fx.sessions.closeCurrent();
+        const response = await get(`ktms-media://background/${background.sha256}`);
+        expect(response.status).toBe(200);
+        expect(response.headers.get('content-type')).toBe('image/png');
+        expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+        expect(Buffer.from(await response.arrayBuffer()).equals(bytes)).toBe(true);
+
+        const thumbnail = await get(`ktms-media://background/${background.sha256}/320`);
+        const metadata = await sharp(Buffer.from(await thumbnail.arrayBuffer())).metadata();
+        expect(metadata).toMatchObject({ format: 'webp', width: 320, height: 160 });
+      }
+    });
+
+    it('never serves a profile image as a background, nor a background as a profile image', async () => {
+      const background = await importBackground('fondo.png', await pngImage(500, 300), 'original');
+
+      expect((await get(`ktms-media://background/${image.sha256}`)).status).toBe(404);
+      expect((await get(`ktms-media://file/${background.sha256}`)).status).toBe(404);
+    });
+
+    it('never serves the kept original of a background', async () => {
+      const original = await pngImage(900, 300);
+      await importBackground('fondo.png', original, 'optimized_with_original');
+      const { createHash } = await import('node:crypto');
+      const originalSha = createHash('sha256').update(original).digest('hex');
+
+      expect((await get(`ktms-media://background/${originalSha}`)).status).toBe(404);
+    });
+
+    it('serves the thumbnail of a background import not saved yet', async () => {
+      fx.sessions.closeCurrent();
+      const { prepared } = await fx.backgrounds.prepareMany(null, [
+        writeFile(fx.scratchDir, 'nuevo.png', await pngImage(400, 100)),
+      ]);
+
+      const response = await get(`ktms-media://prepared/${prepared[0]!.id}/320`);
+      expect(response.status).toBe(200);
+      fx.backgrounds.discardImports([prepared[0]!.id]);
+      expect((await get(`ktms-media://prepared/${prepared[0]!.id}/320`)).status).toBe(404);
+    });
   });
 
   it('answers 400 for malformed URLs and 405 for anything but GET', async () => {

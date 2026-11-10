@@ -1,9 +1,11 @@
 import { NotFoundError, ValidationError } from '../../core/errors';
 import {
   isSettingKey,
+  NO_BACKGROUND,
   settingSchemas,
   settingUpdateSchema,
   type AppSettings,
+  type BackgroundChoice,
   type SettingUpdate,
 } from '../../shared/settings';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
@@ -16,6 +18,7 @@ interface SettingRow {
 /**
  * Preferences resolve as: profile value → global value → built-in default.
  * Values are stored as JSON and validated against `settingSchemas` on read and write.
+ * An imported background must exist in the common gallery (`background_file`).
  */
 export class SettingsService {
   constructor(
@@ -25,18 +28,18 @@ export class SettingsService {
 
   getGlobal(): AppSettings {
     const rows = this.appDb.prepare('SELECT key, value FROM app_setting').all() as SettingRow[];
-    return overlay(this.defaults, rows);
+    return this.overlay(this.defaults, rows);
   }
 
   getForProfile(profileId: string): AppSettings {
     const rows = this.appDb
       .prepare('SELECT key, value FROM profile_setting WHERE profile_id = ?')
       .all(profileId) as SettingRow[];
-    return overlay(this.getGlobal(), rows);
+    return this.overlay(this.getGlobal(), rows);
   }
 
   setGlobal(update: SettingUpdate): void {
-    const { key, value } = parseUpdate(update);
+    const { key, value } = this.parseUpdate(update);
     this.appDb
       .prepare(
         'INSERT INTO app_setting (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value',
@@ -45,7 +48,7 @@ export class SettingsService {
   }
 
   setForProfile(profileId: string, update: SettingUpdate): void {
-    const { key, value } = parseUpdate(update);
+    const { key, value } = this.parseUpdate(update);
     if (!this.appDb.prepare('SELECT 1 FROM profile WHERE id = ?').get(profileId)) {
       throw new NotFoundError('profile.not_found', `Profile ${profileId} does not exist`);
     }
@@ -64,32 +67,66 @@ export class SettingsService {
       this.appDb.prepare('DELETE FROM profile_setting WHERE key = ?').run(update.key);
     })();
   }
-}
 
-function parseUpdate(update: SettingUpdate): SettingUpdate {
-  const parsed = settingUpdateSchema.safeParse(update);
-  if (!parsed.success) {
-    throw new ValidationError(
-      'settings.invalid_value',
-      `Invalid setting: ${JSON.stringify(update)}`,
+  /**
+   * The global value and the profiles' own values that use a background are set to no
+   * background. Called when it is deleted, inside the same transaction.
+   */
+  resetBackground(backgroundId: number): void {
+    const none = JSON.stringify(NO_BACKGROUND);
+    const uses = `key = 'background' AND json_extract(value, '$.kind') = 'imported'
+                  AND json_extract(value, '$.id') = ?`;
+    this.appDb.prepare(`UPDATE app_setting SET value = ? WHERE ${uses}`).run(none, backgroundId);
+    this.appDb
+      .prepare(`UPDATE profile_setting SET value = ? WHERE ${uses}`)
+      .run(none, backgroundId);
+  }
+
+  private parseUpdate(update: SettingUpdate): SettingUpdate {
+    const parsed = settingUpdateSchema.safeParse(update);
+    if (!parsed.success) {
+      throw new ValidationError(
+        'settings.invalid_value',
+        `Invalid setting: ${JSON.stringify(update)}`,
+      );
+    }
+    const { data } = parsed;
+    if (data.key === 'background' && data.value.kind === 'imported') {
+      if (!this.backgroundExists(data.value.id)) {
+        throw new NotFoundError('background.not_found', `Background ${data.value.id} is gone`);
+      }
+    }
+    return data;
+  }
+
+  private backgroundExists(id: number): boolean {
+    return (
+      this.appDb
+        .prepare("SELECT 1 FROM background_file WHERE id = ? AND store = 'files'")
+        .get(id) !== undefined
     );
   }
-  return parsed.data;
-}
 
-function overlay(base: AppSettings, rows: readonly SettingRow[]): AppSettings {
-  const result: Record<string, unknown> = { ...base };
-  for (const { key, value } of rows) {
-    if (!isSettingKey(key)) continue; // Preference from a newer app version: ignore it.
-    const parsed = settingSchemas[key].safeParse(parseJson(value));
-    if (parsed.success) {
+  private overlay(base: AppSettings, rows: readonly SettingRow[]): AppSettings {
+    const result: Record<string, unknown> = { ...base };
+    for (const { key, value } of rows) {
+      if (!isSettingKey(key)) continue; // Preference from a newer app version: ignore it.
+      const parsed = settingSchemas[key].safeParse(parseJson(value));
+      if (!parsed.success) {
+        // A corrupt preference must not prevent the app from starting: keep the fallback value.
+        console.warn(`Ignoring invalid stored value for setting "${key}": ${value}`);
+        continue;
+      }
       result[key] = parsed.data;
-    } else {
-      // A corrupt preference must not prevent the app from starting: keep the fallback value.
-      console.warn(`Ignoring invalid stored value for setting "${key}": ${value}`);
+      // Deleting a background resets its users, so this only happens if app.db was edited.
+      const background = key === 'background' ? (parsed.data as BackgroundChoice) : null;
+      if (background?.kind === 'imported' && !this.backgroundExists(background.id)) {
+        console.warn(`Ignoring missing background ${background.id}`);
+        result[key] = NO_BACKGROUND;
+      }
     }
+    return result as AppSettings;
   }
-  return result as AppSettings;
 }
 
 function parseJson(text: string): unknown {

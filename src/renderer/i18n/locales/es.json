@@ -590,6 +590,9 @@
     "session": {
       "stale": "La sesión ha caducado. Vuelve a elegir tu perfil."
     },
+    "background": {
+      "not_found": "Ese fondo ya no existe."
+    },
     "settings": {
       "invalid_value": "Ese valor no es válido."
     },

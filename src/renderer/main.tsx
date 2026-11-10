@@ -1,6 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MEDIA_SETTING_DEFAULTS, type AppSettings } from '../shared/settings';
+import {
+  BACKGROUND_SETTING_DEFAULTS,
+  MEDIA_SETTING_DEFAULTS,
+  type AppSettings,
+} from '../shared/settings';
 import { App } from './app/App';
 import { applyTheme } from './app/theme';
 import { initI18n } from './i18n';
@@ -10,6 +14,7 @@ const FALLBACK_SETTINGS: AppSettings = {
   language: 'es',
   theme: 'system',
   ...MEDIA_SETTING_DEFAULTS,
+  ...BACKGROUND_SETTING_DEFAULTS,
 };
 
 async function loadStartupSettings(): Promise<AppSettings> {

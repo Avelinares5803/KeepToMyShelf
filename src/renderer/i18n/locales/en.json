@@ -590,6 +590,9 @@
     "session": {
       "stale": "Your session has expired. Please choose your profile again."
     },
+    "background": {
+      "not_found": "That background no longer exists."
+    },
     "settings": {
       "invalid_value": "That value is not valid."
     },

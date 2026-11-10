@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { BackgroundService } from '../../src/main/application/background-service';
 import { CatalogService } from '../../src/main/application/catalog-service';
 import { CollectionService } from '../../src/main/application/collection-service';
 import { ItemService } from '../../src/main/application/item-service';
@@ -12,13 +13,18 @@ import { SettingsService } from '../../src/main/application/settings-service';
 import { openAppDatabase } from '../../src/main/infrastructure/db/app-database';
 import type { SqliteDatabase } from '../../src/main/infrastructure/db/connection';
 import { createDataPaths, type DataPaths } from '../../src/main/infrastructure/paths';
-import { MEDIA_SETTING_DEFAULTS, type AppSettings } from '../../src/shared/settings';
+import {
+  BACKGROUND_SETTING_DEFAULTS,
+  MEDIA_SETTING_DEFAULTS,
+  type AppSettings,
+} from '../../src/shared/settings';
 import { createTempDir } from './temp-dir';
 
 export const DEFAULT_SETTINGS: AppSettings = {
   language: 'es',
   theme: 'system',
   ...MEDIA_SETTING_DEFAULTS,
+  ...BACKGROUND_SETTING_DEFAULTS,
 };
 
 export interface ProfileFixture {
@@ -31,6 +37,7 @@ export interface ProfileFixture {
   readonly catalogs: CatalogService;
   readonly collections: CollectionService;
   readonly media: MediaService;
+  readonly backgrounds: BackgroundService;
   /** Temporary folder for test files outside the app's data folder (e.g. files to import). */
   readonly scratchDir: string;
   /** Where the copies of opened documents go. */
@@ -92,8 +99,16 @@ export function createProfileFixture(): ProfileFixture {
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
   const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
+  const backgrounds = new BackgroundService({
+    appDb,
+    dir: paths.backgroundsDir,
+    sessions,
+    settings,
+    now,
+  });
 
   return {
+    backgrounds,
     catalogs,
     collections,
     media,

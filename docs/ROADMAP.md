@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-08, con la mejora «Seleccionar» terminada antes de la F10.
+**Última actualización:** 2026-11-10, con la F10 planificada y la F10-A (motor de fondos) hecha.
 
 ---
 
@@ -43,7 +43,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)              |
 | F8 Películas y series   | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                |
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)               |
-| **F10 Personalización** | Fondos predeterminados e importados, desenfoque                                                                                                  | ⏭️ **Siguiente**                               |
+| **F10 Personalización** | Fondos predeterminados e importados, desenfoque                                                                                                  | 🚧 **En curso** (F10-A hecha)                  |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | Pendiente (la copia antes de migrar ya existe) |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                      |
 
@@ -326,6 +326,23 @@ El detalle técnico está en el [ADR 0007](adr/0007-collections.md).
 - **Fondo borrado:** los perfiles que lo usaban vuelven al predeterminado.
 - **Controles:** discretos, sin saturar la interfaz.
 
+El detalle técnico está en el [ADR 0008](adr/0008-backgrounds.md).
+
+**Acordado para la F10 (2026-11-10):**
+
+- **Galería común en `app.db`:** tabla `background_file` (migración `app/0002`) y archivos en `backgrounds\` junto a `app.db`, con las mismas reglas que la multimedia de la F6 (nombres por hash, sin duplicados, originales aparte, barrido). Funciona sin ningún perfil abierto.
+- **Predeterminados:** 6 diseños abstractos propios en SVG (degradados y formas), incluidos en la app: sin problemas de licencia, ligeros y nítidos a cualquier resolución. Identificadores: `aurora`, `dusk`, `ocean`, `forest`, `ember` y `nebula`.
+- **El fondo predeterminado es «Sin fondo»:** los perfiles existentes se siguen viendo igual. Al borrar un fondo, los perfiles que lo usaban (y el valor global, si era ese) pasan a «Sin fondo», no al fondo global.
+- **Preferencias:** `background`, `backgroundBlur` (0 a 40 px; 8 por defecto), `backgroundImportChoice` (**propia**, aparte de la de las portadas, porque los fondos suelen ser enormes) y `backgroundMaxSide` (1920 a 7680 px; 3840 por defecto). Todas con valor global, valor propio de cada perfil y «Aplicar a todos los perfiles».
+- **Borrar un fondo importado:** desde cualquier perfil, porque la galería es común. La confirmación dirá cuántos perfiles lo usan.
+- **Sin borrador:** a diferencia de las portadas, importar un fondo lo añade a la galería al momento.
+
+**Entregas (acordadas el 2026-11-10):**
+
+- F10-A: migración `app/0002`, `BackgroundService` (preparar, confirmar, listar, borrar, barrido y limpieza al arrancar), rutas `ktms-media://background/…`, preferencias e IPC, sin cambios visibles. ✅ Hecha.
+- F10-B: el fondo en la app: capa de fondo con desenfoque y velo para que el texto se lea, los 6 predeterminados y, en Ajustes, la sección «Fondo» (galería, importar, borrar, desenfoque, tamaño máximo y «Aplicar a todos los perfiles»).
+- F10-C: los perfiles: elegir el fondo al crear un perfil, la tarjeta de cada perfil con su fondo y el fondo global en el selector de perfiles.
+
 ### 3.9 Copias de seguridad (F11)
 
 - **Ya existe:** la copia automática antes de cada migración (`VACUUM INTO`, en `backups/` de cada base).
@@ -356,7 +373,10 @@ El detalle técnico está en el [ADR 0007](adr/0007-collections.md).
 ```
 %APPDATA%\KeepToMyShelf\
 ├─ app.db                       perfiles y preferencias            (implementado)
-├─ backgrounds\                 fondos importados, comunes          (F10)
+├─ backgrounds\                 fondos importados, comunes          (implementado, F10-A)
+│  ├─ files\  originals\        fondos de la galería y originales guardados
+│  ├─ .tmp\                     importaciones en preparación; se vacía al arrancar
+│  └─ cache\thumbs\             miniaturas regenerables
 └─ profiles\<uuid>\
    ├─ library.db                biblioteca del perfil               (implementado)
    ├─ backups\                  copias antes de migrar              (implementado)

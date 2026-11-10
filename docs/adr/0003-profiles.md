@@ -37,6 +37,7 @@ Cada perfil tiene su propia biblioteca, que nunca debe mezclarse con la de otro.
 - Resolución: valor del perfil → valor global → valor predeterminado (el idioma predeterminado sale del idioma del sistema).
 - «Aplicar a todos los perfiles» guarda el valor global y borra los valores propios de esa preferencia en una sola transacción.
 - Los valores se guardan como JSON y se validan con `zod` al leer y al escribir. Un valor almacenado corrupto se ignora con un aviso en la consola, para no impedir el arranque.
+- Desde la F10, el fondo y el desenfoque son preferencias más. Un fondo importado debe existir en la galería común; al borrarlo, quienes lo usaban pasan a «Sin fondo». Ver el [ADR 0008](0008-backgrounds.md).
 
 ### Comunicación con la interfaz
 

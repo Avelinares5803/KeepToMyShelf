@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatFileSize, preparedThumbnailSource, thumbnailSource } from './media-url';
+import {
+  backgroundImageSource,
+  backgroundThumbnailSource,
+  formatFileSize,
+  preparedThumbnailSource,
+  thumbnailSource,
+} from './media-url';
 
 describe('media URLs', () => {
   it('offers the HiDPI thumbnail to high-density screens', () => {
@@ -9,6 +15,15 @@ describe('media URLs', () => {
       srcSet: `ktms-media://thumb/${sha}/320 1x, ktms-media://thumb/${sha}/640 2x`,
     });
     expect(preparedThumbnailSource('id').src).toBe('ktms-media://prepared/id/320');
+  });
+
+  it('serves backgrounds from their own part of the scheme', () => {
+    const sha = 'b'.repeat(64);
+    expect(backgroundImageSource(sha)).toBe(`ktms-media://background/${sha}`);
+    expect(backgroundThumbnailSource(sha)).toEqual({
+      src: `ktms-media://background/${sha}/320`,
+      srcSet: `ktms-media://background/${sha}/320 1x, ktms-media://background/${sha}/640 2x`,
+    });
   });
 });
 

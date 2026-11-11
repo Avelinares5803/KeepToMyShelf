@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-10, con la F10 planificada y la F10-A (motor de fondos) hecha.
+**Última actualización:** 2026-11-11, con la F10-B (el fondo en la app) hecha.
 
 ---
 
@@ -43,7 +43,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)              |
 | F8 Películas y series   | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                |
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)               |
-| **F10 Personalización** | Fondos predeterminados e importados, desenfoque                                                                                                  | 🚧 **En curso** (F10-A hecha)                  |
+| **F10 Personalización** | Fondos predeterminados e importados, desenfoque                                                                                                  | 🚧 **En curso** (F10-A y F10-B hechas)         |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | Pendiente (la copia antes de migrar ya existe) |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                      |
 
@@ -340,8 +340,14 @@ El detalle técnico está en el [ADR 0008](adr/0008-backgrounds.md).
 **Entregas (acordadas el 2026-11-10):**
 
 - F10-A: migración `app/0002`, `BackgroundService` (preparar, confirmar, listar, borrar, barrido y limpieza al arrancar), rutas `ktms-media://background/…`, preferencias e IPC, sin cambios visibles. ✅ Hecha.
-- F10-B: el fondo en la app: capa de fondo con desenfoque y velo para que el texto se lea, los 6 predeterminados y, en Ajustes, la sección «Fondo» (galería, importar, borrar, desenfoque, tamaño máximo y «Aplicar a todos los perfiles»).
-- F10-C: los perfiles: elegir el fondo al crear un perfil, la tarjeta de cada perfil con su fondo y el fondo global en el selector de perfiles.
+- F10-B: el fondo en la app: capa de fondo con desenfoque y velo para que el texto se lea, los 6 predeterminados y, en Ajustes, la sección «Fondo» (galería, importar, borrar, desenfoque, tamaño máximo y «Aplicar a todos los perfiles»). ✅ Hecha. Acordado el 2026-11-11:
+  - **El desenfoque se guarda al soltar el deslizador.** Mientras se mueve, el fondo lo muestra al momento.
+  - **Ajustes se desvanece mientras se sostiene el deslizador** (con el ratón o el teclado): solo queda su fila, para ver la app real con el fondo. Ajustes tiene un oscurecido más suave que las demás ventanas, para que se vea el fondo elegido detrás.
+  - **El velo** (una capa del color del tema, al 62 %, entre la imagen y la interfaz, para que el texto se lea sobre cualquier imagen) **es fijo**. Se calibró con capturas en claro y en oscuro; si hace falta, puede pasar a ser un deslizador «Atenuación».
+  - Un fondo recién importado pasa a ser el fondo al momento. Los importados se llaman «Fondo importado N», por orden de importación.
+  - El selector de perfiles ya muestra el fondo global.
+  - **Limitación conocida:** en la biblioteca, el hueco que se reserva para la barra de desplazamiento (cuando no hace falta desplazarse) conserva el color del tema, porque Chromium no pinta ahí ni los elementos fijos ni el fondo de `<html>`.
+- F10-C: los perfiles: elegir el fondo al crear un perfil y la tarjeta de cada perfil con su fondo.
 
 ### 3.9 Copias de seguridad (F11)
 

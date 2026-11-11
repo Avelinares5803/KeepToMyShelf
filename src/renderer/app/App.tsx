@@ -4,6 +4,8 @@ import type { ImageStorageChoice } from '../../core/media/import-rules';
 import type { SessionInfo } from '../../shared/ipc';
 import type { ItemSummary } from '../../shared/items';
 import type { AppSettings, SettingUpdate } from '../../shared/settings';
+import { AppBackground } from '../features/backgrounds/AppBackground';
+import { backgroundSource } from '../features/backgrounds/presets';
 import { CatalogsScreen } from '../features/catalogs/CatalogsScreen';
 import {
   collectionViewOf,
@@ -23,6 +25,7 @@ import { ProfileSelectionScreen } from '../features/profiles/ProfileSelectionScr
 import { TrashScreen } from '../features/trash/TrashScreen';
 import { changeLanguage } from '../i18n';
 import { errorMessage, unwrap } from '../lib/ipc';
+import { useLoad } from '../lib/use-load';
 import {
   canGoBack,
   currentScreen,
@@ -30,7 +33,7 @@ import {
   navigationReducer,
   type Screen,
 } from './navigation';
-import { SettingsDialog } from './SettingsDialog';
+import { SettingsDialog, type BackgroundSettingsOptions } from './SettingsDialog';
 import { applyTheme } from './theme';
 import { TopBar, type Breadcrumb } from './TopBar';
 
@@ -47,6 +50,9 @@ export function App({ initialSettings }: AppProps) {
   const [error, setError] = useState<unknown>(null);
   const [libraryViews, setLibraryViews] = useState<LibraryViews>({});
   const [collectionViews, setCollectionViews] = useState<CollectionViews>({});
+  // The common gallery of imported backgrounds, and the blur shown while its slider moves.
+  const gallery = useLoad(() => window.api.backgrounds.list(), []);
+  const [blurPreview, setBlurPreview] = useState<number | null>(null);
 
   // The item editor registers a guard; leaving it with unsaved changes asks first.
   const editorGuard = useRef<EditorGuard | null>(null);
@@ -93,15 +99,61 @@ export function App({ initialSettings }: AppProps) {
   }
 
   // Outside a profile, preferences are the global defaults; inside, the profile's own.
+  // The new value shows at once (a control never jumps back while it is being saved) and is
+  // undone if it cannot be saved.
   const updateSetting = (update: SettingUpdate) =>
     attempt(async () => {
+      const next = { ...settings, [update.key]: update.value } as AppSettings;
+      setSettings(next);
+      try {
+        unwrap(
+          session
+            ? await window.api.settings.setForProfile({ token: session.token, setting: update })
+            : await window.api.settings.setGlobal({ setting: update }),
+        );
+      } catch (caught) {
+        setSettings(settings);
+        throw caught;
+      }
+      await applySettings(next);
+    });
+
+  /** The preferences in force: the open profile's, or the global ones outside a profile. */
+  const reloadSettings = async () =>
+    applySettings(
       unwrap(
         session
-          ? await window.api.settings.setForProfile({ token: session.token, setting: update })
-          : await window.api.settings.setGlobal({ setting: update }),
-      );
-      await applySettings({ ...settings, [update.key]: update.value } as AppSettings);
-    });
+          ? await window.api.settings.getForProfile({ token: session.token })
+          : await window.api.settings.getGlobal(),
+      ),
+    );
+
+  const background: BackgroundSettingsOptions = {
+    token: session?.token ?? null,
+    gallery: gallery.data,
+    galleryError: gallery.error,
+    blur: blurPreview ?? settings.backgroundBlur,
+    onBlurPreview: setBlurPreview,
+    onBlurCommit: (blur) =>
+      void (async () => {
+        if (blur !== settings.backgroundBlur) {
+          await updateSetting({ key: 'backgroundBlur', value: blur });
+        }
+        // Only now, so the background never jumps back to the old blur while saving.
+        setBlurPreview(null);
+      })(),
+    // The last background imported becomes the background; it shows once the gallery reloads.
+    onImported: (added) => {
+      gallery.reload();
+      const last = added.at(-1);
+      if (last) void updateSetting({ key: 'background', value: { kind: 'imported', id: last.id } });
+    },
+    // Deleting a background may have sent this profile (or the global value) back to none.
+    onDeleted: () => {
+      gallery.reload();
+      void attempt(reloadSettings);
+    },
+  };
 
   const openProfile = (profileId: string) =>
     attempt(async () => {
@@ -298,6 +350,10 @@ export function App({ initialSettings }: AppProps) {
 
   return (
     <div className="app-shell">
+      <AppBackground
+        src={backgroundSource(settings.background, gallery.data ?? [])}
+        blur={blurPreview ?? settings.backgroundBlur}
+      />
       <TopBar
         breadcrumbs={breadcrumbs}
         settings={settings}
@@ -322,6 +378,7 @@ export function App({ initialSettings }: AppProps) {
         <SettingsDialog
           settings={settings}
           profileName={session?.profile.name ?? null}
+          background={background}
           onChange={(update) => void updateSetting(update)}
           onClose={() => setSettingsOpen(false)}
         />

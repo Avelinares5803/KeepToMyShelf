@@ -289,6 +289,47 @@ h1 {
   background: rgb(0 0 0 / 45%);
 }
 
+/* Settings: wider for the background gallery, and with a lighter backdrop, so a background
+   chosen there can be seen behind it. */
+.dialog--settings {
+  max-width: min(38rem, 92vw);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.dialog--settings::backdrop {
+  background: rgb(0 0 0 / 20%);
+}
+
+.dialog--settings .dialog__title,
+.dialog--settings .form > *,
+.dialog--settings .settings-section > * {
+  transition: opacity 0.15s;
+}
+
+/* While the blur slider is held, only its row stays, so the app behind shows the blur. */
+.dialog--peeking {
+  border-color: transparent;
+  background: transparent;
+  /* Hidden, not removed: the slider must not move under the pointer. */
+  scrollbar-color: transparent transparent;
+}
+
+.dialog--peeking .settings-section {
+  border-color: transparent;
+}
+
+.dialog--peeking::backdrop {
+  background: transparent;
+}
+
+.dialog--peeking .dialog__title,
+.dialog--peeking .form > :not(.settings-section),
+.dialog--peeking .settings-section > :not(.setting-row--blur) {
+  opacity: 0;
+}
+
 .dialog__title {
   margin-top: 0;
   font-size: 1.25rem;
@@ -1803,4 +1844,203 @@ html:has(.library) {
 
 .image-import__sizes p {
   margin: 0 0 0.35rem;
+}
+
+/* Background: a fixed picture behind the whole UI (see AppBackground). */
+.app-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Twice the blur larger on every side: a blurred edge would fade into the page colour. */
+.app-background__image {
+  position: absolute;
+  top: calc(var(--background-blur) * -2);
+  left: calc(var(--background-blur) * -2);
+  width: calc(100% + var(--background-blur) * 4);
+  height: calc(100% + var(--background-blur) * 4);
+  object-fit: cover;
+  filter: blur(var(--background-blur));
+}
+
+/* The veil: the theme's colour over the picture, so text stays readable on any of them. */
+.app-background__veil {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-bg) 62%, transparent);
+}
+
+/* Background section of the settings dialog */
+.settings-section {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.settings-section__title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.setting-row--end {
+  justify-content: flex-end;
+}
+
+/* Its padding is always there, so the slider never moves under the pointer when it shows
+   alone while held. */
+.setting-row--blur {
+  margin: 0 -0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.setting-row--peeking {
+  background: var(--color-surface);
+  box-shadow: 0 0.5rem 2rem rgb(0 0 0 / 35%);
+}
+
+.range-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.range-field input {
+  flex: 1;
+  min-width: 0;
+}
+
+.range-field__value {
+  min-width: 3.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.background-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.background-option {
+  position: relative;
+}
+
+.background-option__tile {
+  position: relative;
+  display: grid;
+  gap: 0.3rem;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* The radio button itself is invisible and covers the whole tile, which is what shows. */
+.background-option__input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.background-option__preview,
+.background-option__import {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.background-option__preview {
+  border: 2px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.background-option__preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.background-option__tile:hover .background-option__preview {
+  border-color: var(--color-accent);
+}
+
+.background-option__tile--selected {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.background-option__tile--selected .background-option__preview {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.background-option__tile:has(input:focus-visible) .background-option__preview {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.background-option__missing {
+  padding: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.background-option__delete {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: none;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 60%);
+  color: #ffffff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.background-option__delete:hover,
+.background-option__delete:focus-visible {
+  background: var(--color-danger);
+}
+
+.background-option__import {
+  border: 2px dashed var(--color-border);
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.background-option__import:hover:not(:disabled),
+.background-option__import:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.background-option__import:disabled {
+  cursor: progress;
 }

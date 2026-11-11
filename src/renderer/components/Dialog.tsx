@@ -5,6 +5,8 @@ interface DialogProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Extra class names, e.g. for a wider dialog. */
+  className?: string;
 }
 
 /**
@@ -12,7 +14,7 @@ interface DialogProps {
  * and closes with Escape. A dialog opened inside another one (e.g. the image import window
  * over a collection's window) closes alone.
  */
-export function Dialog({ open, title, onClose, children }: DialogProps) {
+export function Dialog({ open, title, onClose, children, className }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -26,7 +28,7 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
   return (
     <dialog
       ref={ref}
-      className="dialog"
+      className={className ? `dialog ${className}` : 'dialog'}
       aria-labelledby={titleId}
       // The browser does not pass "close" on to outer elements, but React does: a dialog
       // inside this one would close this one too.

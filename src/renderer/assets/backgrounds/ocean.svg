@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4fb3d9"/>
+      <stop offset="0.45" stop-color="#11679a"/>
+      <stop offset="1" stop-color="#03213d"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sea)"/>
+  <g filter="url(#soft)" fill="none" stroke-linecap="round">
+    <path d="M-100 420 C 200 360 400 480 700 420 S 1200 360 1500 430 1900 400 2050 380" stroke="#b9ecff" stroke-width="40" opacity="0.35"/>
+    <path d="M-100 560 C 250 500 500 620 820 560 S 1350 500 1650 570 1950 540 2050 520" stroke="#7fd3f2" stroke-width="60" opacity="0.3"/>
+    <path d="M-100 730 C 300 670 600 790 950 730 S 1500 670 1800 740 2000 720 2050 700" stroke="#3a9ccc" stroke-width="80" opacity="0.35"/>
+    <path d="M-100 900 C 350 850 700 960 1100 900 S 1650 850 2050 890" stroke="#1a6b9a" stroke-width="110" opacity="0.4"/>
+  </g>
+  <ellipse cx="500" cy="180" rx="520" ry="140" fill="#e6f8ff" opacity="0.25" filter="url(#soft)"/>
+</svg>

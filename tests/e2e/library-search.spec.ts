@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import sharp from 'sharp';
 import { launchApp } from './launch-app';
+import { scrollTop } from './scroll-area';
 import { seedItems as seedInto, type SeedItem } from './seed-items';
 
 let dataDir: string;
@@ -243,7 +244,7 @@ test('returns to the same place, and to the top with new results', async () => {
   await reopenGames();
   await expect(heading('Videojuegos (86)')).toBeVisible();
 
-  const scrollY = () => page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY);
+  const scrollY = () => scrollTop(page);
   // Far down, the covers above are no longer drawn: the page only knows their height.
   const last = button('Juego 79');
   await page.locator('.item-card').last().scrollIntoViewIfNeeded();

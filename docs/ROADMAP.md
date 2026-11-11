@@ -347,7 +347,7 @@ El detalle técnico está en el [ADR 0008](adr/0008-backgrounds.md).
   - **Los predeterminados son nítidos:** no llevan desenfoque propio, así que el deslizador los trata igual que a una foto (0 px se ve nítido). El desenfoque por defecto, 8 px, les da un aspecto suave.
   - Un fondo recién importado pasa a ser el fondo al momento. Los importados se llaman «Fondo importado N», por orden de importación.
   - El selector de perfiles ya muestra el fondo global.
-  - **Limitación conocida:** en la biblioteca, el hueco que se reserva para la barra de desplazamiento (cuando no hace falta desplazarse) conserva el color del tema, porque Chromium no pinta ahí ni los elementos fijos ni el fondo de `<html>`.
+  - **La barra de desplazamiento va sobre el fondo** (acordado el 2026-11-11, tras probar la app): la ventana ya no se desplaza; lo hace el área bajo la barra superior, cuyo hueco de la barra es transparente. Así no queda una franja del color del tema a la derecha, el fondo no salta al entrar en la biblioteca y la barra superior queda siempre visible. Se probaron antes las barras superpuestas de Chromium (`OverlayScrollbar`), que Electron 44 en Windows ignora.
 - F10-C: los perfiles: elegir el fondo al crear un perfil y la tarjeta de cada perfil con su fondo.
 
 ### 3.9 Copias de seguridad (F11)

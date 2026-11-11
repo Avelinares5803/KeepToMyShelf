@@ -25,6 +25,7 @@ import { ProfileSelectionScreen } from '../features/profiles/ProfileSelectionScr
 import { TrashScreen } from '../features/trash/TrashScreen';
 import { changeLanguage } from '../i18n';
 import { errorMessage, unwrap } from '../lib/ipc';
+import { SCROLL_AREA_ID } from '../lib/scroll-area';
 import { useLoad } from '../lib/use-load';
 import {
   canGoBack,
@@ -367,7 +368,7 @@ export function App({ initialSettings }: AppProps) {
           {errorMessage(t, error)}
         </p>
       )}
-      <main className="app-main">
+      <main className="app-main" id={SCROLL_AREA_ID}>
         {session ? (
           renderScreen(currentScreen(navigation), session.token)
         ) : (

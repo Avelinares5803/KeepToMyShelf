@@ -15,17 +15,34 @@ import {
   type Theme,
 } from '../../shared/settings';
 import { Dialog } from '../components/Dialog';
+import {
+  BackgroundSettings,
+  type BackgroundSettingsProps,
+} from '../features/backgrounds/BackgroundSettings';
 import { errorMessage, unwrap } from '../lib/ipc';
+
+/** What the "Background" section needs besides the preferences themselves. */
+export type BackgroundSettingsOptions = Omit<
+  BackgroundSettingsProps,
+  'settings' | 'onChange' | 'onApplyToAll' | 'onPeekChange'
+>;
 
 interface SettingsDialogProps {
   settings: AppSettings;
   /** Name of the open profile, or null on the profile selection screen. */
   profileName: string | null;
+  background: BackgroundSettingsOptions;
   onChange: (update: SettingUpdate) => void;
   onClose: () => void;
 }
 
-export function SettingsDialog({ settings, profileName, onChange, onClose }: SettingsDialogProps) {
+export function SettingsDialog({
+  settings,
+  profileName,
+  background,
+  onChange,
+  onClose,
+}: SettingsDialogProps) {
   const { t } = useTranslation();
   const languageId = useId();
   const themeId = useId();
@@ -34,6 +51,8 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
   const maxDocumentId = useId();
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
+  // While the blur slider is held, the dialog fades so the background can be seen.
+  const [peeking, setPeeking] = useState(false);
 
   async function applyToAll(update: SettingUpdate) {
     setStatus(null);
@@ -47,7 +66,12 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
   }
 
   return (
-    <Dialog open title={t('settings.title')} onClose={onClose}>
+    <Dialog
+      open
+      title={t('settings.title')}
+      className={`dialog--settings${peeking ? ' dialog--peeking' : ''}`}
+      onClose={onClose}
+    >
       <div className="form">
         <p className="muted">
           {profileName
@@ -209,6 +233,14 @@ export function SettingsDialog({ settings, profileName, onChange, onClose }: Set
             {t('settings.applyToAll')}
           </button>
         </div>
+
+        <BackgroundSettings
+          {...background}
+          settings={settings}
+          onChange={onChange}
+          onApplyToAll={(update) => void applyToAll(update)}
+          onPeekChange={setPeeking}
+        />
 
         {status && (
           <p className="banner" role="status">

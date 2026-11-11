@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="space" cx="0.6" cy="0.45" r="0.8">
+      <stop offset="0" stop-color="#2a1660"/>
+      <stop offset="0.5" stop-color="#140c38"/>
+      <stop offset="1" stop-color="#06051a"/>
+    </radialGradient>
+    <linearGradient id="planet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0489b"/>
+      <stop offset="1" stop-color="#5b2bd6"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7fe3ee"/>
+      <stop offset="1" stop-color="#2e6fd6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#space)"/>
+  <g fill="#ffffff">
+    <circle cx="140" cy="120" r="2" opacity="0.8"/>
+    <circle cx="380" cy="860" r="1.6" opacity="0.6"/>
+    <circle cx="520" cy="210" r="2.4" opacity="0.9"/>
+    <circle cx="860" cy="120" r="1.5" opacity="0.6"/>
+    <circle cx="1040" cy="940" r="2" opacity="0.7"/>
+    <circle cx="1320" cy="160" r="1.8" opacity="0.8"/>
+    <circle cx="1480" cy="900" r="1.4" opacity="0.6"/>
+    <circle cx="1700" cy="260" r="2.6" opacity="0.9"/>
+    <circle cx="1820" cy="980" r="1.6" opacity="0.6"/>
+    <circle cx="240" cy="560" r="1.4" opacity="0.5"/>
+    <circle cx="760" cy="660" r="1.6" opacity="0.6"/>
+    <circle cx="660" cy="980" r="2" opacity="0.7"/>
+  </g>
+  <ellipse cx="1240" cy="540" rx="420" ry="70" fill="none" stroke="#c7a8ff" stroke-width="10" opacity="0.5" transform="rotate(-14 1240 540)"/>
+  <circle cx="1240" cy="540" r="230" fill="url(#planet)"/>
+  <!-- The front half of the ring, over the planet. -->
+  <path d="M 832.5 641.6 A 420 70 -14 0 0 1647.5 438.4" fill="none" stroke="#c7a8ff" stroke-width="10" opacity="0.8"/>
+  <circle cx="460" cy="330" r="70" fill="url(#moon)"/>
+</svg>

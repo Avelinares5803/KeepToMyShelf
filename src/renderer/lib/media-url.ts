@@ -21,6 +21,16 @@ export const preparedThumbnailSource = (preparedId: string): ImageSource => ({
   srcSet: `ktms-media://prepared/${preparedId}/320 1x, ktms-media://prepared/${preparedId}/640 2x`,
 });
 
+/** A background of the common gallery, at full quality: the app's background layer. */
+export const backgroundImageSource = (sha256: string): string =>
+  `ktms-media://background/${sha256}`;
+
+/** Thumbnail of a background of the common gallery, for the background picker. */
+export const backgroundThumbnailSource = (sha256: string): ImageSource => ({
+  src: `ktms-media://background/${sha256}/320`,
+  srcSet: `ktms-media://background/${sha256}/320 1x, ktms-media://background/${sha256}/640 2x`,
+});
+
 /** File sizes as people read them: "850 KB", "3,2 MB". */
 export function formatFileSize(bytes: number, language: string): string {
   const [value, unit] =

@@ -429,6 +429,46 @@
       "value": "{{megabytes}} MB"
     }
   },
+  "background": {
+    "title": "Background",
+    "label": "App background",
+    "none": "No background",
+    "presets": {
+      "aurora": "Aurora",
+      "dusk": "Dusk",
+      "ocean": "Ocean",
+      "forest": "Forest",
+      "ember": "Ember",
+      "nebula": "Nebula"
+    },
+    "imported": "Imported background {{number}}",
+    "missing": "File not found",
+    "import": "Import…",
+    "preparing": "Preparing…",
+    "fileType": "Images",
+    "rejected": "“{{name}}” could not be added: {{reason}}",
+    "applyToAll": "Apply this background to all profiles",
+    "delete": "Delete",
+    "deleteLabel": "Delete imported background {{number}}",
+    "deleteTitle": "Delete imported background {{number}}?",
+    "deleteBody": "It will be removed from the gallery of every profile.",
+    "deleteUsers_one": "1 profile uses it and will go back to “No background”.",
+    "deleteUsers_other": "{{count}} profiles use it and will go back to “No background”.",
+    "blur": {
+      "label": "Blur",
+      "value": "{{pixels}} px",
+      "applyToAll": "Apply this blur to all profiles"
+    },
+    "importChoice": {
+      "label": "When importing backgrounds",
+      "applyToAll": "Apply this background import option to all profiles"
+    },
+    "maxSide": {
+      "label": "Maximum size of optimized backgrounds",
+      "hint": "Larger backgrounds are reduced until their longest side measures this. They are never enlarged.",
+      "applyToAll": "Apply this maximum background size to all profiles"
+    }
+  },
   "media": {
     "cover": {
       "add": "Add cover",

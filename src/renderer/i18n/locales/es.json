@@ -429,6 +429,46 @@
       "value": "{{megabytes}} MB"
     }
   },
+  "background": {
+    "title": "Fondo",
+    "label": "Fondo de la aplicación",
+    "none": "Sin fondo",
+    "presets": {
+      "aurora": "Aurora",
+      "dusk": "Atardecer",
+      "ocean": "Océano",
+      "forest": "Bosque",
+      "ember": "Brasas",
+      "nebula": "Nebulosa"
+    },
+    "imported": "Fondo importado {{number}}",
+    "missing": "Archivo no encontrado",
+    "import": "Importar…",
+    "preparing": "Preparando…",
+    "fileType": "Imágenes",
+    "rejected": "No se ha podido añadir «{{name}}»: {{reason}}",
+    "applyToAll": "Aplicar este fondo a todos los perfiles",
+    "delete": "Eliminar",
+    "deleteLabel": "Eliminar el fondo importado {{number}}",
+    "deleteTitle": "¿Eliminar el fondo importado {{number}}?",
+    "deleteBody": "Se eliminará de la galería de todos los perfiles.",
+    "deleteUsers_one": "Lo usa 1 perfil, que volverá a «Sin fondo».",
+    "deleteUsers_other": "Lo usan {{count}} perfiles, que volverán a «Sin fondo».",
+    "blur": {
+      "label": "Desenfoque",
+      "value": "{{pixels}} px",
+      "applyToAll": "Aplicar este desenfoque a todos los perfiles"
+    },
+    "importChoice": {
+      "label": "Al importar fondos",
+      "applyToAll": "Aplicar esta opción de importación de fondos a todos los perfiles"
+    },
+    "maxSide": {
+      "label": "Tamaño máximo de los fondos optimizados",
+      "hint": "Los fondos más grandes se reducen hasta que su lado más largo mide esto. Nunca se amplían.",
+      "applyToAll": "Aplicar este tamaño máximo de los fondos a todos los perfiles"
+    }
+  },
   "media": {
     "cover": {
       "add": "Añadir portada",

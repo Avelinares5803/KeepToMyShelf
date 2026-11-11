@@ -130,8 +130,11 @@ h1 {
   color: var(--color-text);
 }
 
-/* Its scrollbar's track is transparent, so the background shows under the scrollbar. */
+/* Its scrollbar's track is transparent, so the background shows under the scrollbar.
+   Positioned, so absolutely positioned elements (e.g. .visually-hidden) are placed inside it:
+   otherwise they are placed against the page, which they lengthen, and the window scrolls. */
 .app-main {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;

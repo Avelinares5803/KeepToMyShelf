@@ -1,15 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="90"/>
-    </filter>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#170707"/>
+      <stop offset="1" stop-color="#4a0f0f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="1" stop-color="#ff7a2b"/>
+    </radialGradient>
   </defs>
-  <rect width="1920" height="1080" fill="#170707"/>
-  <g filter="url(#glow)">
-    <circle cx="420" cy="820" r="380" fill="#c8202a" opacity="0.85"/>
-    <circle cx="980" cy="980" r="420" fill="#ff6a2b" opacity="0.8"/>
-    <circle cx="1560" cy="760" r="340" fill="#d93a1f" opacity="0.75"/>
-    <circle cx="1180" cy="520" r="200" fill="#ffb347" opacity="0.45"/>
-    <circle cx="300" cy="220" r="240" fill="#6e1218" opacity="0.6"/>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <circle cx="960" cy="720" r="260" fill="url(#glow)"/>
+  <path d="M-240 720 C -120 720 120 680 240 680 S 600 720 720 720 S 1080 670 1200 670 S 1560 710 1680 710 S 2040 690 2160 690 L 2160 1080 L -240 1080 Z" fill="#c8202a"/>
+  <path d="M-240 840 C -120 840 120 800 240 800 S 600 840 720 840 S 1080 810 1200 810 S 1560 830 1680 830 S 2040 810 2160 810 L 2160 1080 L -240 1080 Z" fill="#8e1419"/>
+  <path d="M-240 960 C -120 960 120 930 240 930 S 600 960 720 960 S 1080 940 1200 940 S 1560 950 1680 950 S 2040 940 2160 940 L 2160 1080 L -240 1080 Z" fill="#4d0a0d"/>
+  <g fill="#ffb347">
+    <circle cx="420" cy="420" r="5" opacity="0.8"/>
+    <circle cx="610" cy="300" r="3" opacity="0.6"/>
+    <circle cx="1240" cy="380" r="4" opacity="0.7"/>
+    <circle cx="1480" cy="250" r="3" opacity="0.6"/>
+    <circle cx="880" cy="200" r="3.5" opacity="0.7"/>
+    <circle cx="1700" cy="460" r="4" opacity="0.6"/>
+    <circle cx="240" cy="560" r="3" opacity="0.6"/>
   </g>
 </svg>

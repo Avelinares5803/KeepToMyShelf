@@ -1,27 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#050f1c"/>
-      <stop offset="1" stop-color="#0c2b3d"/>
+      <stop offset="0" stop-color="#040b18"/>
+      <stop offset="1" stop-color="#0d2a3c"/>
     </linearGradient>
-    <linearGradient id="green" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="green" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#36e0a6" stop-opacity="0"/>
-      <stop offset="0.45" stop-color="#36e0a6" stop-opacity="0.7"/>
-      <stop offset="1" stop-color="#36e0a6" stop-opacity="0"/>
+      <stop offset="1" stop-color="#36e0a6" stop-opacity="0.75"/>
     </linearGradient>
-    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="violet" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#8a6cff" stop-opacity="0"/>
-      <stop offset="0.6" stop-color="#8a6cff" stop-opacity="0.6"/>
-      <stop offset="1" stop-color="#4fc3ff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#6fb8ff" stop-opacity="0.6"/>
     </linearGradient>
-    <filter id="soft" x="-20%" y="-50%" width="140%" height="200%">
-      <feGaussianBlur stdDeviation="55"/>
-    </filter>
   </defs>
   <rect width="1920" height="1080" fill="url(#sky)"/>
-  <g filter="url(#soft)">
-    <path d="M-200 560 C 250 320 650 680 1050 420 S 1750 240 2150 400 L 2150 540 C 1750 420 1350 680 950 600 S 250 560 -200 720 Z" fill="url(#green)"/>
-    <path d="M-200 330 C 300 180 800 420 1250 260 S 1900 160 2150 230 L 2150 330 C 1800 280 1400 420 1000 380 S 200 300 -200 430 Z" fill="url(#violet)"/>
-    <ellipse cx="1400" cy="900" rx="700" ry="160" fill="#0f5b5a" opacity="0.5"/>
+  <g fill="#ffffff">
+    <circle cx="160" cy="90" r="2" opacity="0.8"/>
+    <circle cx="420" cy="160" r="1.5" opacity="0.6"/>
+    <circle cx="760" cy="70" r="2" opacity="0.7"/>
+    <circle cx="1100" cy="130" r="1.6" opacity="0.6"/>
+    <circle cx="1420" cy="60" r="2.2" opacity="0.8"/>
+    <circle cx="1760" cy="150" r="1.6" opacity="0.6"/>
   </g>
+  <path d="M-50 200 C 300 120 700 300 1100 200 S 1700 80 1970 160 L 1970 420 C 1650 320 1300 480 950 430 S 300 360 -50 470 Z" fill="url(#violet)"/>
+  <path d="M-50 380 C 250 260 650 520 1050 380 S 1700 260 1970 340 L 1970 640 C 1700 520 1350 700 950 640 S 250 560 -50 700 Z" fill="url(#green)"/>
+  <path d="M0 860 L 220 760 L 380 820 L 600 700 L 820 800 L 1040 720 L 1260 810 L 1480 730 L 1700 800 L 1920 740 L 1920 1080 L 0 1080 Z" fill="#06141c"/>
+  <path d="M0 960 L 260 880 L 520 940 L 800 870 L 1100 950 L 1400 880 L 1700 940 L 1920 900 L 1920 1080 L 0 1080 Z" fill="#030a0f"/>
 </svg>

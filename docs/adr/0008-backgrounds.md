@@ -67,7 +67,7 @@ Cuatro preferencias nuevas, con el sistema de siempre (perfil → global → pre
 ### Interfaz (F10-B)
 
 - **Capa de fondo** (`AppBackground`): una `<img>` fija detrás de toda la interfaz (`z-index: -1`), con `filter: blur()`. Es más grande que la ventana en el doble del desenfoque por cada lado, para que el borde desenfocado no se aclare. Encima va el **velo**: el color del tema al 62 % (`color-mix`), para que el texto se lea sobre cualquier imagen. Si la imagen no se puede cargar, no se muestra fondo.
-- **Predeterminados:** 6 SVG propios en `src/renderer/assets/backgrounds/`. Vite los incluye en la interfaz (como `data:` si son pequeños), así que la CSP no cambia.
+- **Predeterminados:** 6 SVG propios en `src/renderer/assets/backgrounds/`, nítidos (sin `feGaussianBlur`), para que el desenfoque dependa solo del deslizador. Vite los incluye en la interfaz (como `data:` si son pequeños), así que la CSP no cambia.
 - **Ajustes, sección «Fondo»:**
   - La cuadrícula usa botones de opción nativos, transparentes sobre cada miniatura: el teclado funciona sin código propio.
   - Importar reutiliza `ImageImportDialog` con la preferencia propia de los fondos. El fondo importado pasa a ser el fondo al momento.

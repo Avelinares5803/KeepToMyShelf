@@ -344,6 +344,7 @@ El detalle técnico está en el [ADR 0008](adr/0008-backgrounds.md).
   - **El desenfoque se guarda al soltar el deslizador.** Mientras se mueve, el fondo lo muestra al momento.
   - **Ajustes se desvanece mientras se sostiene el deslizador** (con el ratón o el teclado): solo queda su fila, para ver la app real con el fondo. Ajustes tiene un oscurecido más suave que las demás ventanas, para que se vea el fondo elegido detrás.
   - **El velo** (una capa del color del tema, al 62 %, entre la imagen y la interfaz, para que el texto se lea sobre cualquier imagen) **es fijo**. Se calibró con capturas en claro y en oscuro; si hace falta, puede pasar a ser un deslizador «Atenuación».
+  - **Los predeterminados son nítidos:** no llevan desenfoque propio, así que el deslizador los trata igual que a una foto (0 px se ve nítido). El desenfoque por defecto, 8 px, les da un aspecto suave.
   - Un fondo recién importado pasa a ser el fondo al momento. Los importados se llaman «Fondo importado N», por orden de importación.
   - El selector de perfiles ya muestra el fondo global.
   - **Limitación conocida:** en la biblioteca, el hueco que se reserva para la barra de desplazamiento (cuando no hace falta desplazarse) conserva el color del tema, porque Chromium no pinta ahí ni los elementos fijos ni el fondo de `<html>`.

@@ -1,18 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4fb3d9"/>
-      <stop offset="0.45" stop-color="#11679a"/>
-      <stop offset="1" stop-color="#03213d"/>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fdcf2"/>
+      <stop offset="1" stop-color="#e3f6fc"/>
     </linearGradient>
-    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
   </defs>
-  <rect width="1920" height="1080" fill="url(#sea)"/>
-  <g filter="url(#soft)" fill="none" stroke-linecap="round">
-    <path d="M-100 420 C 200 360 400 480 700 420 S 1200 360 1500 430 1900 400 2050 380" stroke="#b9ecff" stroke-width="40" opacity="0.35"/>
-    <path d="M-100 560 C 250 500 500 620 820 560 S 1350 500 1650 570 1950 540 2050 520" stroke="#7fd3f2" stroke-width="60" opacity="0.3"/>
-    <path d="M-100 730 C 300 670 600 790 950 730 S 1500 670 1800 740 2000 720 2050 700" stroke="#3a9ccc" stroke-width="80" opacity="0.35"/>
-    <path d="M-100 900 C 350 850 700 960 1100 900 S 1650 850 2050 890" stroke="#1a6b9a" stroke-width="110" opacity="0.4"/>
-  </g>
-  <ellipse cx="500" cy="180" rx="520" ry="140" fill="#e6f8ff" opacity="0.25" filter="url(#soft)"/>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <path d="M-240 400 C -120 400 120 370 240 370 S 600 400 720 400 S 1080 360 1200 360 S 1560 390 1680 390 S 2040 370 2160 370 L 2160 1080 L -240 1080 Z" fill="#4fb3d9"/>
+  <path d="M-240 540 C -120 540 120 500 240 500 S 600 540 720 540 S 1080 500 1200 500 S 1560 530 1680 530 S 2040 510 2160 510 L 2160 1080 L -240 1080 Z" fill="#2a8fc0"/>
+  <path d="M-240 700 C -120 700 120 660 240 660 S 600 710 720 710 S 1080 670 1200 670 S 1560 700 1680 700 S 2040 680 2160 680 L 2160 1080 L -240 1080 Z" fill="#14699c"/>
+  <path d="M-240 860 C -120 860 120 820 240 820 S 600 860 720 860 S 1080 830 1200 830 S 1560 850 1680 850 S 2040 830 2160 830 L 2160 1080 L -240 1080 Z" fill="#0a4673"/>
+  <path d="M-240 990 C -120 990 120 960 240 960 S 600 990 720 990 S 1080 970 1200 970 S 1560 980 1680 980 S 2040 960 2160 960 L 2160 1080 L -240 1080 Z" fill="#042a4a"/>
 </svg>

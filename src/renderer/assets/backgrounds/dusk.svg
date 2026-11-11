@@ -5,18 +5,14 @@
       <stop offset="0.55" stop-color="#b8558f"/>
       <stop offset="1" stop-color="#f4a96a"/>
     </linearGradient>
-    <radialGradient id="sun">
-      <stop offset="0" stop-color="#ffe2b0"/>
-      <stop offset="0.5" stop-color="#ffc07a" stop-opacity="0.8"/>
-      <stop offset="1" stop-color="#ff9a6a" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="soft"><feGaussianBlur stdDeviation="8"/></filter>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe7b8"/>
+      <stop offset="1" stop-color="#ffb26b"/>
+    </linearGradient>
   </defs>
   <rect width="1920" height="1080" fill="url(#sky)"/>
-  <circle cx="1280" cy="700" r="380" fill="url(#sun)"/>
-  <g filter="url(#soft)">
-    <path d="M0 760 C 300 660 520 720 780 680 S 1300 600 1560 690 1820 700 1920 660 L 1920 1080 L 0 1080 Z" fill="#6b2f6e" opacity="0.85"/>
-    <path d="M0 860 C 260 790 560 840 860 800 S 1400 760 1700 830 1880 840 1920 820 L 1920 1080 L 0 1080 Z" fill="#3f1a4f"/>
-    <path d="M0 960 C 400 900 800 950 1200 920 S 1700 900 1920 940 L 1920 1080 L 0 1080 Z" fill="#22102f"/>
-  </g>
+  <circle cx="1280" cy="690" r="190" fill="url(#sun)"/>
+  <path d="M-240 740 C -120 740 120 700 240 700 S 600 720 720 720 S 1080 660 1200 660 S 1560 700 1680 700 S 2040 680 2160 680 L 2160 1080 L -240 1080 Z" fill="#7a3577"/>
+  <path d="M-240 840 C -120 840 120 820 240 820 S 600 800 720 800 S 1080 830 1200 830 S 1560 790 1680 790 S 2040 820 2160 820 L 2160 1080 L -240 1080 Z" fill="#4a1d58"/>
+  <path d="M-240 950 C -120 950 120 930 240 930 S 600 960 720 960 S 1080 920 1200 920 S 1560 950 1680 950 S 2040 930 2160 930 L 2160 1080 L -240 1080 Z" fill="#26102f"/>
 </svg>

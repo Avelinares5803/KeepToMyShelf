@@ -2,17 +2,13 @@
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#d5e6cf"/>
-      <stop offset="0.6" stop-color="#7fa78a"/>
-      <stop offset="1" stop-color="#2f5240"/>
+      <stop offset="1" stop-color="#9cc1a2"/>
     </linearGradient>
-    <filter id="mist"><feGaussianBlur stdDeviation="40"/></filter>
-    <filter id="soft"><feGaussianBlur stdDeviation="4"/></filter>
   </defs>
   <rect width="1920" height="1080" fill="url(#sky)"/>
-  <g filter="url(#soft)">
-    <path d="M0 620 L 180 470 L 330 580 L 520 400 L 720 560 L 900 430 L 1120 590 L 1320 420 L 1540 570 L 1720 460 L 1920 600 L 1920 1080 L 0 1080 Z" fill="#5d8a6c"/>
-    <path d="M0 740 L 220 590 L 420 700 L 640 560 L 860 720 L 1080 590 L 1300 730 L 1520 600 L 1740 720 L 1920 640 L 1920 1080 L 0 1080 Z" fill="#3a6249"/>
-  </g>
-  <ellipse cx="960" cy="760" rx="1100" ry="120" fill="#e8f2e4" opacity="0.45" filter="url(#mist)"/>
-  <path d="M0 880 L 260 720 L 470 840 L 700 700 L 940 860 L 1180 720 L 1420 870 L 1660 740 L 1920 860 L 1920 1080 L 0 1080 Z" fill="#1d3a2a" filter="url(#soft)"/>
+  <path d="M0 620 L 180 470 L 330 580 L 520 400 L 720 560 L 900 430 L 1120 590 L 1320 420 L 1540 570 L 1720 460 L 1920 600 L 1920 1080 L 0 1080 Z" fill="#6e9a7b"/>
+  <path d="M0 740 L 220 590 L 420 700 L 640 560 L 860 720 L 1080 590 L 1300 730 L 1520 600 L 1740 720 L 1920 640 L 1920 1080 L 0 1080 Z" fill="#46705a"/>
+  <rect y="760" width="1920" height="40" fill="#e8f2e4" opacity="0.35"/>
+  <path d="M0 880 L 60 800 L 120 880 L 170 790 L 230 880 L 300 770 L 370 880 L 430 810 L 490 880 L 560 780 L 630 880 L 700 800 L 760 880 L 830 770 L 900 880 L 960 810 L 1020 880 L 1090 780 L 1160 880 L 1220 800 L 1280 880 L 1350 770 L 1420 880 L 1480 810 L 1540 880 L 1610 780 L 1680 880 L 1740 800 L 1800 880 L 1860 790 L 1920 880 L 1920 1080 L 0 1080 Z" fill="#24442f"/>
+  <rect y="878" width="1920" height="202" fill="#1a3324"/>
 </svg>

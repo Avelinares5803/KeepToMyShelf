@@ -1,8 +1,9 @@
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemSummary } from '../../../shared/items';
 import { HeartIcon } from '../../components/icons';
+import { scrollArea, scrollToTop } from '../../lib/scroll-area';
 import { Thumbnail } from '../media/Thumbnail';
 import { cardClassName, selectableProps } from '../selection/selection';
 import { SelectionMark } from '../selection/SelectionMark';
@@ -47,7 +48,7 @@ export interface CardSelection {
 
 interface GridBox {
   readonly width: number;
-  /** Distance from the top of the page, which is what scrolls. */
+  /** Distance from the top of the scrolling area's content. */
   readonly top: number;
   readonly rem: number;
 }
@@ -60,7 +61,7 @@ function anchorIndex(items: readonly ItemSummary[], anchor: LibraryAnchor): numb
 
 /**
  * The items of a library, bottom-aligned like books on a shelf. Only the rows near the visible
- * part of the page exist, so its speed does not depend on the size of the library.
+ * part of the scrolling area exist, so its speed does not depend on the size of the library.
  */
 export function LibraryGrid({
   items,
@@ -78,12 +79,13 @@ export function LibraryGrid({
   // The observer also answers before the first paint, so the grid never shows without rows.
   useLayoutEffect(() => {
     const element = container.current;
-    if (element === null) return;
+    const area = scrollArea();
+    if (element === null || area === null) return;
     const update = () => {
       const rect = element.getBoundingClientRect();
       const next: GridBox = {
         width: rect.width,
-        top: rect.top + window.scrollY,
+        top: rect.top - area.getBoundingClientRect().top + area.scrollTop,
         rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
       };
       setBox((current) =>
@@ -119,7 +121,11 @@ export function LibraryGrid({
     (row: number) => `${items[row * columns]?.id}:${columns}`,
     [items, columns],
   );
-  const virtualizer = useWindowVirtualizer({
+  // The rule warns that the React Compiler cannot memoize what this returns. The project does
+  // not use the React Compiler, so nothing is memoized wrongly.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const virtualizer = useVirtualizer({
+    getScrollElement: scrollArea,
     count: columns === 0 ? 0 : rowCountFor(items.length, columns),
     estimateSize,
     getItemKey,
@@ -141,7 +147,7 @@ export function LibraryGrid({
         const row = rowOfItem(anchorIndex(items, anchor.current), columns);
         virtualizer.scrollToIndex(row, { align: 'start' });
       } else if (appearing) {
-        window.scrollTo(0, 0);
+        scrollToTop();
       }
       return;
     }

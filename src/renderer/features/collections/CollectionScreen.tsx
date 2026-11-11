@@ -5,6 +5,7 @@ import type { ItemSummary } from '../../../shared/items';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { CheckSquareIcon, PencilIcon, PlusIcon, TrashIcon } from '../../components/icons';
 import { errorMessage, unwrap } from '../../lib/ipc';
+import { scrollToTop } from '../../lib/scroll-area';
 import { useDebounced } from '../../lib/use-debounced';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
@@ -97,7 +98,7 @@ export function CollectionScreen({
   useEffect(() => {
     if (lastResults.current === shownResults) return;
     lastResults.current = shownResults;
-    window.scrollTo(0, 0);
+    scrollToTop();
   }, [shownResults]);
 
   const isEmpty = details.data?.itemCount === 0;

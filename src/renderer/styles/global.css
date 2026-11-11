@@ -46,11 +46,11 @@ h1 {
   color: var(--color-muted);
 }
 
-/* Layout */
+/* Layout: the window never scrolls; the area under the top bar does (see lib/scroll-area). */
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .top-bar {
@@ -130,12 +130,19 @@ h1 {
   color: var(--color-text);
 }
 
+/* Its scrollbar's track is transparent, so the background shows under the scrollbar.
+   Positioned, so absolutely positioned elements (e.g. .visually-hidden) are placed inside it:
+   otherwise they are placed against the page, which they lengthen, and the window scrolls. */
 .app-main {
+  position: relative;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 1rem 1.25rem 3rem;
+  overflow-y: auto;
+  scrollbar-color: color-mix(in srgb, var(--color-text) 35%, transparent) transparent;
 }
 
 /* Choosing screens are centred vertically; content screens start at the top. */
@@ -725,7 +732,7 @@ h1 {
 /* The space of the scrollbar is always kept. Otherwise, when the page barely fits, the scrollbar
    narrows the covers, which makes the page fit and removes the scrollbar, which widens the
    covers... and the grid, whose rows are measured from outside, never stops moving. */
-html:has(.library) {
+.app-main:has(.library) {
   scrollbar-gutter: stable;
 }
 

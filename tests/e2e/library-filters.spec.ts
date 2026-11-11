@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import { launchApp } from './launch-app';
+import { scrollAreaTo, scrollTop } from './scroll-area';
 import { seedItems, type SeedEntry, type SeedItem } from './seed-items';
 
 let dataDir: string;
@@ -308,10 +309,8 @@ test('goes back to the top when the filters change', async () => {
       favorite: index % 2 === 0,
     })),
   );
-  const scrollY = () => page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY);
-  await page.evaluate(() => {
-    (globalThis as unknown as { scrollTo(x: number, y: number): void }).scrollTo(0, 120);
-  });
+  const scrollY = () => scrollTop(page);
+  await scrollAreaTo(page, 120);
   await expect.poll(scrollY).toBe(120);
 
   await box('Favoritos').check();

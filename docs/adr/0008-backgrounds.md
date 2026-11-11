@@ -74,7 +74,7 @@ Cuatro preferencias nuevas, con el sistema de siempre (perfil → global → pre
   - Borrar vuelve a leer la galería antes de confirmar, para decir cuántos perfiles lo usan en ese momento.
 - **Desenfoque:** mientras se mueve el deslizador, `App` guarda una vista previa que la capa muestra al momento; al soltar (`pointerup` en la ventana, o `keyup`), se guarda una vez. Mientras se sostiene, Ajustes se desvanece (clase `dialog--peeking`) y solo queda la fila del deslizador, siempre en la misma posición, para que no se mueva bajo el puntero.
 - **Cambios de preferencias optimistas:** `App` muestra el valor nuevo antes de guardarlo y lo deshace si falla. Si no, un control controlado por React, como un botón de opción, volvería un instante al valor anterior.
-- **Limitación conocida:** el hueco que la biblioteca reserva para la barra de desplazamiento (`scrollbar-gutter: stable`) conserva el color del tema, porque Chromium no pinta ahí ni los elementos fijos ni el fondo de `<html>`.
+- **La ventana no se desplaza; lo hace `<main>`** (`#app-scroll`, ver `lib/scroll-area.ts`). Chromium pinta el hueco de la barra de la ventana con el color del tema y encoge con él la zona de los elementos fijos: quedaba una franja a la derecha y el fondo saltaba al entrar en la biblioteca, que reserva ese hueco. El hueco de la barra de un elemento, en cambio, es transparente, y su carril también (`scrollbar-color`), así que la barra se dibuja sobre el fondo. Además, la barra superior queda siempre visible. Las barras superpuestas de Chromium (`--enable-features=OverlayScrollbar`) lo habrían evitado, pero Electron 44 en Windows las ignora.
 
 ## Alternativas descartadas
 

@@ -11,9 +11,8 @@ interface AppBackgroundProps {
  * The background behind the whole UI: a fixed picture that covers the window, blurred, under
  * a veil of the theme's colour so text stays readable on any picture. A picture that cannot
  * be loaded (e.g. its file was deleted by hand) shows no background, as if none was chosen.
- *
- * Known limitation: the space the library keeps for its scrollbar (`scrollbar-gutter`) keeps
- * the theme's colour, because Chromium never paints fixed elements nor <html> there.
+ * The window never scrolls (see lib/scroll-area), so the picture always covers all of it, and
+ * the scrollbar of the area that scrolls is drawn over it.
  */
 export function AppBackground({ src, blur }: AppBackgroundProps) {
   const [failed, setFailed] = useState<string | null>(null);

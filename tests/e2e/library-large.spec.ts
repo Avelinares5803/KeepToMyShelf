@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import { launchApp } from './launch-app';
+import { scrollAreaTo, scrollHeight, scrollTop } from './scroll-area';
 import { seedItems, type SeedItem } from './seed-items';
 
 let dataDir: string;
@@ -13,18 +14,9 @@ const heading = (name: string) => page.getByRole('heading', { name, exact: true 
 const button = (name: string) => page.getByRole('button', { name, exact: true });
 const cards = () => page.locator('.item-card');
 
-/** What the page evaluates runs in the app's window, which these tests have no types for. */
-const scrollTo = (y: number) =>
-  page.evaluate((target) => {
-    (globalThis as unknown as { scrollTo(x: number, y: number): void }).scrollTo(0, target);
-  }, y);
-const scrollY = () => page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY);
-const pageHeight = () =>
-  page.evaluate(
-    () =>
-      (globalThis as unknown as { document: { documentElement: { scrollHeight: number } } })
-        .document.documentElement.scrollHeight,
-  );
+const scrollTo = (y: number) => scrollAreaTo(page, y);
+const scrollY = () => scrollTop(page);
+const pageHeight = () => scrollHeight(page);
 
 const games = (count: number, make: (index: number) => Partial<SeedItem> = () => ({})) =>
   Array.from({ length: count }, (_, index) => ({

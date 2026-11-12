@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-11, con la F10-B (el fondo en la app) hecha.
+**Última actualización:** 2026-11-12, con la F10-C1 (atenuación) hecha.
 
 ---
 
@@ -43,7 +43,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)              |
 | F8 Películas y series   | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                |
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)               |
-| **F10 Personalización** | Fondos predeterminados e importados, desenfoque                                                                                                  | 🚧 **En curso** (F10-A y F10-B hechas)         |
+| **F10 Personalización** | Fondos predeterminados e importados, desenfoque                                                                                                  | 🚧 **En curso** (F10-A, F10-B y F10-C1 hechas) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | Pendiente (la copia antes de migrar ya existe) |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                      |
 
@@ -348,7 +348,13 @@ El detalle técnico está en el [ADR 0008](adr/0008-backgrounds.md).
   - Un fondo recién importado pasa a ser el fondo al momento. Los importados se llaman «Fondo importado N», por orden de importación.
   - El selector de perfiles ya muestra el fondo global.
   - **La barra de desplazamiento va sobre el fondo** (acordado el 2026-11-11, tras probar la app): la ventana ya no se desplaza; lo hace el área bajo la barra superior, cuyo hueco de la barra es transparente. Así no queda una franja del color del tema a la derecha, el fondo no salta al entrar en la biblioteca y la barra superior queda siempre visible. Se probaron antes las barras superpuestas de Chromium (`OverlayScrollbar`), que Electron 44 en Windows ignora.
-- F10-C: los perfiles: elegir el fondo al crear un perfil y la tarjeta de cada perfil con su fondo.
+- F10-C, dividida en dos entregas (acordado el 2026-11-11):
+  - **F10-C1: atenuación.** ✅ Hecha. Acordado:
+    - Un deslizador «Atenuación» en Ajustes controla la opacidad del velo (0 a 90 %), con el mismo comportamiento que el desenfoque (Ajustes se desvanece mientras se sostiene, se guarda al soltar, «Aplicar a todos los perfiles»).
+    - **Un valor por tema** (`backgroundDimLight` y `backgroundDimDark`): el deslizador cambia el del tema que se ve, y su etiqueta lo dice («Atenuación (tema claro)»). Con «Según el sistema», el del tema que tenga el sistema.
+    - **Por defecto, 40 % en claro y 62 % en oscuro.**
+    - Para que se lea con cualquier fondo y atenuación: **la barra superior tiene su propio velo** (el color del tema al 85 %), y **con un fondo, los textos grises secundarios** (el número junto al título, los avisos…) **son más oscuros en el tema claro y algo más claros en el oscuro**.
+  - **F10-C2: perfiles.** Elegir el fondo al crear un perfil (empieza en el fondo global y permite importar) y la tarjeta de cada perfil rellena con su fondo, con el nombre sobre un degradado oscuro.
 
 ### 3.9 Copias de seguridad (F11)
 

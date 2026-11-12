@@ -83,6 +83,8 @@ describe('SettingsService', () => {
     expect(fx.settings.getGlobal()).toMatchObject({
       background: { kind: 'none' },
       backgroundBlur: 8,
+      backgroundDimLight: 40,
+      backgroundDimDark: 62,
       backgroundImportChoice: 'ask',
       backgroundMaxSide: 3840,
     });
@@ -102,6 +104,20 @@ describe('SettingsService', () => {
     expect(fx.settings.getForProfile(beaId).background).toEqual({ kind: 'none' });
   });
 
+  it('keeps a dimming for each theme, each with its own value per profile', () => {
+    fx.settings.setForProfile(anaId, { key: 'backgroundDimLight', value: 0 });
+    fx.settings.setGlobal({ key: 'backgroundDimDark', value: 90 });
+
+    expect(fx.settings.getForProfile(anaId)).toMatchObject({
+      backgroundDimLight: 0,
+      backgroundDimDark: 90,
+    });
+    expect(fx.settings.getForProfile(beaId)).toMatchObject({
+      backgroundDimLight: 40,
+      backgroundDimDark: 90,
+    });
+  });
+
   it.each([
     { key: 'imageImportChoice', value: 'always' },
     { key: 'optimizedMaxSide', value: 2001 },
@@ -113,6 +129,9 @@ describe('SettingsService', () => {
     { key: 'backgroundBlur', value: 41 },
     { key: 'backgroundBlur', value: 2.5 },
     { key: 'backgroundMaxSide', value: 4000 },
+    { key: 'backgroundDimLight', value: -1 },
+    { key: 'backgroundDimDark', value: 91 },
+    { key: 'backgroundDimDark', value: 62.5 },
     { key: 'backgroundImportChoice', value: 'always' },
   ])('rejects the invalid value %j', (update) => {
     expect(() => fx.settings.setGlobal(update as unknown as SettingUpdate)).toThrow(

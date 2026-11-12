@@ -459,6 +459,17 @@
       "value": "{{pixels}} px",
       "applyToAll": "Apply this blur to all profiles"
     },
+    "dim": {
+      "label": {
+        "light": "Dimming (light theme)",
+        "dark": "Dimming (dark theme)"
+      },
+      "value": "{{percent}}%",
+      "applyToAll": {
+        "light": "Apply this light theme dimming to all profiles",
+        "dark": "Apply this dark theme dimming to all profiles"
+      }
+    },
     "importChoice": {
       "label": "When importing backgrounds",
       "applyToAll": "Apply this background import option to all profiles"

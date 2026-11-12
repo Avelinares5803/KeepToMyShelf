@@ -170,6 +170,45 @@ test('blur: the slider fades the settings while held and saves once released', a
   await expect(background).toHaveAttribute('style', /--background-blur: 1px/);
 });
 
+test('dimming: each theme has its own, changed with its slider like the blur', async () => {
+  await openProfile('Ana');
+  await openSettings();
+  await option('Atardecer').check();
+  const background = page.locator('.app-background');
+  const theme = settings().getByLabel('Tema', { exact: true });
+
+  // Dark theme: its slider, its default value, and the veil follows it.
+  await theme.selectOption('dark');
+  const dark = settings().getByLabel('Atenuación (tema oscuro)', { exact: true });
+  await expect(dark).toHaveValue('62');
+  await expect(background).toHaveAttribute('style', /--background-dim: 62%/);
+  await dark.focus();
+  await page.keyboard.down('ArrowLeft');
+  await expect(settings()).toHaveClass(/dialog--peeking/);
+  await page.keyboard.up('ArrowLeft');
+  await expect(settings()).not.toHaveClass(/dialog--peeking/);
+  await expect(dark).toHaveValue('61');
+  await expect(background).toHaveAttribute('style', /--background-dim: 61%/);
+
+  // Light theme: another slider, with its own value, untouched by the dark one.
+  await theme.selectOption('light');
+  const light = settings().getByLabel('Atenuación (tema claro)', { exact: true });
+  await expect(light).toHaveValue('40');
+  await expect(background).toHaveAttribute('style', /--background-dim: 40%/);
+  await light.focus();
+  await page.keyboard.press('Home');
+  await expect(light).toHaveValue('0');
+  await closeSettings();
+
+  // Both saved: read again after leaving and opening the profile.
+  await leaveProfile();
+  await openProfile('Ana');
+  await expect(background).toHaveAttribute('style', /--background-dim: 0%/);
+  await openSettings();
+  await settings().getByLabel('Tema', { exact: true }).selectOption('dark');
+  await expect(background).toHaveAttribute('style', /--background-dim: 61%/);
+});
+
 test('imports a background to the shared gallery; deleting it sends its users to none', async () => {
   await openProfile('Ana');
   await openSettings();

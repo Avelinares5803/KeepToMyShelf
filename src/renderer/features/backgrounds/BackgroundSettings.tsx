@@ -1,8 +1,10 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImportedBackground } from '../../../shared/backgrounds';
 import {
   BACKGROUND_BLUR_MAX,
+  BACKGROUND_DIM_KEYS,
+  BACKGROUND_DIM_MAX,
   BACKGROUND_MAX_SIDES,
   IMAGE_IMPORT_CHOICES,
   type AppSettings,
@@ -13,19 +15,8 @@ import {
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { BackgroundPicker } from './BackgroundPicker';
+import { PeekSlider } from './PeekSlider';
 import { useBackgroundImport } from './use-background-import';
-
-/** Keys that change a slider's value. */
-const SLIDER_KEYS = new Set([
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowUp',
-  'ArrowDown',
-  'Home',
-  'End',
-  'PageUp',
-  'PageDown',
-]);
 
 export interface BackgroundSettingsProps {
   settings: AppSettings;
@@ -34,13 +25,17 @@ export interface BackgroundSettingsProps {
   /** The common gallery, oldest first; null while it loads or if it failed. */
   gallery: readonly ImportedBackground[] | null;
   galleryError: unknown;
-  /** The blur shown, which may be a preview while the slider moves. */
+  /** The blur shown, which may be a preview while its slider moves. */
   blur: number;
-  /** The slider moves: the background shows the new blur without saving it. */
   onBlurPreview: (blur: number) => void;
-  /** The slider is released: the blur is saved. */
   onBlurCommit: (blur: number) => void;
-  /** True while the slider is held, so the settings dialog fades and the app shows. */
+  /** The theme shown, whose dimming the dimming slider changes. */
+  dimTheme: 'light' | 'dark';
+  /** That theme's dimming shown, which may be a preview while its slider moves. */
+  dim: number;
+  onDimPreview: (dim: number) => void;
+  onDimCommit: (dim: number) => void;
+  /** True while a slider is held, so the settings dialog fades and the app shows. */
   onPeekChange: (peeking: boolean) => void;
   onChange: (update: SettingUpdate) => void;
   onApplyToAll: (update: SettingUpdate) => void;
@@ -59,6 +54,10 @@ export function BackgroundSettings({
   blur,
   onBlurPreview,
   onBlurCommit,
+  dimTheme,
+  dim,
+  onDimPreview,
+  onDimCommit,
   onPeekChange,
   onChange,
   onApplyToAll,
@@ -67,16 +66,14 @@ export function BackgroundSettings({
 }: BackgroundSettingsProps) {
   const { t } = useTranslation();
   const headingId = useId();
-  const blurId = useId();
   const importChoiceId = useId();
   const maxSideId = useId();
-  const slider = useRef<HTMLInputElement>(null);
-  const [peeking, setPeeking] = useState(false);
   const [deleting, setDeleting] = useState<{
     background: ImportedBackground;
     number: number;
   } | null>(null);
   const [deleteError, setDeleteError] = useState<unknown>(null);
+  const dimKey = BACKGROUND_DIM_KEYS[dimTheme];
 
   const backgroundImport = useBackgroundImport({
     token,
@@ -85,11 +82,6 @@ export function BackgroundSettings({
     onRememberChoice: (choice) => onChange({ key: 'backgroundImportChoice', value: choice }),
     onImported,
   });
-
-  function peek(active: boolean) {
-    setPeeking(active);
-    onPeekChange(active);
-  }
 
   /**
    * Asks before deleting, saying how many profiles use it. The count is read again now: any
@@ -110,12 +102,6 @@ export function BackgroundSettings({
     } catch (caught) {
       setDeleteError(caught);
     }
-  }
-
-  /** The slider is let go: the dialog shows again and the blur is saved once. */
-  function release() {
-    peek(false);
-    if (slider.current) onBlurCommit(slider.current.valueAsNumber);
   }
 
   return (
@@ -165,48 +151,28 @@ export function BackgroundSettings({
         </button>
       </div>
 
-      <div className={`setting-row setting-row--blur${peeking ? ' setting-row--peeking' : ''}`}>
-        <div className="field">
-          <label htmlFor={blurId}>{t('background.blur.label')}</label>
-          <div className="range-field">
-            <input
-              ref={slider}
-              id={blurId}
-              type="range"
-              min={0}
-              max={BACKGROUND_BLUR_MAX}
-              step={1}
-              value={blur}
-              aria-valuetext={t('background.blur.value', { pixels: blur })}
-              onChange={(event) => onBlurPreview(event.target.valueAsNumber)}
-              onPointerDown={() => {
-                peek(true);
-                // Released anywhere, even outside the slider.
-                window.addEventListener('pointerup', release, { once: true });
-              }}
-              onKeyDown={(event) => {
-                if (SLIDER_KEYS.has(event.key) && !peeking) peek(true);
-              }}
-              onKeyUp={(event) => {
-                if (SLIDER_KEYS.has(event.key)) release();
-              }}
-            />
-            {/* Not an <output>: its "status" role would announce every step; the slider's
-                aria-valuetext already says the value. */}
-            <span className="range-field__value" aria-hidden="true">
-              {t('background.blur.value', { pixels: blur })}
-            </span>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="button button--ghost"
-          aria-label={t('background.blur.applyToAll')}
-          onClick={() => onApplyToAll({ key: 'backgroundBlur', value: settings.backgroundBlur })}
-        >
-          {t('settings.applyToAll')}
-        </button>
-      </div>
+      <PeekSlider
+        label={t('background.blur.label')}
+        value={blur}
+        max={BACKGROUND_BLUR_MAX}
+        valueText={t('background.blur.value', { pixels: blur })}
+        applyToAllLabel={t('background.blur.applyToAll')}
+        onPreview={onBlurPreview}
+        onCommit={onBlurCommit}
+        onPeekChange={onPeekChange}
+        onApplyToAll={() => onApplyToAll({ key: 'backgroundBlur', value: settings.backgroundBlur })}
+      />
+      <PeekSlider
+        label={t(`background.dim.label.${dimTheme}`)}
+        value={dim}
+        max={BACKGROUND_DIM_MAX}
+        valueText={t('background.dim.value', { percent: dim })}
+        applyToAllLabel={t(`background.dim.applyToAll.${dimTheme}`)}
+        onPreview={onDimPreview}
+        onCommit={onDimCommit}
+        onPeekChange={onPeekChange}
+        onApplyToAll={() => onApplyToAll({ key: dimKey, value: settings[dimKey] })}
+      />
 
       <div className="setting-row">
         <div className="field">

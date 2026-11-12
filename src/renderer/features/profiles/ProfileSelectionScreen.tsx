@@ -1,11 +1,56 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ImportedBackground } from '../../../shared/backgrounds';
 import type { Profile, ProfileChange } from '../../../shared/ipc';
+import type { BackgroundChoice } from '../../../shared/settings';
 import { Dialog } from '../../components/Dialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
-import { CreateProfileForm } from './CreateProfileForm';
+import { backgroundPreview } from '../backgrounds/presets';
+import { CreateProfileForm, type ProfileBackgrounds } from './CreateProfileForm';
 import { DeleteProfileDialog } from './DeleteProfileDialog';
 import { RenameProfileDialog } from './RenameProfileDialog';
+
+/**
+ * Opens a profile. Its background fills the card, with the name over a dark gradient so it
+ * reads on any picture; a profile without one (or whose picture cannot load) has a plain card.
+ */
+function OpenProfileButton({
+  profile,
+  globalBackground,
+  gallery,
+  onOpen,
+}: {
+  profile: Profile;
+  /** Shown by the profiles without a background of their own. */
+  globalBackground: BackgroundChoice;
+  gallery: readonly ImportedBackground[];
+  onOpen: () => void;
+}) {
+  const { t } = useTranslation();
+  const [failed, setFailed] = useState<string | null>(null);
+  const found = backgroundPreview(profile.ownBackground ?? globalBackground, gallery);
+  const preview = found !== null && found.src !== failed ? found : null;
+
+  return (
+    <button
+      type="button"
+      className={`profile-card__open${preview ? ' profile-card__open--image' : ''}`}
+      aria-label={t('profiles.open', { name: profile.name })}
+      onClick={onOpen}
+    >
+      {preview && (
+        <img
+          className="profile-card__image"
+          src={preview.src}
+          srcSet={preview.srcSet}
+          alt=""
+          onError={() => setFailed(preview.src)}
+        />
+      )}
+      <span className="profile-card__name">{profile.name}</span>
+    </button>
+  );
+}
 
 type OpenDialog =
   | { kind: 'create' }
@@ -14,10 +59,11 @@ type OpenDialog =
   | null;
 
 interface ProfileSelectionScreenProps {
+  backgrounds: ProfileBackgrounds;
   onOpen: (profileId: string) => void;
 }
 
-export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) {
+export function ProfileSelectionScreen({ backgrounds, onOpen }: ProfileSelectionScreenProps) {
   const { t } = useTranslation();
   const [profiles, setProfiles] = useState<Profile[] | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -25,7 +71,12 @@ export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) 
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Reloads whenever listVersion changes; a response arriving after unmount is ignored.
+  // A deleted background sends the profiles that had it as their own back to none: when the
+  // gallery changes, their own backgrounds are read again. (The global one is known here.)
+  const galleryKey = backgrounds.gallery?.map((background) => background.id).join(',');
+
+  // Reloads whenever listVersion or the gallery change; a response arriving after unmount is
+  // ignored.
   useEffect(() => {
     let active = true;
     window.api.profiles
@@ -39,7 +90,7 @@ export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) 
     return () => {
       active = false;
     };
-  }, [listVersion]);
+  }, [listVersion, galleryKey]);
 
   const reload = () => setListVersion((version) => version + 1);
 
@@ -69,7 +120,7 @@ export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) 
       <section className="profiles">
         <h1>{t('profiles.firstProfile')}</h1>
         <div className="card">
-          <CreateProfileForm onCreated={handleSaved} />
+          <CreateProfileForm backgrounds={backgrounds} onCreated={handleSaved} />
         </div>
       </section>
     );
@@ -86,14 +137,12 @@ export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) 
       <ul className="profile-grid">
         {profiles.map((profile) => (
           <li key={profile.id} className="profile-card">
-            <button
-              type="button"
-              className="profile-card__open"
-              aria-label={t('profiles.open', { name: profile.name })}
-              onClick={() => onOpen(profile.id)}
-            >
-              <span className="profile-card__name">{profile.name}</span>
-            </button>
+            <OpenProfileButton
+              profile={profile}
+              globalBackground={backgrounds.globalBackground}
+              gallery={backgrounds.gallery ?? []}
+              onOpen={() => onOpen(profile.id)}
+            />
             <div className="profile-card__actions">
               <button
                 type="button"
@@ -126,8 +175,18 @@ export function ProfileSelectionScreen({ onOpen }: ProfileSelectionScreenProps) 
       </ul>
 
       {dialog?.kind === 'create' && (
-        <Dialog open title={t('profiles.new')} onClose={() => setDialog(null)}>
-          <CreateProfileForm onCreated={handleSaved} onCancel={() => setDialog(null)} />
+        // The background picker needs more room than the other profile dialogs.
+        <Dialog
+          open
+          title={t('profiles.new')}
+          className="dialog--wide"
+          onClose={() => setDialog(null)}
+        >
+          <CreateProfileForm
+            backgrounds={backgrounds}
+            onCreated={handleSaved}
+            onCancel={() => setDialog(null)}
+          />
         </Dialog>
       )}
       {dialog?.kind === 'rename' && (

@@ -12,7 +12,7 @@ import type { CollectionDetails, CollectionName, CollectionSummary } from './col
 import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemFilterValues, ItemSummary } from './items';
 import type { ItemMedia, PickedImports } from './media';
-import type { AppSettings } from './settings';
+import type { AppSettings, BackgroundChoice } from './settings';
 
 export const IpcChannels = {
   getAppInfo: 'app:get-info',
@@ -86,6 +86,8 @@ export interface Profile {
   name: string;
   createdAt: string;
   lastOpenedAt: string | null;
+  /** Its own background, shown on its card; null when it shows the global one. */
+  ownBackground: BackgroundChoice | null;
 }
 
 export interface ProfileChange {

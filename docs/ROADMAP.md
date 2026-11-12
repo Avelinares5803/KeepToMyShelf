@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-12, con la F10-C1 (atenuación) hecha.
+**Última actualización:** 2026-11-12, con la F10 terminada (F10-C2: el fondo de cada perfil).
 
 ---
 
@@ -31,21 +31,21 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 
 ## 2. Estado de las fases
 
-| Fase                    | Contenido                                                                                                                                        | Estado                                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| F0 Fundaciones          | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                                       |
-| F1 Núcleo               | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                                       |
-| F2 Perfiles             | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                                       |
-| F3 Estructura de la UI  | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                                       |
-| F4 Elementos            | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                                       |
-| F5 Catálogos            | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)                  |
-| F6 Multimedia           | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)              |
-| F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)              |
-| F8 Películas y series   | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                |
-| F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)               |
-| **F10 Personalización** | Fondos predeterminados e importados, desenfoque                                                                                                  | 🚧 **En curso** (F10-A, F10-B y F10-C1 hechas) |
-| F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | Pendiente (la copia antes de migrar ya existe) |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                      |
+| Fase                        | Contenido                                                                                                                                        | Estado                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| F0 Fundaciones              | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                                              |
+| F1 Núcleo                   | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                                              |
+| F2 Perfiles                 | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                                              |
+| F3 Estructura de la UI      | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                                              |
+| F4 Elementos                | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                                              |
+| F5 Catálogos                | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)                         |
+| F6 Multimedia               | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)                     |
+| F7 Búsqueda y filtros       | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)                     |
+| F8 Películas y series       | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                       |
+| F9 Colecciones              | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)                      |
+| F10 Personalización         | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2)                   |
+| **F11 Copias de seguridad** | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ⏭️ **Siguiente** (la copia antes de migrar ya existe) |
+| F12 Distribución v1.0       | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                             |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -71,11 +71,10 @@ Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama 
 - Se muestran solo por su nombre, sin avatar.
 - Eliminar un perfil pide confirmación con botones Sí/No, resaltando su nombre. El perfil abierto no se puede eliminar.
 - El idioma y el tema tienen un valor global que cada perfil puede sobrescribir. «Aplicar a todos los perfiles» está disponible.
-- El idioma se elige al crear el perfil.
+- El idioma y el fondo se eligen al crear el perfil (el fondo desde la F10).
 
 **Pendiente:**
 
-- Elegir también el fondo al crear un perfil (F10).
 - Copia de seguridad automática antes de eliminar un perfil (F11).
 
 ### 3.3 Elementos (implementado en la F4)
@@ -354,7 +353,10 @@ El detalle técnico está en el [ADR 0008](adr/0008-backgrounds.md).
     - **Un valor por tema** (`backgroundDimLight` y `backgroundDimDark`): el deslizador cambia el del tema que se ve, y su etiqueta lo dice («Atenuación (tema claro)»). Con «Según el sistema», el del tema que tenga el sistema.
     - **Por defecto, 40 % en claro y 62 % en oscuro.**
     - Para que se lea con cualquier fondo y atenuación: **la barra superior tiene su propio velo** (el color del tema al 85 %), y **con un fondo, los textos grises secundarios** (el número junto al título, los avisos…) **son más oscuros en el tema claro y algo más claros en el oscuro**.
-  - **F10-C2: perfiles.** Elegir el fondo al crear un perfil (empieza en el fondo global y permite importar) y la tarjeta de cada perfil rellena con su fondo, con el nombre sobre un degradado oscuro.
+  - **F10-C2: perfiles.** ✅ Hecha. Acordado:
+    - **Al crear un perfil se elige su fondo,** con la misma cuadrícula que en Ajustes (sin borrar, pero con «Importar…»). Empieza marcado el fondo global, y lo elegido se guarda como fondo propio del perfil, igual que el idioma: si después cambia el global, ese perfil conserva el suyo.
+    - **La tarjeta de cada perfil se rellena con su fondo** (su miniatura, nunca el archivo completo), con el nombre en blanco sobre un degradado oscuro. Sin fondo, o si la imagen no carga, la tarjeta es la de siempre.
+    - Cada perfil lleva solo su fondo propio (`ownBackground`, o `null` si sigue al global), y la tarjeta resuelve «el propio o el global» en la interfaz. Así sigue al fondo global en cuanto cambia, sin volver a pedir la lista.
 
 ### 3.9 Copias de seguridad (F11)
 

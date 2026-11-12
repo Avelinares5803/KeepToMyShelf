@@ -6,7 +6,7 @@ import ember from '../../assets/backgrounds/ember.svg';
 import forest from '../../assets/backgrounds/forest.svg';
 import nebula from '../../assets/backgrounds/nebula.svg';
 import ocean from '../../assets/backgrounds/ocean.svg';
-import { backgroundImageSource } from '../../lib/media-url';
+import { backgroundImageSource, backgroundThumbnailSource } from '../../lib/media-url';
 
 /** The pictures of the backgrounds that come with the app, bundled with the UI by Vite. */
 export const PRESET_SOURCES: Readonly<Record<BackgroundPreset, string>> = {
@@ -17,6 +17,29 @@ export const PRESET_SOURCES: Readonly<Record<BackgroundPreset, string>> = {
   ember,
   nebula,
 };
+
+/**
+ * A small picture of a background, e.g. for a profile's card: the thumbnail of an imported
+ * one (never the full file), or the picture of one that comes with the app. Null for none,
+ * or for an imported one that is gone or whose file is missing.
+ */
+export function backgroundPreview(
+  choice: BackgroundChoice,
+  gallery: readonly ImportedBackground[],
+): { readonly src: string; readonly srcSet?: string } | null {
+  switch (choice.kind) {
+    case 'none':
+      return null;
+    case 'preset':
+      return { src: PRESET_SOURCES[choice.id] };
+    case 'imported': {
+      const background = gallery.find((candidate) => candidate.id === choice.id);
+      return background === undefined || background.isMissing
+        ? null
+        : backgroundThumbnailSource(background.sha256);
+    }
+  }
+}
 
 /**
  * The picture the background layer shows for a choice, or null for none. An imported

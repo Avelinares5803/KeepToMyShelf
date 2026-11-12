@@ -1,6 +1,6 @@
 # ADR 0008: Fondos de pantalla
 
-- **Estado:** aceptada; implementadas la F10-A (motor, sin cambios visibles) y la F10-B (el fondo en la app y en Ajustes)
+- **Estado:** aceptada; implementada toda la F10: la F10-A (motor, sin cambios visibles), la F10-B (el fondo en la app y en Ajustes), la F10-C1 (atenuación) y la F10-C2 (el fondo de cada perfil)
 - **Fecha:** 2026-11-10
 
 ## Contexto
@@ -55,6 +55,11 @@ Cuatro preferencias nuevas, con el sistema de siempre (perfil → global → pre
 - **Borrar un fondo** cambia a `{ kind: 'none' }`, en la misma transacción, la preferencia global y las de los perfiles que lo usaban. Así, esos perfiles vuelven a «Sin fondo», y no al fondo global, que podría ser otro.
 - **Leer** una referencia a un fondo que no existe (solo si alguien edita `app.db` a mano) da «Sin fondo», con un aviso en la consola.
 - `list()` indica cuántos perfiles muestran cada fondo, para avisar al borrarlo.
+
+### Perfiles (F10-C2)
+
+- `profiles.create` acepta un fondo, que se guarda como preferencia propia del perfil en la misma transacción que lo crea; un fondo importado que no existe la hace fallar sin dejar nada.
+- Cada `Profile` lleva su fondo propio (`ownBackground`), o `null` si sigue al global (`SettingsService.getOwnForProfile`). La tarjeta resuelve «el propio o el global» en la interfaz, con la miniatura del fondo. Se descartó devolver el fondo ya resuelto: al cambiar el global, la lista se volvía a pedir antes de que se guardara y las tarjetas quedaban con el valor anterior.
 
 ### Protocolo
 

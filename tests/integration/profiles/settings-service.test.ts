@@ -42,6 +42,14 @@ describe('SettingsService', () => {
     expect(fx.settings.getForProfile(beaId).language).toBe('en');
   });
 
+  it('tells apart the preferences a profile has of its own', () => {
+    fx.settings.setGlobal({ key: 'theme', value: 'dark' });
+    fx.settings.setForProfile(anaId, { key: 'language', value: 'en' });
+
+    expect(fx.settings.getOwnForProfile(anaId)).toEqual({ language: 'en' });
+    expect(fx.settings.getOwnForProfile(beaId)).toEqual({});
+  });
+
   it('overwrites a previous value', () => {
     fx.settings.setForProfile(anaId, { key: 'theme', value: 'light' });
     fx.settings.setForProfile(anaId, { key: 'theme', value: 'dark' });

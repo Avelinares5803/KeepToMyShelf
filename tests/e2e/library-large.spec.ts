@@ -119,14 +119,21 @@ test('keeps the same item in view when the window changes the number of columns'
 
   await scrollTo((await pageHeight()) / 2);
   await expect.poll(scrollY).toBeGreaterThan(1000);
-  // Rows above the view are drawn too: this is the first card really on screen.
-  const seen = await cards().evaluateAll((elements) => {
-    const shown = elements as unknown as {
-      textContent: string;
-      getBoundingClientRect(): { top: number };
-    }[];
-    return shown.find((card) => card.getBoundingClientRect().top >= 0)!.textContent;
-  });
+  // Rows above the view are drawn too: this is the first card really on screen, below the top
+  // of the scrolling area. The rows of the new place are drawn just after scrolling, so it is
+  // waited for: on a slow machine (the CI) they may not be there yet.
+  const firstSeen = () =>
+    cards().evaluateAll((elements) => {
+      type Box = { getBoundingClientRect(): { top: number } };
+      const area = (
+        globalThis as unknown as { document: { getElementById(id: string): Box } }
+      ).document.getElementById('app-scroll');
+      const areaTop = area.getBoundingClientRect().top;
+      const shown = elements as unknown as (Box & { textContent: string })[];
+      return shown.find((card) => card.getBoundingClientRect().top >= areaTop)?.textContent ?? null;
+    });
+  await expect.poll(firstSeen).not.toBeNull();
+  const seen = (await firstSeen())!;
   await expect(button(seen)).toBeInViewport();
 
   // Emulated: the real window has a minimum width at which the columns still do not change.

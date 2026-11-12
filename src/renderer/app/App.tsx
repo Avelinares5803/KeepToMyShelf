@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { ImageStorageChoice } from '../../core/media/import-rules';
 import type { SessionInfo } from '../../shared/ipc';
 import type { ItemSummary } from '../../shared/items';
-import type { AppSettings, SettingUpdate } from '../../shared/settings';
+import { BACKGROUND_DIM_KEYS, type AppSettings, type SettingUpdate } from '../../shared/settings';
 import { AppBackground } from '../features/backgrounds/AppBackground';
 import { backgroundSource } from '../features/backgrounds/presets';
 import { CatalogsScreen } from '../features/catalogs/CatalogsScreen';
@@ -35,7 +35,7 @@ import {
   type Screen,
 } from './navigation';
 import { SettingsDialog, type BackgroundSettingsOptions } from './SettingsDialog';
-import { applyTheme } from './theme';
+import { applyTheme, useShownTheme } from './theme';
 import { TopBar, type Breadcrumb } from './TopBar';
 
 interface AppProps {
@@ -54,6 +54,11 @@ export function App({ initialSettings }: AppProps) {
   // The common gallery of imported backgrounds, and the blur shown while its slider moves.
   const gallery = useLoad(() => window.api.backgrounds.list(), []);
   const [blurPreview, setBlurPreview] = useState<number | null>(null);
+  // Each theme has its own dimming: the one of the theme shown applies, and its slider changes it.
+  const shownTheme = useShownTheme(settings.theme);
+  const dimKey = BACKGROUND_DIM_KEYS[shownTheme];
+  const [dimPreview, setDimPreview] = useState<number | null>(null);
+  const shownDim = dimPreview ?? settings[dimKey];
 
   // The item editor registers a guard; leaving it with unsaved changes asks first.
   const editorGuard = useRef<EditorGuard | null>(null);
@@ -142,6 +147,14 @@ export function App({ initialSettings }: AppProps) {
         }
         // Only now, so the background never jumps back to the old blur while saving.
         setBlurPreview(null);
+      })(),
+    dimTheme: shownTheme,
+    dim: shownDim,
+    onDimPreview: setDimPreview,
+    onDimCommit: (dim) =>
+      void (async () => {
+        if (dim !== settings[dimKey]) await updateSetting({ key: dimKey, value: dim });
+        setDimPreview(null);
       })(),
     // The last background imported becomes the background; it shows once the gallery reloads.
     onImported: (added) => {
@@ -354,6 +367,7 @@ export function App({ initialSettings }: AppProps) {
       <AppBackground
         src={backgroundSource(settings.background, gallery.data ?? [])}
         blur={blurPreview ?? settings.backgroundBlur}
+        dim={shownDim}
       />
       <TopBar
         breadcrumbs={breadcrumbs}

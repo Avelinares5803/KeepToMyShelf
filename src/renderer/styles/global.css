@@ -60,6 +60,9 @@ h1 {
   gap: 1rem;
   padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--color-border);
+  /* Its own veil: its small, grey texts stay readable over any background and dimming.
+     Without a background it is the page's colour, so nothing changes. */
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
 }
 
 .top-bar__start,
@@ -333,7 +336,7 @@ h1 {
 
 .dialog--peeking .dialog__title,
 .dialog--peeking .form > :not(.settings-section),
-.dialog--peeking .settings-section > :not(.setting-row--blur) {
+.dialog--peeking .settings-section > :not(.setting-row--peeking) {
   opacity: 0;
 }
 
@@ -1854,6 +1857,12 @@ h1 {
 }
 
 /* Background: a fixed picture behind the whole UI (see AppBackground). */
+/* Secondary grey texts (counts, hints…) sit straight on the background: with one, they are
+   darker in the light theme and lighter in the dark one, so they keep their contrast. */
+.app-shell:has(> .app-background) {
+  --color-muted: light-dark(#46464b, #c2c2c7);
+}
+
 .app-background {
   position: fixed;
   inset: 0;
@@ -1873,11 +1882,12 @@ h1 {
   filter: blur(var(--background-blur));
 }
 
-/* The veil: the theme's colour over the picture, so text stays readable on any of them. */
+/* The veil: the theme's colour over the picture, so text stays readable on any of them. How
+   much is the theme's dimming preference (--background-dim, set by AppBackground). */
 .app-background__veil {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--color-bg) 62%, transparent);
+  background: color-mix(in srgb, var(--color-bg) var(--background-dim), transparent);
 }
 
 /* Background section of the settings dialog */
@@ -1899,7 +1909,7 @@ h1 {
 
 /* Its padding is always there, so the slider never moves under the pointer when it shows
    alone while held. */
-.setting-row--blur {
+.setting-row--slider {
   margin: 0 -0.75rem;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius);

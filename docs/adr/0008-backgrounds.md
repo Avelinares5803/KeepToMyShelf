@@ -45,6 +45,8 @@ Cuatro preferencias nuevas, con el sistema de siempre (perfil → global → pre
 | ------------------------ | ------------------------------------------------------------------------------------- | ------------------ |
 | `background`             | `{ kind: 'none' }`, `{ kind: 'preset', id }` (6 diseños) o `{ kind: 'imported', id }` | `{ kind: 'none' }` |
 | `backgroundBlur`         | entero de 0 a 40 (píxeles CSS)                                                        | 8                  |
+| `backgroundDimLight`     | entero de 0 a 90 (% del velo en el tema claro; F10-C1)                                | 40                 |
+| `backgroundDimDark`      | entero de 0 a 90 (% del velo en el tema oscuro; F10-C1)                               | 62                 |
 | `backgroundImportChoice` | igual que `imageImportChoice`, pero aparte                                            | `ask`              |
 | `backgroundMaxSide`      | 1920, 2560, 3840, 5120 o 7680 px                                                      | 3840               |
 
@@ -66,7 +68,9 @@ Cuatro preferencias nuevas, con el sistema de siempre (perfil → global → pre
 
 ### Interfaz (F10-B)
 
-- **Capa de fondo** (`AppBackground`): una `<img>` fija detrás de toda la interfaz (`z-index: -1`), con `filter: blur()`. Es más grande que la ventana en el doble del desenfoque por cada lado, para que el borde desenfocado no se aclare. Encima va el **velo**: el color del tema al 62 % (`color-mix`), para que el texto se lea sobre cualquier imagen. Si la imagen no se puede cargar, no se muestra fondo.
+- **Capa de fondo** (`AppBackground`): una `<img>` fija detrás de toda la interfaz (`z-index: -1`), con `filter: blur()`. Es más grande que la ventana en el doble del desenfoque por cada lado, para que el borde desenfocado no se aclare. Encima va el **velo**: el color del tema (`color-mix`), para que el texto se lea sobre cualquier imagen. Si la imagen no se puede cargar, no se muestra fondo.
+- **Atenuación (F10-C1):** la opacidad del velo es una preferencia por tema, porque el mismo velo no sienta igual en claro que en oscuro. `useShownTheme` resuelve «Según el sistema» con `prefers-color-scheme` (que sigue al tema nativo que fija `applyTheme`) y se actualiza si el sistema cambia. El deslizador de la atenuación y el del desenfoque son el mismo componente, `PeekSlider`.
+- **Legibilidad con un fondo:** la barra superior tiene su propio velo, y los textos grises secundarios que van directamente sobre el fondo usan un gris más contrastado (`.app-shell:has(> .app-background)` redefine `--color-muted`). Sin ellos, con poca atenuación en el tema claro, el número junto al título y las migas de pan no se leían sobre fondos oscuros.
 - **Predeterminados:** 6 SVG propios en `src/renderer/assets/backgrounds/`, nítidos (sin `feGaussianBlur`), para que el desenfoque dependa solo del deslizador. Vite los incluye en la interfaz (como `data:` si son pequeños), así que la CSP no cambia.
 - **Ajustes, sección «Fondo»:**
   - La cuadrícula usa botones de opción nativos, transparentes sobre cada miniatura: el teclado funciona sin código propio.

@@ -5,6 +5,8 @@ interface AppBackgroundProps {
   src: string | null;
   /** Blur, in CSS pixels. */
   blur: number;
+  /** How much of the theme's colour veils the picture, in percent. */
+  dim: number;
 }
 
 /**
@@ -14,7 +16,7 @@ interface AppBackgroundProps {
  * The window never scrolls (see lib/scroll-area), so the picture always covers all of it, and
  * the scrollbar of the area that scrolls is drawn over it.
  */
-export function AppBackground({ src, blur }: AppBackgroundProps) {
+export function AppBackground({ src, blur, dim }: AppBackgroundProps) {
   const [failed, setFailed] = useState<string | null>(null);
   if (src === null || src === failed) return null;
 
@@ -22,7 +24,7 @@ export function AppBackground({ src, blur }: AppBackgroundProps) {
     <div
       className="app-background"
       aria-hidden="true"
-      style={{ '--background-blur': `${blur}px` } as CSSProperties}
+      style={{ '--background-blur': `${blur}px`, '--background-dim': `${dim}%` } as CSSProperties}
     >
       <img className="app-background__image" src={src} alt="" onError={() => setFailed(src)} />
       <div className="app-background__veil" />

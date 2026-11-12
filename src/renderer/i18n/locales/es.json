@@ -459,6 +459,17 @@
       "value": "{{pixels}} px",
       "applyToAll": "Aplicar este desenfoque a todos los perfiles"
     },
+    "dim": {
+      "label": {
+        "light": "Atenuación (tema claro)",
+        "dark": "Atenuación (tema oscuro)"
+      },
+      "value": "{{percent}} %",
+      "applyToAll": {
+        "light": "Aplicar esta atenuación del tema claro a todos los perfiles",
+        "dark": "Aplicar esta atenuación del tema oscuro a todos los perfiles"
+      }
+    },
     "importChoice": {
       "label": "Al importar fondos",
       "applyToAll": "Aplicar esta opción de importación de fondos a todos los perfiles"

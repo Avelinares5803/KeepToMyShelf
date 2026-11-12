@@ -22,6 +22,7 @@
     "form": {
       "name": "Name",
       "language": "Language",
+      "background": "Background",
       "create": "Create profile"
     },
     "renameDialog": {

@@ -209,6 +209,68 @@ test('dimming: each theme has its own, changed with its slider like the blur', a
   await expect(background).toHaveAttribute('style', /--background-dim: 61%/);
 });
 
+test('each profile card shows its background; a new profile starts with the global one', async () => {
+  const card = (name: string) => button(`Abrir el perfil de ${name}`).locator('img');
+  // Ana and Bea were created with "Sin fondo" chosen: it is their own background.
+  await expect(card('Ana')).toHaveCount(0);
+
+  await openSettings();
+  await option('Océano').check();
+  await closeSettings();
+  await expect(card('Ana')).toHaveCount(0);
+
+  // Creating a profile starts with the global background...
+  const create = page.getByRole('dialog', { name: 'Nuevo perfil' });
+  const createProfileWith = async (name: string, background?: string) => {
+    await button('Nuevo perfil').click();
+    await expect(create.getByRole('radio', { name: 'Océano', exact: true })).toBeChecked();
+    if (background) await create.getByRole('radio', { name: background, exact: true }).check();
+    await create.getByLabel('Nombre').fill(name);
+    await create.getByRole('button', { name: 'Crear perfil' }).click();
+    await expect(button(`Abrir el perfil de ${name}`)).toBeVisible();
+  };
+  await createProfileWith('Carla');
+  await expect(card('Carla')).toHaveAttribute('src', /svg/);
+  // ...and another one can be chosen.
+  await createProfileWith('Dana', 'Bosque');
+  await expect(card('Dana')).toHaveAttribute('src', /svg/);
+  expect(await card('Dana').getAttribute('src')).not.toBe(await card('Carla').getAttribute('src'));
+
+  // What was chosen is the profile's own: changing the global one changes neither.
+  await openSettings();
+  await option('Sin fondo').check();
+  await closeSettings();
+  await expect(card('Carla')).toHaveCount(1);
+  await expect(card('Dana')).toHaveCount(1);
+  await openProfile('Dana');
+  await expect(layer()).toHaveCount(1);
+  await openSettings();
+  await expect(option('Bosque')).toBeChecked();
+});
+
+test('imports a background while creating a profile, which gets it', async () => {
+  await chooseFile(await photoFile('montaña.png'));
+  await button('Nuevo perfil').click();
+  const create = page.getByRole('dialog', { name: 'Nuevo perfil' });
+  await create.getByRole('button', { name: 'Importar…', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Añadir «montaña.png»' })
+    .getByRole('button', { name: 'Añadir', exact: true })
+    .click();
+
+  await expect(create.getByRole('radio', { name: 'Fondo importado 1', exact: true })).toBeChecked();
+  await create.getByLabel('Nombre').fill('Carla');
+  await create.getByRole('button', { name: 'Crear perfil' }).click();
+
+  // Its card shows the thumbnail, never the full picture.
+  await expect(button('Abrir el perfil de Carla').locator('img')).toHaveAttribute(
+    'src',
+    /^ktms-media:\/\/background\/[0-9a-f]{64}\/320$/,
+  );
+  // The others keep no background.
+  await expect(button('Abrir el perfil de Ana').locator('img')).toHaveCount(0);
+});
+
 test('imports a background to the shared gallery; deleting it sends its users to none', async () => {
   await openProfile('Ana');
   await openSettings();

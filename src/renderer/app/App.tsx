@@ -386,7 +386,19 @@ export function App({ initialSettings }: AppProps) {
         {session ? (
           renderScreen(currentScreen(navigation), session.token)
         ) : (
-          <ProfileSelectionScreen onOpen={(profileId) => void openProfile(profileId)} />
+          <ProfileSelectionScreen
+            // Outside a profile, the preferences in force are the global ones.
+            backgrounds={{
+              gallery: gallery.data,
+              globalBackground: settings.background,
+              importChoice: settings.backgroundImportChoice,
+              optimizedMaxSide: settings.backgroundMaxSide,
+              onRememberChoice: (choice) =>
+                void updateSetting({ key: 'backgroundImportChoice', value: choice }),
+              onGalleryChanged: gallery.reload,
+            }}
+            onOpen={(profileId) => void openProfile(profileId)}
+          />
         )}
       </main>
       {settingsOpen && (

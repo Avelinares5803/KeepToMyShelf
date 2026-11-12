@@ -38,6 +38,14 @@ export class SettingsService {
     return this.overlay(this.getGlobal(), rows);
   }
 
+  /** Only the preferences a profile has of its own, without the global ones. */
+  getOwnForProfile(profileId: string): Partial<AppSettings> {
+    const rows = this.appDb
+      .prepare('SELECT key, value FROM profile_setting WHERE profile_id = ?')
+      .all(profileId) as SettingRow[];
+    return this.overlay({} as AppSettings, rows);
+  }
+
   setGlobal(update: SettingUpdate): void {
     const { key, value } = this.parseUpdate(update);
     this.appDb

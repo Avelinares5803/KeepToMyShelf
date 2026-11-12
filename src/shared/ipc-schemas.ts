@@ -11,7 +11,12 @@ import { ITEM_SORT_FIELDS, SORT_DIRECTIONS } from '../core/filters/item-sort';
 import { ITEM_STATUSES } from '../core/items/item-draft';
 import { IMAGE_STORAGE_CHOICES } from '../core/media/import-rules';
 import { ITEM_KINDS } from './content';
-import { languageSchema, settingUpdateSchema, themeSchema } from './settings';
+import {
+  backgroundChoiceSchema,
+  languageSchema,
+  settingUpdateSchema,
+  themeSchema,
+} from './settings';
 
 const profileIdSchema = z.uuid();
 const sessionTokenSchema = z.uuid();
@@ -141,7 +146,11 @@ const membershipsSchema = z
 export const ipcInputSchemas = {
   getAppInfo: z.undefined(),
   listProfiles: z.undefined(),
-  createProfile: z.object({ name: profileNameSchema, language: languageSchema.optional() }),
+  createProfile: z.object({
+    name: profileNameSchema,
+    language: languageSchema.optional(),
+    background: backgroundChoiceSchema.optional(),
+  }),
   renameProfile: z.object({ profileId: profileIdSchema, name: profileNameSchema }),
   deleteProfile: z.object({ profileId: profileIdSchema }),
   openSession: z.object({ profileId: profileIdSchema }),

@@ -22,6 +22,7 @@
     "form": {
       "name": "Nombre",
       "language": "Idioma",
+      "background": "Fondo",
       "create": "Crear perfil"
     },
     "renameDialog": {

@@ -65,6 +65,40 @@ describe('ProfileService', () => {
       expect(fx.settings.getGlobal().language).toBe('es');
     });
 
+    it('stores the background chosen at creation; without one, the profile shows the global one', () => {
+      fx.settings.setGlobal({ key: 'background', value: { kind: 'preset', id: 'ocean' } });
+
+      const ana = fx.profiles.create({
+        name: 'Ana',
+        background: { kind: 'preset', id: 'forest' },
+      }).profile;
+      const bea = fx.profiles.create({ name: 'Bea' }).profile;
+
+      expect(ana.ownBackground).toEqual({ kind: 'preset', id: 'forest' });
+      expect(fx.settings.getForProfile(ana.id).background).toEqual({
+        kind: 'preset',
+        id: 'forest',
+      });
+      // Bea has no background of her own: she shows the global one, whatever it becomes.
+      expect(bea.ownBackground).toBeNull();
+      expect(fx.settings.getForProfile(bea.id).background).toEqual({ kind: 'preset', id: 'ocean' });
+      expect(fx.profiles.list().map((profile) => [profile.name, profile.ownBackground])).toEqual([
+        ['Ana', { kind: 'preset', id: 'forest' }],
+        ['Bea', null],
+      ]);
+    });
+
+    it('refuses an imported background that does not exist, without leaving anything behind', () => {
+      expectAppError(
+        () => fx.profiles.create({ name: 'Ana', background: { kind: 'imported', id: 42 } }),
+        NotFoundError,
+        'background.not_found',
+      );
+
+      expect(fx.profiles.list()).toEqual([]);
+      expect(readdirSync(fx.paths.profilesDir)).toEqual([]);
+    });
+
     it('rejects an invalid name without leaving anything behind', () => {
       expectAppError(
         () => fx.profiles.create({ name: '   ' }),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ImportedBackground } from '../../../shared/backgrounds';
 import { BACKGROUND_PRESETS } from '../../../shared/settings';
-import { backgroundSource, PRESET_SOURCES } from './presets';
+import { backgroundPreview, backgroundSource, PRESET_SOURCES } from './presets';
 
 const imported = (id: number, overrides: Partial<ImportedBackground> = {}): ImportedBackground => ({
   id,
@@ -15,6 +15,30 @@ const imported = (id: number, overrides: Partial<ImportedBackground> = {}): Impo
   isMissing: false,
   profileCount: 0,
   ...overrides,
+});
+
+describe('backgroundPreview', () => {
+  it('uses the thumbnail of an imported background, never its full file', () => {
+    const background = imported(2);
+    expect(backgroundPreview({ kind: 'imported', id: 2 }, [background])).toEqual({
+      src: `ktms-media://background/${background.sha256}/320`,
+      srcSet: `ktms-media://background/${background.sha256}/320 1x, ktms-media://background/${background.sha256}/640 2x`,
+    });
+  });
+
+  it('uses the picture of a background that comes with the app', () => {
+    expect(backgroundPreview({ kind: 'preset', id: 'ocean' }, [])).toEqual({
+      src: PRESET_SOURCES.ocean,
+    });
+  });
+
+  it('has nothing for no background, nor for an imported one that is gone or missing', () => {
+    expect(backgroundPreview({ kind: 'none' }, [])).toBeNull();
+    expect(backgroundPreview({ kind: 'imported', id: 3 }, [imported(1)])).toBeNull();
+    expect(
+      backgroundPreview({ kind: 'imported', id: 1 }, [imported(1, { isMissing: true })]),
+    ).toBeNull();
+  });
 });
 
 describe('backgroundSource', () => {

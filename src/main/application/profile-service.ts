@@ -7,7 +7,7 @@ import {
   resolveUniqueProfileName,
 } from '../../core/profiles/profile-name';
 import type { Profile, ProfileChange } from '../../shared/ipc';
-import type { Language } from '../../shared/settings';
+import type { BackgroundChoice, Language } from '../../shared/settings';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
 import { seedDefaultCatalogs } from '../infrastructure/db/default-catalogs';
 import { openLibraryDatabase } from '../infrastructure/db/library-database';
@@ -22,13 +22,6 @@ interface ProfileRow {
   last_opened_at: string | null;
 }
 
-const toProfile = (row: ProfileRow): Profile => ({
-  id: row.id,
-  name: row.name,
-  createdAt: row.created_at,
-  lastOpenedAt: row.last_opened_at,
-});
-
 export interface ProfileServiceDeps {
   readonly appDb: SqliteDatabase;
   readonly paths: DataPaths;
@@ -41,6 +34,8 @@ export interface ProfileServiceDeps {
 export interface CreateProfileInput {
   readonly name: string;
   readonly language?: Language;
+  /** Becomes the profile's own background; without it, it shows the global one. */
+  readonly background?: BackgroundChoice;
 }
 
 export class ProfileService {
@@ -52,7 +47,18 @@ export class ProfileService {
         'SELECT id, name, created_at, last_opened_at FROM profile ORDER BY name_key, created_at',
       )
       .all() as ProfileRow[];
-    return rows.map(toProfile);
+    return rows.map((row) => this.toProfile(row));
+  }
+
+  /** A profile with its own background, if it has one. */
+  private toProfile(row: ProfileRow): Profile {
+    return {
+      id: row.id,
+      name: row.name,
+      createdAt: row.created_at,
+      lastOpenedAt: row.last_opened_at,
+      ownBackground: this.deps.settings.getOwnForProfile(row.id).background ?? null,
+    };
   }
 
   get(profileId: string): Profile {
@@ -62,7 +68,7 @@ export class ProfileService {
     if (!row) {
       throw new NotFoundError('profile.not_found', `Profile ${profileId} does not exist`);
     }
-    return toProfile(row);
+    return this.toProfile(row);
   }
 
   /** Creates the profile's folder and library first; the profile is registered only if that works. */
@@ -77,6 +83,7 @@ export class ProfileService {
       name,
       createdAt: now().toISOString(),
       lastOpenedAt: null,
+      ownBackground: input.background ?? null,
     };
 
     const profileDir = paths.profileDir(profile.id);
@@ -94,6 +101,10 @@ export class ProfileService {
           .run(profile.id, profile.name, profileNameKey(profile.name), profile.createdAt);
         if (input.language !== undefined) {
           settings.setForProfile(profile.id, { key: 'language', value: input.language });
+        }
+        // An imported background that no longer exists fails here, and nothing is created.
+        if (input.background !== undefined) {
+          settings.setForProfile(profile.id, { key: 'background', value: input.background });
         }
       })();
     } catch (error) {

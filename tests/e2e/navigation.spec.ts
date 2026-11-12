@@ -14,12 +14,15 @@ async function createProfile(page: Page, name: string): Promise<void> {
   if (await firstProfileHeading.isVisible()) {
     await page.getByLabel('Nombre').fill(name);
     await page.getByRole('button', { name: 'Crear perfil' }).click();
-    return;
+  } else {
+    await page.getByRole('button', { name: 'Nuevo perfil' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Nombre').fill(name);
+    await dialog.getByRole('button', { name: 'Crear perfil' }).click();
   }
-  await page.getByRole('button', { name: 'Nuevo perfil' }).click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Nombre').fill(name);
-  await dialog.getByRole('button', { name: 'Crear perfil' }).click();
+  // Until its card shows, the screen may still be the first profile's form: the next call
+  // would use that form, whose button stays disabled while the profile is being created.
+  await expect(page.getByRole('button', { name: `Abrir el perfil de ${name}` })).toBeVisible();
 }
 
 test.describe('app shell', () => {

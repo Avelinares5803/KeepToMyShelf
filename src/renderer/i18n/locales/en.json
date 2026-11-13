@@ -32,7 +32,10 @@
       "title": "Delete profile",
       "question": "Are you sure you want to delete this profile?",
       "warning": "Its library, ratings and collections will be deleted forever. This cannot be undone.",
-      "confirm": "Delete profile"
+      "backupNotice": "A backup will be saved first in the automatic backups folder.",
+      "confirm": "Delete profile",
+      "deletingTitle": "Deleting the profile",
+      "savingBackup": "Saving a backup before deleting it…"
     }
   },
   "nav": {
@@ -430,6 +433,20 @@
       "value": "{{megabytes}} MB"
     }
   },
+  "backups": {
+    "title": "Backups",
+    "hint": "Saves this profile's library in a .zip file, with its images, documents and settings.",
+    "create": "Create backup…",
+    "fileType": "Backups",
+    "creatingTitle": "Creating the backup",
+    "creating": "Saving the library, its images and documents…",
+    "percent": "{{percent}}%",
+    "saved": "Backup saved: “{{fileName}}”.",
+    "missing_one": "1 file of the library was not found, so it was not included.",
+    "missing_other": "{{count}} files of the library were not found, so they were not included.",
+    "automaticHint": "An automatic backup is saved before a profile is deleted. The 10 most recent are kept.",
+    "openFolder": "Open the automatic backups folder"
+  },
   "background": {
     "title": "Background",
     "label": "App background",
@@ -637,7 +654,13 @@
       "name_too_long": "The name cannot be longer than 40 characters.",
       "name_invalid_characters": "The name contains invalid characters.",
       "not_found": "That profile no longer exists.",
-      "in_use": "The open profile cannot be deleted."
+      "in_use": "The open profile cannot be deleted.",
+      "backup_failed": "The profile's backup could not be saved, so the profile was not deleted."
+    },
+    "backup": {
+      "busy": "A backup is already being saved. Please wait until it finishes.",
+      "write_failed": "The backup could not be saved. Check that there is free space and that the folder can be written to.",
+      "open_folder_failed": "The automatic backups folder could not be opened."
     },
     "session": {
       "stale": "Your session has expired. Please choose your profile again."

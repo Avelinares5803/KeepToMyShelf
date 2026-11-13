@@ -1,7 +1,10 @@
-import { app, ipcMain, nativeTheme } from 'electron';
-import { IpcChannels } from '../../shared/ipc';
+import { join } from 'node:path';
+import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
+import type { BackupProgress } from '../../shared/backups';
+import { IpcChannels, IpcEvents } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
 import type { BackgroundService } from '../application/background-service';
+import type { BackupService } from '../application/backup-service';
 import type { CatalogService } from '../application/catalog-service';
 import type { CollectionService } from '../application/collection-service';
 import type { ItemService } from '../application/item-service';
@@ -9,7 +12,7 @@ import type { MediaService } from '../application/media-service';
 import type { ProfileService } from '../application/profile-service';
 import type { SessionManager } from '../application/session-manager';
 import type { SettingsService } from '../application/settings-service';
-import { chooseDocumentFiles, chooseImageFiles } from '../file-dialogs';
+import { chooseBackupDestination, chooseDocumentFiles, chooseImageFiles } from '../file-dialogs';
 import { createAsyncHandler, createHandler } from './create-handler';
 
 export interface Services {
@@ -21,6 +24,7 @@ export interface Services {
   readonly media: MediaService;
   readonly collections: CollectionService;
   readonly backgrounds: BackgroundService;
+  readonly backups: BackupService;
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
@@ -33,7 +37,15 @@ export function registerIpcHandlers({
   media,
   collections,
   backgrounds,
+  backups,
 }: Services): void {
+  // The app has a single window; webContents is the page it shows, which receives the event.
+  const sendBackupProgress = (progress: BackupProgress) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(IpcEvents.backupProgress, progress);
+    }
+  };
+
   const handlers: Record<keyof typeof IpcChannels, (input: unknown) => unknown> = {
     getAppInfo: createHandler(ipcInputSchemas.getAppInfo, () => ({
       name: app.getName(),
@@ -44,8 +56,9 @@ export function registerIpcHandlers({
     renameProfile: createHandler(ipcInputSchemas.renameProfile, ({ profileId, name }) =>
       profiles.rename(profileId, name),
     ),
-    deleteProfile: createHandler(ipcInputSchemas.deleteProfile, ({ profileId }) =>
-      profiles.delete(profileId),
+    // Takes time: an automatic backup of the profile is written first.
+    deleteProfile: createAsyncHandler(ipcInputSchemas.deleteProfile, ({ profileId }) =>
+      profiles.delete(profileId, sendBackupProgress),
     ),
     openSession: createHandler(ipcInputSchemas.openSession, ({ profileId }) => {
       const { token } = sessions.open(profileId);
@@ -201,6 +214,23 @@ export function registerIpcHandlers({
     ),
     deleteBackground: createHandler(ipcInputSchemas.deleteBackground, ({ id }) =>
       backgrounds.delete(id),
+    ),
+    createBackup: createAsyncHandler(
+      ipcInputSchemas.createBackup,
+      async ({ token, filterName }) => {
+        // A stale session is reported before the dialog opens, not after the user chose.
+        const suggested = backups.suggestedFileName(token);
+        const destination = await chooseBackupDestination(
+          filterName,
+          join(app.getPath('documents'), suggested),
+        );
+        return destination === null
+          ? null
+          : backups.createForSession(token, destination, sendBackupProgress);
+      },
+    ),
+    openBackupsFolder: createAsyncHandler(ipcInputSchemas.openBackupsFolder, () =>
+      backups.openAutomaticFolder(),
     ),
   };
 

@@ -146,8 +146,36 @@ interface AttachmentRow extends FileRow {
  */
 export class MediaService implements MediaForItems, MediaForCollections {
   private readonly preparations = new Map<string, Preparation>();
+  /** Profiles whose sweeps are on hold (while a backup reads their files), and how many times. */
+  private readonly sweepHolds = new Map<string, number>();
+  /** Profiles that skipped a sweep while on hold: it runs when the hold ends. */
+  private readonly pendingSweeps = new Set<string>();
 
   constructor(private readonly deps: MediaServiceDeps) {}
+
+  /**
+   * Stops sweeping a profile's files until the returned function is called. A backup reads the
+   * files its snapshot lists while the user may keep editing: without this, removing an image
+   * would delete a file the backup still has to read. A sweep asked for meanwhile runs at the
+   * end, if the profile is still open.
+   */
+  holdSweeps(profileId: string): () => void {
+    this.sweepHolds.set(profileId, (this.sweepHolds.get(profileId) ?? 0) + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const holds = (this.sweepHolds.get(profileId) ?? 1) - 1;
+      if (holds > 0) {
+        this.sweepHolds.set(profileId, holds);
+        return;
+      }
+      this.sweepHolds.delete(profileId);
+      if (!this.pendingSweeps.delete(profileId)) return;
+      const session = this.deps.sessions.currentSession();
+      if (session?.profileId === profileId) this.sweepSession(session);
+    };
+  }
 
   /**
    * Prepares the files chosen in the file dialog one after another. Files that cannot be
@@ -813,6 +841,10 @@ export class MediaService implements MediaForItems, MediaForCollections {
    * file and thumbnail without a row.
    */
   private sweepSession(session: ProfileSession): void {
+    if (this.sweepHolds.has(session.profileId)) {
+      this.pendingSweeps.add(session.profileId);
+      return;
+    }
     const { db } = session;
     const rows = db.transaction(() => {
       // Removing an unused copy can leave its original unused: repeat until nothing changes.

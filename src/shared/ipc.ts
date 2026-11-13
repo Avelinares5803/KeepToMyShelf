@@ -7,6 +7,7 @@
  */
 import type { z } from 'zod';
 import type { ImportedBackground } from './backgrounds';
+import type { BackupProgress, BackupSaved } from './backups';
 import type { CatalogEntrySummary } from './catalogs';
 import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
 import type { IpcInputSchemas } from './ipc-schemas';
@@ -64,6 +65,17 @@ export const IpcChannels = {
   importBackground: 'backgrounds:import',
   discardBackgroundImports: 'backgrounds:discard-imports',
   deleteBackground: 'backgrounds:delete',
+  createBackup: 'backups:create',
+  openBackupsFolder: 'backups:open-folder',
+} as const;
+
+/**
+ * Messages the main process sends on its own, with no request from the UI (the opposite way
+ * of the channels above). The UI listens to them through the preload.
+ */
+export const IpcEvents = {
+  /** How far the backup being written has got: a manual one, or the one before deleting. */
+  backupProgress: 'backups:progress',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -202,5 +214,19 @@ export interface KeepToMyShelfApi {
     discardImports(input: IpcInput<'discardBackgroundImports'>): Promise<IpcResult<void>>;
     /** Deletes it; every preference that used it goes back to no background. */
     delete(input: IpcInput<'deleteBackground'>): Promise<IpcResult<void>>;
+  };
+  backups: {
+    /**
+     * Asks where to save a backup of the open profile and writes it; null if the dialog was
+     * cancelled. Progress arrives through `onProgress` meanwhile.
+     */
+    create(input: IpcInput<'createBackup'>): Promise<IpcResult<BackupSaved | null>>;
+    /** Opens the folder of automatic backups in the file explorer. */
+    openFolder(): Promise<IpcResult<void>>;
+    /**
+     * Calls `listener` while a backup is written (also the one made before deleting a
+     * profile). Returns the function that stops listening.
+     */
+    onProgress(listener: (progress: BackupProgress) => void): () => void;
   };
 }

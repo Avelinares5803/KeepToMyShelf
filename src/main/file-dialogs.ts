@@ -18,6 +18,27 @@ export function chooseDocumentFiles(filterName: string): Promise<string[] | null
   return chooseFiles(filterName, DOCUMENT_EXTENSIONS, true);
 }
 
+/**
+ * Opens the system "Save as" dialog for a backup, suggesting `defaultPath`. Resolves to the
+ * chosen path, or null if the user cancelled. Windows adds ".zip" from the filter when the user
+ * leaves it out, and asks before replacing an existing file.
+ */
+export async function chooseBackupDestination(
+  filterName: string,
+  defaultPath: string,
+): Promise<string | null> {
+  const options: Electron.SaveDialogOptions = {
+    defaultPath,
+    filters: [{ name: filterName, extensions: ['zip'] }],
+    properties: ['showOverwriteConfirmation'],
+  };
+  const window = BrowserWindow.getFocusedWindow();
+  const result = window
+    ? await dialog.showSaveDialog(window, options)
+    : await dialog.showSaveDialog(options);
+  return result.canceled || !result.filePath ? null : result.filePath;
+}
+
 async function chooseFiles(
   filterName: string,
   extensions: string[],

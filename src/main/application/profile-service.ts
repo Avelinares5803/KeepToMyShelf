@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { ConflictError, NotFoundError } from '../../core/errors';
+import { AppError, ConflictError, NotFoundError } from '../../core/errors';
 import {
   normalizeProfileName,
   profileNameKey,
@@ -12,6 +12,7 @@ import type { SqliteDatabase } from '../infrastructure/db/connection';
 import { seedDefaultCatalogs } from '../infrastructure/db/default-catalogs';
 import { openLibraryDatabase } from '../infrastructure/db/library-database';
 import { DELETED_PROFILE_PREFIX, type DataPaths } from '../infrastructure/paths';
+import type { BackupProgressListener, BackupService } from './backup-service';
 import type { SessionManager } from './session-manager';
 import type { SettingsService } from './settings-service';
 
@@ -27,6 +28,8 @@ export interface ProfileServiceDeps {
   readonly paths: DataPaths;
   readonly sessions: SessionManager;
   readonly settings: SettingsService;
+  /** Saves an automatic backup of a profile before it is deleted. */
+  readonly backups: Pick<BackupService, 'createBeforeDelete'>;
   readonly now: () => Date;
   readonly newId: () => string;
 }
@@ -128,16 +131,25 @@ export class ProfileService {
   }
 
   /**
-   * Deletes a profile and all its data. The open profile cannot be deleted.
+   * Deletes a profile and all its data, after saving an automatic backup of it; if the backup
+   * fails, nothing is deleted. The open profile cannot be deleted.
    * The folder is first renamed to ".deleted-<id>": if it cannot be removed right away
    * (e.g. a file is briefly locked), it is removed on a later call or at the next start.
    */
-  delete(profileId: string): void {
-    const { appDb, paths, sessions } = this.deps;
-    this.get(profileId);
-    if (sessions.isOpen(profileId)) {
-      throw new ConflictError('profile.in_use', 'The open profile cannot be deleted');
+  async delete(profileId: string, onProgress: BackupProgressListener = () => {}): Promise<void> {
+    const { appDb, paths } = this.deps;
+    this.assertDeletable(profileId);
+    try {
+      await this.deps.backups.createBeforeDelete(profileId, onProgress);
+    } catch (error) {
+      throw new AppError(
+        'profile.backup_failed',
+        `Profile ${profileId} was not deleted: its backup failed`,
+        { cause: error },
+      );
     }
+    // While the backup was written, the profile may have been opened or deleted.
+    this.assertDeletable(profileId);
 
     const profileDir = paths.profileDir(profileId);
     if (existsSync(profileDir)) {
@@ -145,6 +157,13 @@ export class ProfileService {
     }
     appDb.prepare('DELETE FROM profile WHERE id = ?').run(profileId);
     this.removeDeletedProfileFolders();
+  }
+
+  private assertDeletable(profileId: string): void {
+    this.get(profileId);
+    if (this.deps.sessions.isOpen(profileId)) {
+      throw new ConflictError('profile.in_use', 'The open profile cannot be deleted');
+    }
   }
 
   /** Removes leftover folders of deleted profiles. Folders that are still locked are kept for later. */

@@ -1,4 +1,5 @@
 import { ValidationError } from '../errors';
+import { replaceForbiddenFileNameCharacters } from '../files/file-name';
 import { characterCount, cleanSingleLine } from '../text/clean-text';
 
 /** Longest name of a document, in characters. */
@@ -39,8 +40,7 @@ export function cleanDocumentLabel(raw: string): string {
   return label;
 }
 
-// Characters Windows does not allow in file names, and names it reserves for devices.
-const FORBIDDEN_IN_FILE_NAMES = /[<>:"/\\|?*\p{Cc}]/gu;
+// Names Windows reserves for devices.
 const RESERVED_FILE_NAMES = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
 const TRAILING_DOTS_AND_SPACES = /[. ]+$/;
 // Keeps the whole path well under the 260 characters some programs still expect.
@@ -51,7 +51,7 @@ const FILE_NAME_MAX_LENGTH = 120;
  * name: "Manual de Zelda" → "Manual de Zelda.pdf". Made safe for Windows.
  */
 export function fileNameForLabel(label: string): string {
-  let base = label.replace(FORBIDDEN_IN_FILE_NAMES, '_').trim();
+  let base = replaceForbiddenFileNameCharacters(label).trim();
   base = [...base].slice(0, FILE_NAME_MAX_LENGTH).join('').replace(TRAILING_DOTS_AND_SPACES, '');
   if (base === '') base = 'document';
   if (RESERVED_FILE_NAMES.test(base)) base = `_${base}`;

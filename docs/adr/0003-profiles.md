@@ -31,6 +31,7 @@ Cada perfil tiene su propia biblioteca, que nunca debe mezclarse con la de otro.
 
 - El perfil abierto no se puede eliminar (`profile.in_use`).
 - La carpeta se renombra a `.deleted-<uuid>`, se borra el registro y después la carpeta. Si un archivo está bloqueado, la carpeta se elimina en el siguiente arranque. Nunca queda un perfil a medio borrar.
+- Desde la F11-A, antes se guarda una copia de seguridad automática del perfil; si falla, no se elimina. Ver el [ADR 0009](0009-backups.md).
 
 ### Preferencias
 

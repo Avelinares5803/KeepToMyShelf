@@ -9,12 +9,14 @@ import { join } from 'node:path';
  *   profiles/<id>/cache/        thumbnails, which can always be regenerated
  *   profiles/.deleted-<id>/     folder of a deleted profile awaiting removal
  *   backgrounds/                imported backgrounds, shared by every profile
+ *   backups/                    automatic backups of profiles (and app.db's pre-migration copies)
  */
 export interface DataPaths {
   readonly root: string;
   readonly appDatabase: string;
   readonly profilesDir: string;
   readonly backgroundsDir: string;
+  readonly backupsDir: string;
   profileDir(profileId: string): string;
   libraryDatabase(profileId: string): string;
   mediaDir(profileId: string): string;
@@ -42,6 +44,7 @@ export function createDataPaths(root: string): DataPaths {
     appDatabase: join(root, 'app.db'),
     profilesDir,
     backgroundsDir: join(root, 'backgrounds'),
+    backupsDir: join(root, 'backups'),
     profileDir,
     libraryDatabase: (profileId) => join(profileDir(profileId), 'library.db'),
     mediaDir: (profileId) => join(profileDir(profileId), 'media'),

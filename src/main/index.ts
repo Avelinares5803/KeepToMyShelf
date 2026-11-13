@@ -9,6 +9,7 @@ import {
   type AppSettings,
 } from '../shared/settings';
 import { BackgroundService } from './application/background-service';
+import { BackupService } from './application/backup-service';
 import { CatalogService } from './application/catalog-service';
 import { CollectionService } from './application/collection-service';
 import { ItemService } from './application/item-service';
@@ -44,8 +45,6 @@ function startApp(): void {
     onOpen: (session) => media.onSessionOpened(session),
     onClose: (session) => media.onSessionClosing(session),
   });
-  const profiles = new ProfileService({ appDb, paths, sessions, settings, now, newId: randomUUID });
-
   const media = new MediaService({
     sessions,
     paths,
@@ -69,6 +68,28 @@ function startApp(): void {
   });
   // Copies left from the last run that a viewer kept open.
   media.clearOpenedDocuments();
+  const backups = new BackupService({
+    appDb,
+    paths,
+    sessions,
+    settings,
+    media,
+    appVersion: app.getVersion(),
+    now,
+    // Like a double click on the folder in the File Explorer.
+    openFolder: (path) => shell.openPath(path),
+  });
+  // Files left by a backup the last run could not finish.
+  backups.removeLeftovers();
+  const profiles = new ProfileService({
+    appDb,
+    paths,
+    sessions,
+    settings,
+    backups,
+    now,
+    newId: randomUUID,
+  });
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
   const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
@@ -92,6 +113,7 @@ function startApp(): void {
     media,
     collections,
     backgrounds,
+    backups,
   });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
   protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media, backgrounds));

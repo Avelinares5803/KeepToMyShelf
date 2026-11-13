@@ -32,7 +32,10 @@
       "title": "Eliminar perfil",
       "question": "¿Seguro que quieres eliminar este perfil?",
       "warning": "Se borrarán para siempre su biblioteca, sus valoraciones y sus colecciones. Esta acción no se puede deshacer.",
-      "confirm": "Eliminar perfil"
+      "backupNotice": "Antes se guardará una copia de seguridad en la carpeta de copias automáticas.",
+      "confirm": "Eliminar perfil",
+      "deletingTitle": "Eliminando el perfil",
+      "savingBackup": "Guardando una copia de seguridad antes de eliminarlo…"
     }
   },
   "nav": {
@@ -430,6 +433,20 @@
       "value": "{{megabytes}} MB"
     }
   },
+  "backups": {
+    "title": "Copias de seguridad",
+    "hint": "Guarda en un archivo .zip la biblioteca de este perfil, con sus imágenes, sus documentos y sus ajustes.",
+    "create": "Crear copia de seguridad…",
+    "fileType": "Copias de seguridad",
+    "creatingTitle": "Creando la copia de seguridad",
+    "creating": "Guardando la biblioteca, sus imágenes y sus documentos…",
+    "percent": "{{percent}} %",
+    "saved": "Copia guardada: «{{fileName}}».",
+    "missing_one": "No se ha encontrado 1 archivo de la biblioteca, así que no se ha incluido.",
+    "missing_other": "No se han encontrado {{count}} archivos de la biblioteca, así que no se han incluido.",
+    "automaticHint": "Antes de eliminar un perfil se guarda una copia automática. Se conservan las 10 más recientes.",
+    "openFolder": "Abrir la carpeta de copias automáticas"
+  },
   "background": {
     "title": "Fondo",
     "label": "Fondo de la aplicación",
@@ -637,7 +654,13 @@
       "name_too_long": "El nombre no puede tener más de 40 caracteres.",
       "name_invalid_characters": "El nombre contiene caracteres no válidos.",
       "not_found": "Ese perfil ya no existe.",
-      "in_use": "No se puede eliminar el perfil que está abierto."
+      "in_use": "No se puede eliminar el perfil que está abierto.",
+      "backup_failed": "No se ha podido guardar la copia de seguridad del perfil, así que no se ha eliminado."
+    },
+    "backup": {
+      "busy": "Ya se está guardando una copia de seguridad. Espera a que termine.",
+      "write_failed": "No se ha podido guardar la copia de seguridad. Comprueba que hay espacio libre y que se puede escribir en esa carpeta.",
+      "open_folder_failed": "No se ha podido abrir la carpeta de copias automáticas."
     },
     "session": {
       "stale": "La sesión ha caducado. Vuelve a elegir tu perfil."

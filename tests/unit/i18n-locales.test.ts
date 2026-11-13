@@ -28,7 +28,7 @@ function sourceFiles(dir: string): string[] {
  */
 function thrownErrorCodes(): string[] {
   const pattern =
-    /'((?:background|catalog|collection|date|filter|item|media|profile|session|settings|ipc)\.[a-z_]+)'/g;
+    /'((?:background|backup|catalog|collection|date|filter|item|media|profile|session|settings|ipc)\.[a-z_]+)'/g;
   const codes = new Set<string>();
   // Error codes originate outside the UI; renderer keys (t('settings.title')) look alike.
   const roots = ['core', 'main', 'shared'].map((dir) => join(__dirname, '../../src', dir));

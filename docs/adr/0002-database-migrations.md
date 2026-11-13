@@ -24,7 +24,7 @@ Cada perfil tiene su propia base de datos SQLite (`library.db`). El esquema evol
 
 - Antes de migrar una base que ya tiene datos (versión > 0), se crea una copia con `VACUUM INTO` en `backups/<nombre>-v<versión>-<fecha>.db`, junto a la base de datos.
 - Si la copia falla, no se migra.
-- La política de retención (cuántas copias conservar) se definirá en la fase de copias de seguridad.
+- **Retención** (desde la F11-A): se conservan las 5 copias más recientes de cada base de datos, ordenadas por la fecha de su nombre. Ver el [ADR 0009](0009-backups.md).
 
 ### Integridad
 

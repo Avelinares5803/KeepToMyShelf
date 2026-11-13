@@ -1,5 +1,6 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import { IpcChannels, type KeepToMyShelfApi } from '../shared/ipc';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import type { BackupProgress } from '../shared/backups';
+import { IpcChannels, IpcEvents, type KeepToMyShelfApi } from '../shared/ipc';
 
 // The only bridge between the UI and the main process: each method maps to one IPC channel.
 // The main process validates every input; this file only forwards calls.
@@ -77,6 +78,18 @@ const api: KeepToMyShelfApi = {
     import: invoke(IpcChannels.importBackground),
     discardImports: invoke(IpcChannels.discardBackgroundImports),
     delete: invoke(IpcChannels.deleteBackground),
+  },
+  backups: {
+    create: invoke(IpcChannels.createBackup),
+    openFolder: invoke(IpcChannels.openBackupsFolder),
+    // The UI gets a plain callback, never ipcRenderer itself; the function returned removes it.
+    onProgress: (listener) => {
+      const forward = (_event: IpcRendererEvent, progress: BackupProgress) => listener(progress);
+      ipcRenderer.on(IpcEvents.backupProgress, forward);
+      return () => {
+        ipcRenderer.removeListener(IpcEvents.backupProgress, forward);
+      };
+    },
   },
 };
 

@@ -20,6 +20,19 @@ function expectAppError(run: () => unknown, type: typeof AppError, code: string)
   expect.fail(`Expected ${type.name} with code "${code}"`);
 }
 
+async function expectAppErrorAsync(
+  running: Promise<unknown>,
+  type: typeof AppError,
+  code: string,
+): Promise<void> {
+  const error: unknown = await running.then(
+    () => expect.fail(`Expected ${type.name} with code "${code}"`),
+    (caught: unknown) => caught,
+  );
+  expect(error).toBeInstanceOf(type);
+  expect((error as AppError).code).toBe(code);
+}
+
 describe('ProfileService', () => {
   let fx: ProfileFixture;
 
@@ -155,45 +168,74 @@ describe('ProfileService', () => {
   });
 
   describe('delete', () => {
-    it('removes the profile, its folder and its preferences', () => {
+    const backupsSaved = () =>
+      existsSync(fx.paths.backupsDir)
+        ? readdirSync(fx.paths.backupsDir).filter((name) => name.endsWith('.zip'))
+        : [];
+
+    it('removes the profile, its folder and its preferences', async () => {
       const { profile } = fx.profiles.create({ name: 'Ana', language: 'en' });
 
-      fx.profiles.delete(profile.id);
+      await fx.profiles.delete(profile.id);
 
       expect(fx.profiles.list()).toEqual([]);
       expect(readdirSync(fx.paths.profilesDir)).toEqual([]);
       expect(fx.appDb.prepare('SELECT COUNT(*) AS n FROM profile_setting').get()).toEqual({ n: 0 });
     });
 
-    it('keeps other profiles untouched', () => {
+    it('saves an automatic backup of the profile first', async () => {
+      const { profile } = fx.profiles.create({ name: 'Ana' });
+      const progress: number[] = [];
+
+      await fx.profiles.delete(profile.id, ({ doneBytes }) => progress.push(doneBytes));
+
+      expect(backupsSaved()).toEqual([expect.stringMatching(/ - Ana - before-delete\.zip$/)]);
+      expect(progress.length).toBeGreaterThan(0);
+    });
+
+    it('keeps the profile if its backup cannot be saved', async () => {
+      const { profile } = fx.profiles.create({ name: 'Ana' });
+      // A file where the backups folder should be: nothing can be written there.
+      writeFileSync(fx.paths.backupsDir, 'not a folder');
+
+      await expectAppErrorAsync(fx.profiles.delete(profile.id), AppError, 'profile.backup_failed');
+
+      expect(fx.profiles.list()).toHaveLength(1);
+      expect(existsSync(fx.paths.libraryDatabase(profile.id))).toBe(true);
+    });
+
+    it('keeps other profiles untouched', async () => {
       const { profile: ana } = fx.profiles.create({ name: 'Ana' });
       const { profile: bea } = fx.profiles.create({ name: 'Bea' });
 
-      fx.profiles.delete(ana.id);
+      await fx.profiles.delete(ana.id);
 
       expect(fx.profiles.list()).toEqual([bea]);
       expect(existsSync(fx.paths.libraryDatabase(bea.id))).toBe(true);
     });
 
-    it('refuses to delete the open profile', () => {
+    it('refuses to delete the open profile, without saving a backup', async () => {
       const { profile } = fx.profiles.create({ name: 'Ana' });
       fx.sessions.open(profile.id);
 
-      expectAppError(() => fx.profiles.delete(profile.id), ConflictError, 'profile.in_use');
+      await expectAppErrorAsync(fx.profiles.delete(profile.id), ConflictError, 'profile.in_use');
       expect(fx.profiles.list()).toHaveLength(1);
+      expect(backupsSaved()).toEqual([]);
     });
 
-    it('fails for a profile that does not exist', () => {
-      expectAppError(() => fx.profiles.delete(MISSING_ID), NotFoundError, 'profile.not_found');
+    it('fails for a profile that does not exist', async () => {
+      await expectAppErrorAsync(fx.profiles.delete(MISSING_ID), NotFoundError, 'profile.not_found');
     });
 
-    it('works even if the profile folder was removed outside the app', () => {
+    it('works even if the profile folder was removed outside the app', async () => {
       const { profile } = fx.profiles.create({ name: 'Ana' });
       rmSync(fx.paths.profileDir(profile.id), { recursive: true });
 
-      fx.profiles.delete(profile.id);
+      await fx.profiles.delete(profile.id);
 
       expect(fx.profiles.list()).toEqual([]);
+      // There was nothing left to keep.
+      expect(backupsSaved()).toEqual([]);
     });
   });
 

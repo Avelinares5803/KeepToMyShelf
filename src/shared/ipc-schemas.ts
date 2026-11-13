@@ -271,6 +271,9 @@ export const ipcInputSchemas = {
     preparedIds: z.array(preparedIdSchema).max(1_000).readonly(),
   }),
   deleteBackground: z.object({ id: z.number().int().positive() }),
+  // The dialog's file-type filter is named in the UI language, which only the UI knows.
+  createBackup: z.object({ token: sessionTokenSchema, filterName: z.string().min(1).max(100) }),
+  openBackupsFolder: z.undefined(),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

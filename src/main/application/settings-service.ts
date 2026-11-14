@@ -68,6 +68,11 @@ export class SettingsService {
       .run(profileId, key, JSON.stringify(value));
   }
 
+  /** Removes every preference of a profile's own: it follows the global ones again. */
+  clearForProfile(profileId: string): void {
+    this.appDb.prepare('DELETE FROM profile_setting WHERE profile_id = ?').run(profileId);
+  }
+
   /** Sets the global value and removes every profile's own value for that preference. */
   applyToAllProfiles(update: SettingUpdate): void {
     this.appDb.transaction(() => {

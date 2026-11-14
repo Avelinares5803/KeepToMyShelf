@@ -37,7 +37,11 @@ describe('automaticBackupFileName', () => {
     expect(isAutomaticBackupFileName(automaticBackupFileName('Ana', 'before-delete', date))).toBe(
       true,
     );
+    expect(isAutomaticBackupFileName(automaticBackupFileName('Ana', 'before-restore', date))).toBe(
+      true,
+    );
     expect(isAutomaticBackupFileName(manualBackupFileName('Ana', date))).toBe(false);
+    expect(isAutomaticBackupFileName('2026-11-13 08-05-09 - Ana - before-other.zip')).toBe(false);
     expect(isAutomaticBackupFileName('app-v1-2026-10-21T15-02-18-123Z.db')).toBe(false);
     expect(
       isAutomaticBackupFileName('2026-11-13 08-05-09 - Ana - before-delete.zip.x.partial'),
@@ -53,6 +57,16 @@ describe('automaticBackupsToRemove', () => {
     const names = ['mía.zip', at(3), at(1), at(2, 2), at(2)];
 
     expect(automaticBackupsToRemove(names, 2).sort()).toEqual([at(1), at(2)].sort());
+  });
+
+  it('counts the backups made before restoring together with the others', () => {
+    const beforeRestore = automaticBackupFileName(
+      'Ana',
+      'before-restore',
+      new Date(2026, 10, 4, 10, 0, 0),
+    );
+
+    expect(automaticBackupsToRemove([at(1), beforeRestore, at(3)], 2)).toEqual([at(1)]);
   });
 
   it('removes nothing while there are no more than it keeps', () => {

@@ -7,7 +7,7 @@
  */
 import type { z } from 'zod';
 import type { ImportedBackground } from './backgrounds';
-import type { BackupProgress, BackupSaved } from './backups';
+import type { BackupProgress, BackupSaved, RestorePreview } from './backups';
 import type { CatalogEntrySummary } from './catalogs';
 import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
 import type { IpcInputSchemas } from './ipc-schemas';
@@ -67,6 +67,9 @@ export const IpcChannels = {
   deleteBackground: 'backgrounds:delete',
   createBackup: 'backups:create',
   openBackupsFolder: 'backups:open-folder',
+  restoreBackupAsNewProfile: 'backups:restore-as-new',
+  previewBackupRestore: 'backups:preview-restore',
+  restoreBackupOverProfile: 'backups:restore-over',
 } as const;
 
 /**
@@ -74,7 +77,7 @@ export const IpcChannels = {
  * of the channels above). The UI listens to them through the preload.
  */
 export const IpcEvents = {
-  /** How far the backup being written has got: a manual one, or the one before deleting. */
+  /** How far the backup or restore that is running has got (see `BackupProgress.stage`). */
   backupProgress: 'backups:progress',
 } as const;
 
@@ -224,8 +227,27 @@ export interface KeepToMyShelfApi {
     /** Opens the folder of automatic backups in the file explorer. */
     openFolder(): Promise<IpcResult<void>>;
     /**
+     * Asks for a backup and restores it as a new profile; null if the dialog was cancelled.
+     * No profile needs to be open. Progress arrives through `onProgress` meanwhile.
+     */
+    restoreAsNew(
+      input: IpcInput<'restoreBackupAsNewProfile'>,
+    ): Promise<IpcResult<ProfileChange | null>>;
+    /**
+     * Asks for a backup to restore over the open profile and tells what it holds, so the user
+     * can confirm; null if the dialog was cancelled. Nothing is restored yet.
+     */
+    previewRestore(
+      input: IpcInput<'previewBackupRestore'>,
+    ): Promise<IpcResult<RestorePreview | null>>;
+    /**
+     * Restores the backup previewed over the open profile, after saving an automatic backup of
+     * its current state. The profile is opened again with a new token; the old one is stale.
+     */
+    restoreOver(input: IpcInput<'restoreBackupOverProfile'>): Promise<IpcResult<SessionInfo>>;
+    /**
      * Calls `listener` while a backup is written (also the one made before deleting a
-     * profile). Returns the function that stops listening.
+     * profile) or a backup is restored. Returns the function that stops listening.
      */
     onProgress(listener: (progress: BackupProgress) => void): () => void;
   };

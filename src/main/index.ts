@@ -9,12 +9,14 @@ import {
   type AppSettings,
 } from '../shared/settings';
 import { BackgroundService } from './application/background-service';
+import { BackupLock } from './application/backup-lock';
 import { BackupService } from './application/backup-service';
 import { CatalogService } from './application/catalog-service';
 import { CollectionService } from './application/collection-service';
 import { ItemService } from './application/item-service';
 import { MediaService } from './application/media-service';
 import { ProfileService } from './application/profile-service';
+import { RestoreService } from './application/restore-service';
 import { SessionManager } from './application/session-manager';
 import { SettingsService } from './application/settings-service';
 import { openAppDatabase } from './infrastructure/db/app-database';
@@ -68,11 +70,14 @@ function startApp(): void {
   });
   // Copies left from the last run that a viewer kept open.
   media.clearOpenedDocuments();
+  // Backups and restores share it: only one of them runs at a time.
+  const backupLock = new BackupLock();
   const backups = new BackupService({
     appDb,
     paths,
     sessions,
     settings,
+    lock: backupLock,
     media,
     appVersion: app.getVersion(),
     now,
@@ -90,6 +95,19 @@ function startApp(): void {
     now,
     newId: randomUUID,
   });
+  const restores = new RestoreService({
+    appDb,
+    paths,
+    sessions,
+    settings,
+    profiles,
+    backups,
+    lock: backupLock,
+    now,
+    newId: randomUUID,
+  });
+  // Backups a restore interrupted by the last run left half extracted.
+  restores.removeLeftovers();
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
   const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
@@ -114,6 +132,7 @@ function startApp(): void {
     collections,
     backgrounds,
     backups,
+    restores,
   });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
   protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media, backgrounds));

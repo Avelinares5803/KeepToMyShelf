@@ -1,7 +1,7 @@
 import { replaceForbiddenFileNameCharacters } from '../files/file-name';
 
 /** Why an automatic backup was made; it is part of its file name. */
-export type AutomaticBackupReason = 'before-delete';
+export type AutomaticBackupReason = 'before-delete' | 'before-restore';
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -37,7 +37,7 @@ export function automaticBackupFileName(
 }
 
 const AUTOMATIC_BACKUP =
-  /^(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}) - .+ - before-delete(?: \((\d+)\))?\.zip$/;
+  /^(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}) - .+ - before-(?:delete|restore)(?: \((\d+)\))?\.zip$/;
 
 /** Whether a file name is one of an automatic backup; nothing else is ever removed. */
 export function isAutomaticBackupFileName(fileName: string): boolean {

@@ -8,6 +8,7 @@ import { join } from 'node:path';
  *   profiles/<id>/media/        imported images and documents
  *   profiles/<id>/cache/        thumbnails, which can always be regenerated
  *   profiles/.deleted-<id>/     folder of a deleted profile awaiting removal
+ *   profiles/.restoring-<id>/   a backup being restored, before it becomes a profile's folder
  *   backgrounds/                imported backgrounds, shared by every profile
  *   backups/                    automatic backups of profiles (and app.db's pre-migration copies)
  */
@@ -22,9 +23,12 @@ export interface DataPaths {
   mediaDir(profileId: string): string;
   cacheDir(profileId: string): string;
   deletedProfileDir(profileId: string): string;
+  /** Where a backup is extracted and checked; `id` is a new UUID for each restore. */
+  restoringDir(id: string): string;
 }
 
 export const DELETED_PROFILE_PREFIX = '.deleted-';
+export const RESTORING_PROFILE_PREFIX = '.restoring-';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -51,5 +55,6 @@ export function createDataPaths(root: string): DataPaths {
     cacheDir: (profileId) => join(profileDir(profileId), 'cache'),
     deletedProfileDir: (profileId) =>
       join(profilesDir, `${DELETED_PROFILE_PREFIX}${assertProfileId(profileId)}`),
+    restoringDir: (id) => join(profilesDir, `${RESTORING_PROFILE_PREFIX}${assertProfileId(id)}`),
   };
 }

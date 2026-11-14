@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AppError } from '../../../src/core/errors';
 import { EMPTY_ITEM_DRAFT } from '../../../src/core/items/item-draft';
+import { BackupLock } from '../../../src/main/application/backup-lock';
 import {
   AUTOMATIC_BACKUPS_KEPT,
   BackupService,
@@ -124,6 +125,8 @@ describe('BackupService', () => {
         media: { files: 3, missing: 0 },
       });
       expect(manifest.media.bytes).toBeGreaterThan(0);
+      // Without an imported background of its own, there is no hash to name.
+      expect(manifest).not.toHaveProperty('importedBackground');
 
       // The snapshot is a complete library.
       const snapshotPath = join(fx.scratchDir, 'library.db');
@@ -137,6 +140,26 @@ describe('BackupService', () => {
       } finally {
         snapshot.close();
       }
+    });
+
+    it('names the imported background of the profile by its hash', async () => {
+      const picture = await pngImage(300, 200);
+      const { prepared } = await fx.backgrounds.prepareMany(null, [
+        writeFile(fx.scratchDir, 'fondo.png', picture),
+      ]);
+      const background = fx.backgrounds.commitImport(prepared[0]!.id, 'original');
+      fx.settings.setForProfile(profileId, {
+        key: 'background',
+        value: { kind: 'imported', id: background.id },
+      });
+      const destination = join(outDir, 'copia.zip');
+
+      await fx.backups.createForSession(token, destination, noProgress);
+
+      const manifest = JSON.parse(
+        (await readZip(destination)).get('manifest.json')!.bytes.toString('utf8'),
+      ) as BackupManifest;
+      expect(manifest.importedBackground).toEqual({ sha256: sha256(picture) });
     });
 
     it('leaves out a file deleted by hand and says so', async () => {
@@ -300,6 +323,7 @@ describe('BackupService', () => {
         paths: fx.paths,
         sessions: fx.sessions,
         settings: fx.settings,
+        lock: new BackupLock(),
         media: fx.media,
         appVersion: FIXTURE_APP_VERSION,
         now: () => new Date(),

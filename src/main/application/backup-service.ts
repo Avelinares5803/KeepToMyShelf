@@ -1,40 +1,49 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { mediaEntryName } from '../../core/backups/backup-entries';
 import {
   automaticBackupFileName,
   automaticBackupsToRemove,
   manualBackupFileName,
   type AutomaticBackupReason,
 } from '../../core/backups/backup-file-name';
-import { AppError, ConflictError, NotFoundError } from '../../core/errors';
+import { AppError, NotFoundError } from '../../core/errors';
 import {
   BACKUP_FORMAT,
   BACKUP_FORMAT_VERSION,
   type BackupManifest,
-  type BackupProgress,
   type BackupReason,
   type BackupSaved,
 } from '../../shared/backups';
+import type { AppSettings } from '../../shared/settings';
 import { readLibrarySnapshot } from '../infrastructure/backup/library-snapshot';
 import { writeZip, type ZipFileEntry } from '../infrastructure/backup/zip-writer';
 import { backupDatabase } from '../infrastructure/db/backup';
 import { openDatabase, type SqliteDatabase } from '../infrastructure/db/connection';
 import { MediaStore } from '../infrastructure/media/media-store';
 import type { DataPaths } from '../infrastructure/paths';
+import {
+  progressByPercent,
+  removeIfPossible,
+  type BackupLock,
+  type BackupProgressListener,
+} from './backup-lock';
 import type { SessionManager } from './session-manager';
 import type { SettingsService } from './settings-service';
 
+export type { BackupProgressListener } from './backup-lock';
+
 /** How many automatic backups are kept in the app's `backups` folder, for all profiles. */
 export const AUTOMATIC_BACKUPS_KEPT = 10;
-
-export type BackupProgressListener = (progress: BackupProgress) => void;
 
 export interface BackupServiceDeps {
   readonly appDb: SqliteDatabase;
   readonly paths: DataPaths;
   readonly sessions: SessionManager;
   readonly settings: Pick<SettingsService, 'getOwnForProfile'>;
+  /** Shared with restores: only one of them runs at a time. */
+  readonly lock: BackupLock;
   /** While a backup reads a profile's files, none of them may be swept away. */
   readonly media: { holdSweeps(profileId: string): () => void };
   readonly appVersion: string;
@@ -54,11 +63,9 @@ interface ProfileRow {
 /**
  * Backups of one profile in a .zip: a snapshot of its library, the stored files the snapshot
  * lists and a manifest with its own preferences. Thumbnails are left out, since they are made
- * again when needed. Only one backup is written at a time.
+ * again when needed. Only one backup (or restore) runs at a time.
  */
 export class BackupService {
-  private running = false;
-
   constructor(private readonly deps: BackupServiceDeps) {}
 
   /** The name offered when saving a backup of the open profile. */
@@ -74,7 +81,7 @@ export class BackupService {
     onProgress: BackupProgressListener,
   ): Promise<BackupSaved> {
     const session = this.deps.sessions.require(token);
-    const manifest = await this.exclusive(() =>
+    const manifest = await this.deps.lock.run(() =>
       this.write(session.profileId, session.db, destination, 'manual', onProgress),
     );
     return {
@@ -95,17 +102,31 @@ export class BackupService {
   ): Promise<string | null> {
     const libraryPath = this.deps.paths.libraryDatabase(profileId);
     if (!existsSync(libraryPath)) return null;
-    return this.exclusive(async () => {
+    return this.deps.lock.run(async () => {
       const db = openDatabase(libraryPath);
       try {
-        const destination = this.automaticDestination(profileId, 'before-delete');
-        await this.write(profileId, db, destination, 'before-delete', onProgress);
-        this.pruneAutomaticBackups();
-        return destination;
+        return await this.writeAutomatic(profileId, db, 'before-delete', onProgress);
       } finally {
         db.close();
       }
     });
+  }
+
+  /**
+   * Writes an automatic backup of a profile in the app's `backups` folder and keeps only the
+   * most recent ones. Resolves to its path. The caller must hold the lock (a restore does,
+   * for the backup of the state it replaces).
+   */
+  async writeAutomatic(
+    profileId: string,
+    db: SqliteDatabase,
+    reason: AutomaticBackupReason,
+    onProgress: BackupProgressListener,
+  ): Promise<string> {
+    const destination = this.automaticDestination(profileId, reason);
+    await this.write(profileId, db, destination, reason, onProgress);
+    this.pruneAutomaticBackups();
+    return destination;
   }
 
   /** Opens the folder of automatic backups in the file explorer. */
@@ -125,18 +146,6 @@ export class BackupService {
     if (!existsSync(backupsDir)) return;
     for (const fileName of readdirSync(backupsDir)) {
       if (fileName.endsWith('.partial')) removeIfPossible(join(backupsDir, fileName));
-    }
-  }
-
-  private async exclusive<T>(run: () => Promise<T>): Promise<T> {
-    if (this.running) {
-      throw new ConflictError('backup.busy', 'Another backup is being written');
-    }
-    this.running = true;
-    try {
-      return await run();
-    } finally {
-      this.running = false;
     }
   }
 
@@ -188,12 +197,14 @@ export class BackupService {
         mediaBytes += size;
         files.push({
           sourcePath,
-          name: `media/${file.store}/${file.sha256.slice(0, 2)}/${basename(sourcePath)}`,
+          name: mediaEntryName(file.store, file.sha256, file.format),
           size,
           compress: false,
         });
       }
 
+      const settings = this.deps.settings.getOwnForProfile(profileId);
+      const importedBackground = this.importedBackgroundOf(settings);
       const manifest: BackupManifest = {
         format: BACKUP_FORMAT,
         formatVersion: BACKUP_FORMAT_VERSION,
@@ -202,7 +213,8 @@ export class BackupService {
         reason,
         profile: { name: profile.name, createdAt: profile.created_at },
         librarySchemaVersion: snapshot.schemaVersion,
-        settings: this.deps.settings.getOwnForProfile(profileId),
+        settings,
+        ...(importedBackground && { importedBackground }),
         media: { files: files.length - 1, bytes: mediaBytes, missing },
       };
       const manifestBytes = Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
@@ -211,7 +223,7 @@ export class BackupService {
         partial,
         { buffers: [{ name: 'manifest.json', bytes: manifestBytes }], files },
         createdAt,
-        byPercent(onProgress),
+        progressByPercent(onProgress, 'backup'),
       );
       renameSync(partial, destination);
       return manifest;
@@ -231,6 +243,17 @@ export class BackupService {
       rmSync(workDir, { recursive: true, force: true });
       releaseSweeps();
     }
+  }
+
+  /** The hash of the imported background a profile's own preference names, if any. */
+  private importedBackgroundOf(settings: Partial<AppSettings>): { sha256: string } | null {
+    const background = settings.background;
+    if (background?.kind !== 'imported') return null;
+    const sha256 = this.deps.appDb
+      .prepare("SELECT sha256 FROM background_file WHERE id = ? AND store = 'files'")
+      .pluck()
+      .get(background.id) as string | undefined;
+    return sha256 === undefined ? null : { sha256 };
   }
 
   /** A free name in the `backups` folder; two backups in the same second get "(2)", "(3)"… */
@@ -261,33 +284,11 @@ export class BackupService {
   }
 }
 
-/** Passes on the progress only when the whole percentage changes, not for every chunk read. */
-function byPercent(
-  listener: BackupProgressListener,
-): (doneBytes: number, totalBytes: number) => void {
-  let lastPercent = -1;
-  return (doneBytes, totalBytes) => {
-    const percent = totalBytes === 0 ? 100 : Math.floor((doneBytes * 100) / totalBytes);
-    if (percent === lastPercent) return;
-    lastPercent = percent;
-    listener({ doneBytes, totalBytes });
-  };
-}
-
 function sizeIfExists(path: string): number | null {
   try {
     return statSync(path).size;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw error;
-  }
-}
-
-/** Housekeeping: a file Windows will not let go of is left for the next time. */
-function removeIfPossible(path: string): void {
-  try {
-    rmSync(path, { force: true });
-  } catch (error) {
-    console.warn(`Could not remove "${path}"; will retry later`, error);
   }
 }

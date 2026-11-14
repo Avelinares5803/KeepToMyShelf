@@ -658,9 +658,15 @@
       "backup_failed": "No se ha podido guardar la copia de seguridad del perfil, así que no se ha eliminado."
     },
     "backup": {
-      "busy": "Ya se está guardando una copia de seguridad. Espera a que termine.",
+      "busy": "Ya se está guardando o restaurando una copia de seguridad. Espera a que termine.",
       "write_failed": "No se ha podido guardar la copia de seguridad. Comprueba que hay espacio libre y que se puede escribir en esa carpeta.",
-      "open_folder_failed": "No se ha podido abrir la carpeta de copias automáticas."
+      "open_folder_failed": "No se ha podido abrir la carpeta de copias automáticas.",
+      "invalid_file": "Ese archivo no es una copia de seguridad de KeepToMyShelf, o se ha modificado. No se ha restaurado nada.",
+      "damaged": "La copia de seguridad está dañada: parte de su contenido no se puede leer correctamente. No se ha restaurado nada.",
+      "too_new": "Esa copia de seguridad se hizo con una versión más nueva de KeepToMyShelf. Actualiza la aplicación para restaurarla.",
+      "restore_failed": "No se ha podido restaurar la copia de seguridad. Comprueba que hay espacio libre. Tus datos no han cambiado.",
+      "restore_expired": "Vuelve a elegir la copia de seguridad que quieres restaurar.",
+      "safety_backup_failed": "No se ha podido guardar la copia del estado actual del perfil, así que no se ha restaurado nada."
     },
     "session": {
       "stale": "La sesión ha caducado. Vuelve a elegir tu perfil."

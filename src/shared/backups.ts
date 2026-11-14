@@ -13,7 +13,7 @@ export const BACKUP_FORMAT = 'keeptomyshelf-backup';
 export const BACKUP_FORMAT_VERSION = 1;
 
 /** Why a backup was made. Automatic backups go to the app's own `backups` folder. */
-export type BackupReason = 'manual' | 'before-delete';
+export type BackupReason = 'manual' | 'before-delete' | 'before-restore';
 
 export interface BackupManifest {
   readonly format: typeof BACKUP_FORMAT;
@@ -26,6 +26,11 @@ export interface BackupManifest {
   readonly librarySchemaVersion: number;
   /** The profile's own preferences, without the global ones. */
   readonly settings: Partial<AppSettings>;
+  /**
+   * The imported background the profile's own `background` names, by its SHA-256: in another
+   * installation, the same id may be another picture. Missing in backups made before the F11-B.
+   */
+  readonly importedBackground?: { readonly sha256: string };
   readonly media: {
     /** Stored files included. */
     readonly files: number;
@@ -35,10 +40,24 @@ export interface BackupManifest {
   };
 }
 
-/** How far a backup has got, in bytes read; sent to the UI while it is written. */
+/**
+ * How far a backup or a restore has got, in bytes; sent to the UI meanwhile. Restoring over
+ * the open profile goes through both stages: the backup is the one of its current state.
+ */
 export interface BackupProgress {
+  readonly stage: 'backup' | 'restore';
   readonly doneBytes: number;
   readonly totalBytes: number;
+}
+
+/** What a backup chosen to restore over the open profile holds, to confirm it first. */
+export interface RestorePreview {
+  /** Names the chosen file in the main process: the UI never handles paths. */
+  readonly restoreId: string;
+  readonly fileName: string;
+  readonly profileName: string;
+  readonly createdAt: string;
+  readonly files: number;
 }
 
 /** What the UI is told when a manual backup is saved. */

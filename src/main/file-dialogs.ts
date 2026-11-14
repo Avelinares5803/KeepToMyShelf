@@ -39,6 +39,12 @@ export async function chooseBackupDestination(
   return result.canceled || !result.filePath ? null : result.filePath;
 }
 
+/** Opens the system dialog to choose one backup (.zip) to restore; null if cancelled. */
+export async function chooseBackupToRestore(filterName: string): Promise<string | null> {
+  const paths = await chooseFiles(filterName, ['zip'], false);
+  return paths?.[0] ?? null;
+}
+
 async function chooseFiles(
   filterName: string,
   extensions: string[],

@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { BackgroundService } from '../../src/main/application/background-service';
+import { BackupLock } from '../../src/main/application/backup-lock';
 import { BackupService } from '../../src/main/application/backup-service';
+import { RestoreService } from '../../src/main/application/restore-service';
 import { CatalogService } from '../../src/main/application/catalog-service';
 import { CollectionService } from '../../src/main/application/collection-service';
 import { ItemService } from '../../src/main/application/item-service';
@@ -43,6 +45,7 @@ export interface ProfileFixture {
   readonly media: MediaService;
   readonly backgrounds: BackgroundService;
   readonly backups: BackupService;
+  readonly restores: RestoreService;
   /** Folders "opened in the file explorer", in order. */
   readonly openedFolders: string[];
   /** Temporary folder for test files outside the app's data folder (e.g. files to import). */
@@ -104,11 +107,13 @@ export function createProfileFixture(): ProfileFixture {
   });
   // The file explorer is replaced by a recorder too.
   const openedFolders: string[] = [];
+  const lock = new BackupLock();
   const backups = new BackupService({
     appDb,
     paths,
     sessions,
     settings,
+    lock,
     media,
     appVersion: FIXTURE_APP_VERSION,
     now,
@@ -126,6 +131,17 @@ export function createProfileFixture(): ProfileFixture {
     now,
     newId: randomUUID,
   });
+  const restores = new RestoreService({
+    appDb,
+    paths,
+    sessions,
+    settings,
+    profiles,
+    backups,
+    lock,
+    now,
+    newId: randomUUID,
+  });
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ sessions });
   const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
@@ -140,6 +156,7 @@ export function createProfileFixture(): ProfileFixture {
   return {
     backgrounds,
     backups,
+    restores,
     openedFolders,
     catalogs,
     collections,

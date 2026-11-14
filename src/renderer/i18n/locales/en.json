@@ -658,9 +658,15 @@
       "backup_failed": "The profile's backup could not be saved, so the profile was not deleted."
     },
     "backup": {
-      "busy": "A backup is already being saved. Please wait until it finishes.",
+      "busy": "A backup is already being saved or restored. Please wait until it finishes.",
       "write_failed": "The backup could not be saved. Check that there is free space and that the folder can be written to.",
-      "open_folder_failed": "The automatic backups folder could not be opened."
+      "open_folder_failed": "The automatic backups folder could not be opened.",
+      "invalid_file": "That file is not a KeepToMyShelf backup, or it has been modified. Nothing has been restored.",
+      "damaged": "The backup is damaged: some of its contents cannot be read correctly. Nothing has been restored.",
+      "too_new": "That backup was made with a newer version of KeepToMyShelf. Update the app to restore it.",
+      "restore_failed": "The backup could not be restored. Check that there is free space. Your data has not changed.",
+      "restore_expired": "Choose the backup to restore again.",
+      "safety_backup_failed": "The backup of the current state of the profile could not be saved, so nothing has been restored."
     },
     "session": {
       "stale": "Your session has expired. Please choose your profile again."

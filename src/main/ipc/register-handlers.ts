@@ -12,7 +12,13 @@ import type { MediaService } from '../application/media-service';
 import type { ProfileService } from '../application/profile-service';
 import type { SessionManager } from '../application/session-manager';
 import type { SettingsService } from '../application/settings-service';
-import { chooseBackupDestination, chooseDocumentFiles, chooseImageFiles } from '../file-dialogs';
+import type { RestoreService } from '../application/restore-service';
+import {
+  chooseBackupDestination,
+  chooseBackupToRestore,
+  chooseDocumentFiles,
+  chooseImageFiles,
+} from '../file-dialogs';
 import { createAsyncHandler, createHandler } from './create-handler';
 
 export interface Services {
@@ -25,6 +31,7 @@ export interface Services {
   readonly collections: CollectionService;
   readonly backgrounds: BackgroundService;
   readonly backups: BackupService;
+  readonly restores: RestoreService;
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
@@ -38,6 +45,7 @@ export function registerIpcHandlers({
   collections,
   backgrounds,
   backups,
+  restores,
 }: Services): void {
   // The app has a single window; webContents is the page it shows, which receives the event.
   const sendBackupProgress = (progress: BackupProgress) => {
@@ -231,6 +239,26 @@ export function registerIpcHandlers({
     ),
     openBackupsFolder: createAsyncHandler(ipcInputSchemas.openBackupsFolder, () =>
       backups.openAutomaticFolder(),
+    ),
+    restoreBackupAsNewProfile: createAsyncHandler(
+      ipcInputSchemas.restoreBackupAsNewProfile,
+      async ({ filterName }) => {
+        const path = await chooseBackupToRestore(filterName);
+        return path === null ? null : restores.restoreAsNew(path, sendBackupProgress);
+      },
+    ),
+    previewBackupRestore: createAsyncHandler(
+      ipcInputSchemas.previewBackupRestore,
+      async ({ token, filterName }) => {
+        // A stale session is reported before the dialog opens, not after the user chose.
+        sessions.require(token);
+        const path = await chooseBackupToRestore(filterName);
+        return path === null ? null : restores.preview(token, path);
+      },
+    ),
+    restoreBackupOverProfile: createAsyncHandler(
+      ipcInputSchemas.restoreBackupOverProfile,
+      ({ token, restoreId }) => restores.restoreOver(token, restoreId, sendBackupProgress),
     ),
   };
 

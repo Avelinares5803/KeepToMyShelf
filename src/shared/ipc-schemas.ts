@@ -274,6 +274,12 @@ export const ipcInputSchemas = {
   // The dialog's file-type filter is named in the UI language, which only the UI knows.
   createBackup: z.object({ token: sessionTokenSchema, filterName: z.string().min(1).max(100) }),
   openBackupsFolder: z.undefined(),
+  restoreBackupAsNewProfile: z.object({ filterName: z.string().min(1).max(100) }),
+  previewBackupRestore: z.object({
+    token: sessionTokenSchema,
+    filterName: z.string().min(1).max(100),
+  }),
+  restoreBackupOverProfile: z.object({ token: sessionTokenSchema, restoreId: z.uuid() }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

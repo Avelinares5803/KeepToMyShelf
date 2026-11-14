@@ -82,6 +82,9 @@ const api: KeepToMyShelfApi = {
   backups: {
     create: invoke(IpcChannels.createBackup),
     openFolder: invoke(IpcChannels.openBackupsFolder),
+    restoreAsNew: invoke(IpcChannels.restoreBackupAsNewProfile),
+    previewRestore: invoke(IpcChannels.previewBackupRestore),
+    restoreOver: invoke(IpcChannels.restoreBackupOverProfile),
     // The UI gets a plain callback, never ipcRenderer itself; the function returned removes it.
     onProgress: (listener) => {
       const forward = (_event: IpcRendererEvent, progress: BackupProgress) => listener(progress);

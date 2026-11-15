@@ -5,6 +5,7 @@ import type { SessionInfo } from '../../shared/ipc';
 import type { ItemSummary } from '../../shared/items';
 import { BACKGROUND_DIM_KEYS, type AppSettings, type SettingUpdate } from '../../shared/settings';
 import { AppBackground } from '../features/backgrounds/AppBackground';
+import type { BackupSettingsProps } from '../features/backups/BackupSettings';
 import { backgroundSource } from '../features/backgrounds/presets';
 import { CatalogsScreen } from '../features/catalogs/CatalogsScreen';
 import {
@@ -169,15 +170,31 @@ export function App({ initialSettings }: AppProps) {
     },
   };
 
+  /** Starts a profile's session on its first screen, with its own preferences. */
+  async function enterSession(opened: SessionInfo): Promise<void> {
+    await applySettings(unwrap(await window.api.settings.getForProfile({ token: opened.token })));
+    dispatch({ type: 'reset' });
+    setLibraryViews({});
+    setCollectionViews({});
+    setSession(opened);
+  }
+
   const openProfile = (profileId: string) =>
-    attempt(async () => {
-      const opened = unwrap(await window.api.session.open({ profileId }));
-      await applySettings(unwrap(await window.api.settings.getForProfile({ token: opened.token })));
-      dispatch({ type: 'reset' });
-      setLibraryViews({});
-      setCollectionViews({});
-      setSession(opened);
-    });
+    attempt(async () => enterSession(unwrap(await window.api.session.open({ profileId }))));
+
+  // Restoring a backup over the open profile replaces its library and preferences, so it starts
+  // again from its first screen with the new session. If it fails, its data has not changed, but
+  // its session may have been opened again with a token the UI does not know: it is opened again
+  // here, staying on the same screen.
+  const backups: BackupSettingsProps | null = session && {
+    token: session.token,
+    profileName: session.profile.name,
+    beforeRestore: leaveEditor,
+    onRestored: enterSession,
+    onSessionLost: async () => {
+      setSession(unwrap(await window.api.session.open({ profileId: session.profile.id })));
+    },
+  };
 
   const leaveProfile = () =>
     attempt(async () => {
@@ -406,6 +423,7 @@ export function App({ initialSettings }: AppProps) {
           settings={settings}
           profileName={session?.profile.name ?? null}
           background={background}
+          backups={backups}
           onChange={(update) => void updateSetting(update)}
           onClose={() => setSettingsOpen(false)}
         />

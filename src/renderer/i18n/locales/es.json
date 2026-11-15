@@ -444,8 +444,29 @@
     "saved": "Copia guardada: «{{fileName}}».",
     "missing_one": "No se ha encontrado 1 archivo de la biblioteca, así que no se ha incluido.",
     "missing_other": "No se han encontrado {{count}} archivos de la biblioteca, así que no se han incluido.",
-    "automaticHint": "Antes de eliminar un perfil se guarda una copia automática. Se conservan las 10 más recientes.",
-    "openFolder": "Abrir la carpeta de copias automáticas"
+    "automaticHint": "Antes de eliminar un perfil o de restaurar una copia sobre él se guarda una copia automática. Se conservan las 10 más recientes.",
+    "openFolder": "Abrir la carpeta de copias automáticas",
+    "restoringTitle": "Restaurando la copia de seguridad",
+    "restored": "Copia restaurada: «{{fileName}}».",
+    "restoreAsNew": {
+      "open": "Restaurar copia de seguridad…",
+      "restoring": "Comprobando la copia y recuperando la biblioteca, sus imágenes y sus documentos…",
+      "restored": "Perfil «{{name}}» restaurado.",
+      "renamed": "Ya existía un perfil con ese nombre, así que se ha restaurado como «{{name}}»."
+    },
+    "restoreOver": {
+      "open": "Restaurar copia sobre este perfil…",
+      "title": "Restaurar copia sobre este perfil",
+      "question": "¿Seguro que quieres restaurar esta copia sobre el perfil «{{name}}»?",
+      "file": "Archivo",
+      "profile": "Perfil de la copia",
+      "createdAt": "Fecha de la copia",
+      "files": "Imágenes y documentos",
+      "warning": "Se sustituirán la biblioteca, las imágenes, los documentos y los ajustes de este perfil, que conservará su nombre. Antes se guardará una copia del estado actual en la carpeta de copias automáticas.",
+      "confirm": "Restaurar copia",
+      "stepRestore": "Paso 1 de 2: comprobando la copia…",
+      "stepBackup": "Paso 2 de 2: guardando una copia del estado actual…"
+    }
   },
   "background": {
     "title": "Fondo",

@@ -444,8 +444,29 @@
     "saved": "Backup saved: “{{fileName}}”.",
     "missing_one": "1 file of the library was not found, so it was not included.",
     "missing_other": "{{count}} files of the library were not found, so they were not included.",
-    "automaticHint": "An automatic backup is saved before a profile is deleted. The 10 most recent are kept.",
-    "openFolder": "Open the automatic backups folder"
+    "automaticHint": "An automatic backup is saved before a profile is deleted or a backup is restored over it. The 10 most recent are kept.",
+    "openFolder": "Open the automatic backups folder",
+    "restoringTitle": "Restoring the backup",
+    "restored": "Backup restored: “{{fileName}}”.",
+    "restoreAsNew": {
+      "open": "Restore backup…",
+      "restoring": "Checking the backup and recovering the library, its images and documents…",
+      "restored": "Profile “{{name}}” restored.",
+      "renamed": "A profile with that name already existed, so it was restored as “{{name}}”."
+    },
+    "restoreOver": {
+      "open": "Restore backup over this profile…",
+      "title": "Restore backup over this profile",
+      "question": "Are you sure you want to restore this backup over the profile “{{name}}”?",
+      "file": "File",
+      "profile": "Backup's profile",
+      "createdAt": "Backup date",
+      "files": "Images and documents",
+      "warning": "This profile's library, images, documents and settings will be replaced; it will keep its name. A backup of its current state will be saved first in the automatic backups folder.",
+      "confirm": "Restore backup",
+      "stepRestore": "Step 1 of 2: checking the backup…",
+      "stepBackup": "Step 2 of 2: saving a backup of the current state…"
+    }
   },
   "background": {
     "title": "Background",

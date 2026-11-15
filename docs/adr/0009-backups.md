@@ -1,7 +1,7 @@
 # ADR 0009: Copias de seguridad de los perfiles
 
-- **Estado:** aceptada; implementadas la F11-A (crear copias, copia antes de eliminar un perfil y retención) y la F11-B1 (motor de restauración). La interfaz de la restauración llega en la F11-B2.
-- **Fecha:** 2026-11-13; restauración, 2026-11-14
+- **Estado:** aceptada; implementada en la F11-A (crear copias, copia antes de eliminar un perfil y retención), la F11-B1 (motor de restauración) y la F11-B2 (interfaz de la restauración).
+- **Fecha:** 2026-11-13; restauración, 2026-11-14 y 2026-11-15
 
 ## Contexto
 
@@ -90,6 +90,8 @@ Los errores del disco (espacio, permisos) se distinguen de los de la copia por s
 **Preferencias de la copia:** las desconocidas (de una versión más nueva) y los valores no válidos se ignoran, con un aviso en la consola. El fondo importado se busca por su hash; si no está en la galería, el perfil sigue el fondo global. En las copias anteriores a la F11-B1, sin hash, se conserva el id solo si existe.
 
 Al arrancar se borran las carpetas `.restoring-*` que dejara un cierre inesperado.
+
+**En la interfaz (F11-B2):** restaurar como perfil nuevo está en la pantalla de perfiles (también antes de tener ninguno), sin confirmación. Restaurar sobre el perfil abierto está en Ajustes: pide el resumen, confirma y, al terminar, `App.tsx` entra en la sesión nueva desde la pantalla de modos, con las preferencias de la copia. Si la respuesta es `backup.restore_failed`, la sesión pudo cerrarse y reabrirse con un token desconocido, así que la interfaz vuelve a abrir el perfil (`session.open`) sin cambiar de pantalla.
 
 - La ventana de progreso aparece con el primer evento, no mientras «Guardar como» está abierto. No se puede cerrar: Chromium solo deja que una página rechace Esc una vez sin un clic en medio, así que, si se cierra igualmente, se vuelve a abrir.
 

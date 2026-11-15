@@ -19,7 +19,7 @@ import {
   BackgroundSettings,
   type BackgroundSettingsProps,
 } from '../features/backgrounds/BackgroundSettings';
-import { BackupSettings } from '../features/backups/BackupSettings';
+import { BackupSettings, type BackupSettingsProps } from '../features/backups/BackupSettings';
 import { errorMessage, unwrap } from '../lib/ipc';
 
 /** What the "Background" section needs besides the preferences themselves. */
@@ -33,6 +33,8 @@ interface SettingsDialogProps {
   /** Name of the open profile, or null on the profile selection screen. */
   profileName: string | null;
   background: BackgroundSettingsOptions;
+  /** The "Backups" section, only with a profile open. */
+  backups: BackupSettingsProps | null;
   onChange: (update: SettingUpdate) => void;
   onClose: () => void;
 }
@@ -41,6 +43,7 @@ export function SettingsDialog({
   settings,
   profileName,
   background,
+  backups,
   onChange,
   onClose,
 }: SettingsDialogProps) {
@@ -243,7 +246,7 @@ export function SettingsDialog({
           onPeekChange={setPeeking}
         />
 
-        {background.token !== null && <BackupSettings token={background.token} />}
+        {backups !== null && <BackupSettings {...backups} />}
 
         {status && (
           <p className="banner" role="status">

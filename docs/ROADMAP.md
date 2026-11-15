@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-14, con la F11-B1 (motor de restauración).
+**Última actualización:** 2026-11-15, con la F11-B2 (interfaz de la restauración), que cierra la F11.
 
 ---
 
@@ -31,21 +31,21 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 
 ## 2. Estado de las fases
 
-| Fase                        | Contenido                                                                                                                                        | Estado                                                   |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| F0 Fundaciones              | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                                                 |
-| F1 Núcleo                   | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                                                 |
-| F2 Perfiles                 | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                                                 |
-| F3 Estructura de la UI      | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                                                 |
-| F4 Elementos                | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                                                 |
-| F5 Catálogos                | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)                            |
-| F6 Multimedia               | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)                        |
-| F7 Búsqueda y filtros       | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)                        |
-| F8 Películas y series       | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)                          |
-| F9 Colecciones              | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)                         |
-| F10 Personalización         | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2)                      |
-| **F11 Copias de seguridad** | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | 🚧 **En curso** (F11-A y F11-B1 hechas; falta la F11-B2) |
-| F12 Distribución v1.0       | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                                                |
+| Fase                    | Contenido                                                                                                                                        | Estado                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| F0 Fundaciones          | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                            |
+| F1 Núcleo               | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                            |
+| F2 Perfiles             | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                            |
+| F3 Estructura de la UI  | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                            |
+| F4 Elementos            | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                            |
+| F5 Catálogos            | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)       |
+| F6 Multimedia           | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)   |
+| F7 Búsqueda y filtros   | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)   |
+| F8 Películas y series   | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)     |
+| F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
+| F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
+| F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                           |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -391,7 +391,12 @@ El detalle técnico está en el [ADR 0009](adr/0009-backups.md).
     - **El fondo importado se busca por su hash:** el manifiesto guarda ahora el SHA-256 del fondo importado del perfil (`importedBackground`, opcional; sigue siendo `formatVersion` 1), porque en otra instalación el mismo id puede ser otra imagen. Si no está en la galería, el perfil sigue el fondo global. En las copias de la F11-A, que no lo tienen, se conserva el id solo si existe.
     - **Orden al restaurar sobre el perfil abierto:** primero se extrae y se valida la copia (un zip malo no deja una copia automática inútil), después se guarda la copia automática `before-restore` (cuenta para las 10), se cierra la sesión, se cambian las carpetas y se reabre con un token nuevo. La interfaz primero ve el resumen de la copia (`backups:preview-restore`) y luego confirma (`backups:restore-over`).
     - **yauzl no comprueba el CRC-32:** lo comprueba el lector de la app en cada entrada, además del SHA-256 de cada archivo de media.
-  - **F11-B2: interfaz y E2E.** «Restaurar copia de seguridad…» en la pantalla de perfiles (también en la del primer perfil) y «Restaurar copia sobre este perfil…» en Ajustes, con confirmación (foco en «Cancelar»), ventana de progreso con las dos etapas (`stage`: «restore» y «backup») y, al terminar, la sesión nueva en `App.tsx`. Si la restauración falla después de cerrar la sesión (`backup.restore_failed`), el perfil se reabre como estaba, pero con otro token: la interfaz debe volver a abrirlo.
+  - **F11-B2: interfaz y E2E.** ✅ Hecha. «Restaurar copia de seguridad…» en la pantalla de perfiles (también en la del primer perfil) y «Restaurar copia sobre este perfil…» en Ajustes, con confirmación (foco en «Cancelar»), ventana de progreso con las dos etapas (`stage`: «restore» y «backup») y, al terminar, la sesión nueva en `App.tsx`. Acordado (2026-11-15):
+    - **Restaurar como perfil nuevo no pide confirmación** (no sustituye nada) **ni abre el perfil**: la lista muestra «Perfil «Ana» restaurado.» o, si el nombre estaba ocupado, que se ha restaurado como «Ana (1)».
+    - **La confirmación de restaurar sobre el perfil** muestra el archivo, el perfil y la fecha de la copia y cuántas imágenes y documentos tiene, y avisa de que se sustituirá todo salvo el nombre y de que antes se guarda una copia del estado actual. La ventana de progreso dice «Paso 1 de 2: comprobando la copia…» y «Paso 2 de 2: guardando una copia del estado actual…».
+    - **Tras restaurar sobre el perfil, Ajustes sigue abierto** con «Copia restaurada: «archivo».», y detrás el perfil vuelve a la pantalla de modos con sus preferencias nuevas (idioma, tema, fondo…) y sin la búsqueda, los filtros ni la posición recordados.
+    - **Con cambios sin guardar en el editor**, el botón pregunta antes (Seguir editando, Descartar o Guardar), porque la restauración los perdería.
+    - **Si falla con `backup.restore_failed`**, la sesión puede haberse cerrado y reabierto con un token que la interfaz no conoce: la interfaz vuelve a abrir el perfil (abrir uno cierra antes la sesión actual, así que no importa si no se cerró) y se queda en la misma pantalla, porque los datos no han cambiado.
 
 ### 3.10 Distribución (F12)
 

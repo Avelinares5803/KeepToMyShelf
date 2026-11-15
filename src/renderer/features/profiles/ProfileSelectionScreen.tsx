@@ -6,6 +6,7 @@ import type { BackgroundChoice } from '../../../shared/settings';
 import { Dialog } from '../../components/Dialog';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { backgroundPreview } from '../backgrounds/presets';
+import { RestoreBackupButton } from '../backups/RestoreBackupButton';
 import { CreateProfileForm, type ProfileBackgrounds } from './CreateProfileForm';
 import { DeleteProfileDialog } from './DeleteProfileDialog';
 import { RenameProfileDialog } from './RenameProfileDialog';
@@ -70,6 +71,7 @@ export function ProfileSelectionScreen({ backgrounds, onOpen }: ProfileSelection
   const [listVersion, setListVersion] = useState(0);
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<unknown>(null);
 
   // A deleted background sends the profiles that had it as their own back to none: when the
   // gallery changes, their own backgrounds are read again. (The global one is known here.)
@@ -106,6 +108,32 @@ export function ProfileSelectionScreen({ backgrounds, onOpen }: ProfileSelection
     reload();
   }
 
+  // Restoring a backup as a new profile, available on both screens (also before any profile).
+  const restoreAction = (
+    <div className="profiles__actions">
+      <RestoreBackupButton
+        onStart={() => {
+          setNotice(null);
+          setActionError(null);
+        }}
+        onRestored={(change) => {
+          setNotice(
+            t(change.renamed ? 'backups.restoreAsNew.renamed' : 'backups.restoreAsNew.restored', {
+              name: change.profile.name,
+            }),
+          );
+          reload();
+        }}
+        onError={setActionError}
+      />
+    </div>
+  );
+  const actionErrorBanner = actionError !== null && (
+    <p className="banner banner--error" role="alert">
+      {errorMessage(t, actionError)}
+    </p>
+  );
+
   if (loadError) {
     return (
       <p className="banner banner--error" role="alert">
@@ -119,9 +147,11 @@ export function ProfileSelectionScreen({ backgrounds, onOpen }: ProfileSelection
     return (
       <section className="profiles">
         <h1>{t('profiles.firstProfile')}</h1>
+        {actionErrorBanner}
         <div className="card">
           <CreateProfileForm backgrounds={backgrounds} onCreated={handleSaved} />
         </div>
+        {restoreAction}
       </section>
     );
   }
@@ -134,6 +164,7 @@ export function ProfileSelectionScreen({ backgrounds, onOpen }: ProfileSelection
           {notice}
         </p>
       )}
+      {actionErrorBanner}
       <ul className="profile-grid">
         {profiles.map((profile) => (
           <li key={profile.id} className="profile-card">
@@ -173,6 +204,7 @@ export function ProfileSelectionScreen({ backgrounds, onOpen }: ProfileSelection
           </button>
         </li>
       </ul>
+      {restoreAction}
 
       {dialog?.kind === 'create' && (
         // The background picker needs more room than the other profile dialogs.

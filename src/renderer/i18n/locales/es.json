@@ -404,6 +404,10 @@
     "dark": "Oscuro",
     "toggle": "Tema: {{current}}. Pulsa para cambiarlo"
   },
+  "window": {
+    "enterFullScreen": "Pantalla completa",
+    "leaveFullScreen": "Salir de pantalla completa"
+  },
   "settings": {
     "open": "Ajustes",
     "title": "Ajustes",

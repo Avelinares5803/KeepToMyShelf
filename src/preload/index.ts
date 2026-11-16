@@ -32,6 +32,15 @@ const api: KeepToMyShelfApi = {
   },
   window: {
     setNativeTheme: invoke(IpcChannels.setNativeTheme),
+    getFullScreen: invoke(IpcChannels.getFullScreen),
+    setFullScreen: invoke(IpcChannels.setFullScreen),
+    onFullScreenChange: (listener) => {
+      const forward = (_event: IpcRendererEvent, fullScreen: boolean) => listener(fullScreen);
+      ipcRenderer.on(IpcEvents.fullScreenChanged, forward);
+      return () => {
+        ipcRenderer.removeListener(IpcEvents.fullScreenChanged, forward);
+      };
+    },
   },
   items: {
     list: invoke(IpcChannels.listItems),

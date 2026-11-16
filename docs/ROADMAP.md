@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-16, con la F12-A (icono, instalador y zip portable).
+**Última actualización:** 2026-11-16, con la F12-A2 (estado de la ventana y pantalla completa).
 
 ---
 
@@ -45,7 +45,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A hecha)              |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A y F12-A2 hechas)    |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -421,6 +421,12 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **La app es portable si existe `KeepToMyShelf Data` junto al `.exe`**, y entonces guarda ahí todos sus datos. Si no se puede escribir en ella, muestra un mensaje con la ruta en lugar de no abrirse.
   - **Instalador en español o inglés** según el sistema. Desinstalar no borra los datos.
   - **Icono:** tres lomos en una estantería (mando, claqueta y televisor), con la fuente en `build/icon.svg`.
+- **F12-A2: estado de la ventana y pantalla completa** (añadida el 2026-11-16). ✅ Hecha. Acordado:
+  - **La ventana se abre como se cerró:** maximizada o no, con su tamaño y su posición sin maximizar (al desmaximizar vuelve a ellos) y en pantalla completa si se cerró así. Se guarda en `window-state.json`, en la carpeta de datos, porque no es una preferencia del perfil. Si falta o está dañado, la ventana se abre con su tamaño por defecto (1280 × 800, centrada).
+  - **Una posición fuera de todas las pantallas** (un monitor desconectado) se descarta: la ventana se abre centrada.
+  - **Pantalla completa con F11 y con un botón** en la barra superior, junto al del tema («Pantalla completa» / «Salir de pantalla completa», con F11 en la descripción). **Esc no sale de la pantalla completa**, porque ya cierra diálogos y sale del modo «Seleccionar».
+  - **Escalado de pantalla distinto del 100 %:** Electron redondea los tamaños y muestra la ventana uno o dos píxeles más alta de lo pedido. Para que no crezca en cada arranque, si el usuario no la toca se vuelve a guardar el tamaño leído, no el mostrado.
+  - **Limitación de las pruebas:** `page.keyboard` de Playwright no pasa por el proceso principal, así que la E2E pulsa F11 con `webContents.sendInputEvent`, que sí lo hace, como una tecla real.
 - **F12-B: workflow de release, prueba de humo** (instalación silenciosa en una carpeta temporal, abrir la app instalada y la portable con Playwright y desinstalar), `docs/RELEASING.md` y prueba con `v1.0.0-rc.1`.
 - **F12-C: documentación** (`ARCHITECTURE.md`, `DEVELOPMENT.md`, `TESTING.md`, `CHANGELOG.md` y el README para usuarios), versión `1.0.0` y etiqueta `v1.0.0`.
 
@@ -439,6 +445,7 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 ```
 %APPDATA%\KeepToMyShelf\
 ├─ app.db                       perfiles y preferencias            (implementado)
+├─ window-state.json            tamaño, posición, maximizada y pantalla completa al cerrar (F12-A2)
 ├─ backgrounds\                 fondos importados, comunes          (implementado, F10-A)
 │  ├─ files\  originals\        fondos de la galería y originales guardados
 │  ├─ .tmp\                     importaciones en preparación; se vacía al arrancar

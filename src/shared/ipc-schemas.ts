@@ -161,6 +161,8 @@ export const ipcInputSchemas = {
   setProfileSetting: z.object({ token: sessionTokenSchema, setting: settingUpdateSchema }),
   applySettingToAllProfiles: z.object({ setting: settingUpdateSchema }),
   setNativeTheme: z.object({ theme: themeSchema }),
+  getFullScreen: z.undefined(),
+  setFullScreen: z.object({ fullScreen: z.boolean() }),
   // Without a search, a filter or a sort, the whole library in title order.
   listItems: z.object({
     token: sessionTokenSchema,

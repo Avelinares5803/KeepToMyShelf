@@ -9,6 +9,7 @@ describe('createDataPaths', () => {
 
   it('places every file inside the data folder', () => {
     expect(paths.appDatabase).toBe(join(root, 'app.db'));
+    expect(paths.windowStateFile).toBe(join(root, 'window-state.json'));
     expect(paths.profileDir(id)).toBe(join(root, 'profiles', id));
     expect(paths.libraryDatabase(id)).toBe(join(root, 'profiles', id, 'library.db'));
     expect(paths.mediaDir(id)).toBe(join(root, 'profiles', id, 'media'));

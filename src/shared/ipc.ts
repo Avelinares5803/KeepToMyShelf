@@ -29,6 +29,8 @@ export const IpcChannels = {
   setProfileSetting: 'settings:set-profile',
   applySettingToAllProfiles: 'settings:apply-to-all',
   setNativeTheme: 'window:set-native-theme',
+  getFullScreen: 'window:get-full-screen',
+  setFullScreen: 'window:set-full-screen',
   listItems: 'items:list',
   listItemFilterValues: 'items:list-filter-values',
   listTrash: 'items:list-trash',
@@ -79,6 +81,8 @@ export const IpcChannels = {
 export const IpcEvents = {
   /** How far the backup or restore that is running has got (see `BackupProgress.stage`). */
   backupProgress: 'backups:progress',
+  /** The window entered (true) or left (false) full screen, with the button or with F11. */
+  fullScreenChanged: 'window:full-screen-changed',
 } as const;
 
 /** Every IPC call resolves to a result; expected errors carry a translatable code. */
@@ -140,6 +144,14 @@ export interface KeepToMyShelfApi {
   window: {
     /** Aligns native parts of the window (e.g. the Windows title bar) with the UI theme. */
     setNativeTheme(input: IpcInput<'setNativeTheme'>): Promise<IpcResult<void>>;
+    getFullScreen(): Promise<IpcResult<boolean>>;
+    /** Enters or leaves full screen; `onFullScreenChange` tells when it has happened. */
+    setFullScreen(input: IpcInput<'setFullScreen'>): Promise<IpcResult<void>>;
+    /**
+     * Calls `listener` whenever the window enters or leaves full screen, also with F11.
+     * Returns the function that stops listening.
+     */
+    onFullScreenChange(listener: (fullScreen: boolean) => void): () => void;
   };
   items: {
     list(input: IpcInput<'listItems'>): Promise<IpcResult<ItemSummary[]>>;

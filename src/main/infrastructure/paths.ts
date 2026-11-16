@@ -11,10 +11,12 @@ import { join } from 'node:path';
  *   profiles/.restoring-<id>/   a backup being restored, before it becomes a profile's folder
  *   backgrounds/                imported backgrounds, shared by every profile
  *   backups/                    automatic backups of profiles (and app.db's pre-migration copies)
+ *   window-state.json           size, position, maximized and full screen of the window at exit
  */
 export interface DataPaths {
   readonly root: string;
   readonly appDatabase: string;
+  readonly windowStateFile: string;
   readonly profilesDir: string;
   readonly backgroundsDir: string;
   readonly backupsDir: string;
@@ -46,6 +48,7 @@ export function createDataPaths(root: string): DataPaths {
   return {
     root,
     appDatabase: join(root, 'app.db'),
+    windowStateFile: join(root, 'window-state.json'),
     profilesDir,
     backgroundsDir: join(root, 'backgrounds'),
     backupsDir: join(root, 'backups'),

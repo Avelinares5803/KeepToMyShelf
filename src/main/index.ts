@@ -148,7 +148,7 @@ function startApp(): void {
     appDb.close();
   });
 
-  createMainWindow();
+  createMainWindow({ stateFile: paths.windowStateFile });
 }
 
 // The data folder must be chosen before the app is ready: Electron and the single-instance lock

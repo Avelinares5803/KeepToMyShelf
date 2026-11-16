@@ -42,6 +42,23 @@ const expectCloseTo = (actual: Shown['bounds'], expected: Shown['bounds']) => {
   }
 };
 
+/** 1280 × 800, or less on a smaller screen (GitHub's runners have 1024 × 768), and centered. */
+const expectDefaultWindow = async (app: ElectronApplication) => {
+  const { bounds, workArea } = await app.evaluate(({ BrowserWindow, screen }) => ({
+    bounds: BrowserWindow.getAllWindows()[0]?.getBounds(),
+    workArea: screen.getPrimaryDisplay().workArea,
+  }));
+  if (!bounds) throw new Error('No window');
+  const width = Math.min(1280, workArea.width);
+  const height = Math.min(800, workArea.height);
+  expectCloseTo(bounds, {
+    x: workArea.x + Math.round((workArea.width - width) / 2),
+    y: workArea.y + Math.round((workArea.height - height) / 2),
+    width,
+    height,
+  });
+};
+
 const enterButton = (page: Page) => page.getByRole('button', { name: 'Full screen', exact: true });
 const leaveButton = (page: Page) =>
   page.getByRole('button', { name: 'Exit full screen', exact: true });
@@ -75,11 +92,8 @@ test.describe('window state', () => {
 
   test('opens at the default size the first time', async () => {
     const current = await open();
-    expect(await shown(current)).toMatchObject({
-      maximized: false,
-      fullScreen: false,
-      bounds: { width: 1280, height: 800 },
-    });
+    expect(await shown(current)).toMatchObject({ maximized: false, fullScreen: false });
+    await expectDefaultWindow(current);
   });
 
   test('opens with the size and position it was left with, without growing', async () => {
@@ -161,8 +175,6 @@ test.describe('window state', () => {
         fullScreen: false,
       }),
     );
-    const current = await open();
-    expect((await shown(current)).bounds).toMatchObject({ width: 1280, height: 800 });
-    expect((await shown(current)).bounds.x).toBeGreaterThanOrEqual(0);
+    await expectDefaultWindow(await open());
   });
 });

@@ -23,9 +23,12 @@ export function createMainWindow({ stateFile }: MainWindowOptions): BrowserWindo
   const workAreas = screen.getAllDisplays().map((display) => display.workArea);
   const savedBounds = saved && isOnScreen(saved.bounds, workAreas) ? saved.bounds : null;
 
+  // The default size, as far as it fits on the main screen (GitHub's runners have 1024 × 768);
+  // without a position, Electron centers the window.
+  const { workArea } = screen.getPrimaryDisplay();
   const window = new BrowserWindow({
-    width: DEFAULT_WIDTH,
-    height: DEFAULT_HEIGHT,
+    width: Math.min(DEFAULT_WIDTH, workArea.width),
+    height: Math.min(DEFAULT_HEIGHT, workArea.height),
     minWidth: 960,
     minHeight: 600,
     show: false,

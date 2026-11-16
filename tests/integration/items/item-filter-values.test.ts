@@ -93,7 +93,9 @@ describe('ItemService.filterValues', () => {
     expect(names('game', 'tag')).toBeUndefined();
   });
 
-  it('answers quickly with 10,000 items and many values', () => {
+  // Filling the library takes seconds on a loaded machine, beyond Vitest's default 5 s; only
+  // filterValues itself is timed, below.
+  it('answers quickly with 10,000 items and many values', { timeout: 20_000 }, () => {
     const tags = Array.from({ length: 2_000 }, (_, index) => entry('tag', `Etiqueta ${index}`));
     const { db } = fx.sessions.require(token);
     const insertItem = db.prepare(

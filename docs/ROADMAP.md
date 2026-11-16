@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-15, con la F11-B2 (interfaz de la restauración), que cierra la F11.
+**Última actualización:** 2026-11-16, con la F12-A (icono, instalador y zip portable).
 
 ---
 
@@ -45,7 +45,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | Pendiente                           |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A hecha)              |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -400,17 +400,37 @@ El detalle técnico está en el [ADR 0009](adr/0009-backups.md).
 
 ### 3.10 Distribución (F12)
 
+El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
+
 - **Formato:** instalador NSIS por usuario (sin permisos de administrador) como principal, y versión portable como opción.
 - **`release.yml`:** al crear una etiqueta `v*`, genera el instalador y el portable con sus checksums SHA-256, hace una prueba de humo del artefacto y crea un **release en borrador** que el responsable publica.
-- **Versiones:** SemVer `0.x` hasta la 1.0, con un registro de cambios (manual o con release-please).
 - **Sin firma de código:** se documenta el aviso de SmartScreen. Icono propio de la aplicación.
-- **Actualizaciones automáticas:** opcionales; se decidirán en la F12.
-- **Documentación por crear:**
-  - `docs/ARCHITECTURE.md`
-  - `docs/DEVELOPMENT.md`
-  - `docs/TESTING.md`
-  - `docs/RELEASING.md`
-  - `CHANGELOG.md`
+
+**Acordado para la F12 (2026-11-15):**
+
+- **Sin actualizaciones automáticas en la v1** (necesitan `electron-updater`, y sin firma la comprobación es débil). Siguen en las mejoras anotadas.
+- **Registro de cambios manual** (`CHANGELOG.md`, formato «Keep a Changelog»), sin release-please, que exigiría permitir a las Actions crear PR.
+- **La primera versión publicada es la v1.0.0.** El workflow se prueba antes con la etiqueta `v1.0.0-rc.1`, cuyo borrador se puede borrar.
+- El release se crea con la CLI `gh` del propio runner y el `GITHUB_TOKEN` del workflow (`contents: write` solo en ese trabajo), sin acciones de terceros ni tokens personales.
+
+**Entregas (acordadas el 2026-11-15):**
+
+- **F12-A: icono y empaquetado.** ✅ Hecha. Acordado (2026-11-16):
+  - **Portable en `.zip`, no en un solo `.exe`.** El target `portable` de electron-builder descomprime toda la app en `%TEMP%` en cada arranque: 11 s cada vez, frente a 0,9 s del zip.
+  - **El zip trae una carpeta `KeepToMyShelf\`** (así «Extraer aquí» no desparrama los archivos) con el `.exe`, todo lo que necesita y la carpeta `KeepToMyShelf Data\` con un `LEEME - README.txt`.
+  - **La app es portable si existe `KeepToMyShelf Data` junto al `.exe`**, y entonces guarda ahí todos sus datos. Si no se puede escribir en ella, muestra un mensaje con la ruta en lugar de no abrirse.
+  - **Instalador en español o inglés** según el sistema. Desinstalar no borra los datos.
+  - **Icono:** tres lomos en una estantería (mando, claqueta y televisor), con la fuente en `build/icon.svg`.
+- **F12-B: workflow de release, prueba de humo** (instalación silenciosa en una carpeta temporal, abrir la app instalada y la portable con Playwright y desinstalar), `docs/RELEASING.md` y prueba con `v1.0.0-rc.1`.
+- **F12-C: documentación** (`ARCHITECTURE.md`, `DEVELOPMENT.md`, `TESTING.md`, `CHANGELOG.md` y el README para usuarios), versión `1.0.0` y etiqueta `v1.0.0`.
+
+**Documentación por crear:**
+
+- `docs/ARCHITECTURE.md`
+- `docs/DEVELOPMENT.md`
+- `docs/TESTING.md`
+- `docs/RELEASING.md`
+- `CHANGELOG.md`
 
 ---
 
@@ -436,6 +456,8 @@ El detalle técnico está en el [ADR 0009](adr/0009-backups.md).
 %TEMP%\KeepToMyShelf\
 └─ opened-documents\<id>\       copias de los PDF abiertos en el visor (implementado; se borran solas)
 ```
+
+**Versión portable** (F12-A): todo lo que va en `%APPDATA%\KeepToMyShelf\` va en la carpeta `KeepToMyShelf Data\`, junto a `KeepToMyShelf.exe`, con la misma estructura.
 
 Las pruebas automáticas usan siempre una carpeta temporal (`KTMS_USER_DATA_DIR`). Los datos reales del usuario nunca se tocan.
 

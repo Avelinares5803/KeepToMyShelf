@@ -1,5 +1,6 @@
 appId: io.github.avelinares5803.keeptomyshelf
 productName: KeepToMyShelf
+copyright: Copyright © 2026 Avelinares5803
 directories:
   output: release/${version}
 files:
@@ -13,13 +14,22 @@ asarUnpack:
 # better-sqlite3 and sharp ship N-API prebuilt binaries that work in Electron as-is.
 npmRebuild: false
 win:
+  # Rendered from build/icon.svg (scripts/render-icon.mjs); electron-builder makes the .ico.
+  icon: build/icon.png
   target:
     - target: nsis
       arch: [x64]
-  artifactName: ${productName}-Setup-${version}.${ext}
+# The portable .zip is made from release/<version>/win-unpacked by scripts/package-portable.mjs,
+# because it also carries the "KeepToMyShelf Data" folder that the installer must not have.
 nsis:
+  artifactName: ${productName}-Setup-${version}.${ext}
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
+  # The installer speaks the system's language: Spanish or, otherwise, English.
+  installerLanguages: [es_ES, en_US]
+  multiLanguageInstaller: true
+  # Uninstalling never deletes the libraries in %APPDATA%\KeepToMyShelf.
+  deleteAppDataOnUninstall: false
 publish: null

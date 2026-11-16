@@ -21,7 +21,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "package": "npm run build && electron-builder --win",
+    "package": "npm run build && electron-builder --win && node scripts/package-portable.mjs",
     "package:dir": "npm run build && electron-builder --win --dir",
     "postinstall": "install-electron"
   },

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- KeepToMyShelf app icon: three spines on a shelf (video games, movies, TV series).
+       Source of build/icon.png: run `node scripts/render-icon.mjs` after editing it. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b3a67"/>
+      <stop offset="1" stop-color="#141b33"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bg)"/>
+
+  <!-- Video games -->
+  <rect x="112" y="146" width="92" height="246" rx="14" fill="#f2715f"/>
+  <rect x="112" y="176" width="92" height="10" fill="#000" opacity="0.18"/>
+  <rect x="112" y="352" width="92" height="10" fill="#000" opacity="0.18"/>
+  <g fill="#fff">
+    <rect x="130" y="250" width="56" height="34" rx="14"/>
+  </g>
+  <g fill="#f2715f">
+    <rect x="140" y="264" width="16" height="6" rx="2"/>
+    <rect x="145" y="259" width="6" height="16" rx="2"/>
+    <circle cx="170" cy="263" r="4"/>
+    <circle cx="177" cy="271" r="4"/>
+  </g>
+
+  <!-- Movies -->
+  <rect x="214" y="104" width="92" height="288" rx="14" fill="#f8bd3c"/>
+  <rect x="214" y="134" width="92" height="10" fill="#000" opacity="0.18"/>
+  <rect x="214" y="352" width="92" height="10" fill="#000" opacity="0.18"/>
+  <g fill="#fff">
+    <rect x="232" y="246" width="56" height="34" rx="5"/>
+    <path d="M232 230h56v11h-56z"/>
+  </g>
+  <g fill="#f8bd3c">
+    <path d="M241 230h8l-6 11h-8zM259 230h8l-6 11h-8zM277 230h8l-6 11h-8z"/>
+  </g>
+
+  <!-- TV series, leaning on the shelf -->
+  <g transform="rotate(12 406 392)">
+    <rect x="316" y="166" width="90" height="226" rx="14" fill="#33c9b4"/>
+    <rect x="316" y="196" width="90" height="10" fill="#000" opacity="0.18"/>
+    <rect x="316" y="352" width="90" height="10" fill="#000" opacity="0.18"/>
+    <g fill="#fff">
+      <rect x="333" y="252" width="56" height="38" rx="7"/>
+      <path d="M349 238l12 14h-4l-11-12zM373 238l-12 14h4l11-12z"/>
+    </g>
+    <rect x="340" y="259" width="42" height="24" rx="3" fill="#33c9b4"/>
+  </g>
+
+  <!-- Shelf -->
+  <rect x="84" y="392" width="360" height="26" rx="9" fill="#e8e2d6"/>
+  <rect x="84" y="410" width="360" height="8" rx="4" fill="#000" opacity="0.12"/>
+</svg>

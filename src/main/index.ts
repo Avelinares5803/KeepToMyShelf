@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
 import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
 import {
@@ -21,6 +21,7 @@ import { SessionManager } from './application/session-manager';
 import { SettingsService } from './application/settings-service';
 import { openAppDatabase } from './infrastructure/db/app-database';
 import { createDataPaths } from './infrastructure/paths';
+import { ensureWritableDir, resolveUserDataLocation } from './infrastructure/user-data-location';
 import { registerIpcHandlers } from './ipc/register-handlers';
 import { createMediaProtocolHandler, MEDIA_SCHEME } from './media-protocol';
 import { createMainWindow } from './window';
@@ -150,10 +151,25 @@ function startApp(): void {
   createMainWindow();
 }
 
+// The data folder must be chosen before the app is ready: Electron and the single-instance lock
+// below start using it right away.
+// process.execPath is KeepToMyShelf.exe once packaged (electron.exe in development).
+const userDataLocation = resolveUserDataLocation({
+  env: process.env,
+  exeDir: dirname(process.execPath),
+});
 // Automated tests point the app at a temporary data folder so real user data is never touched.
-const userDataOverride = process.env['KTMS_USER_DATA_DIR'];
-if (userDataOverride) {
-  app.setPath('userData', userDataOverride);
+const userDataOverride = userDataLocation.kind === 'override' ? userDataLocation.dir : undefined;
+let portableDataError: unknown = null;
+if (userDataLocation.kind === 'portable') {
+  try {
+    ensureWritableDir(userDataLocation.dir);
+  } catch (error) {
+    portableDataError = error;
+  }
+}
+if (userDataLocation.kind !== 'default') {
+  app.setPath('userData', userDataLocation.dir);
 }
 
 // Custom schemes must be declared before the app is ready. "standard" makes URLs parse like
@@ -162,8 +178,19 @@ protocol.registerSchemesAsPrivileged([
   { scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true } },
 ]);
 
-// Only one instance may run at a time: two processes writing the same database could corrupt it.
-if (!app.requestSingleInstanceLock()) {
+if (userDataLocation.kind === 'portable' && portableDataError !== null) {
+  // Without this message the app would just not open (see ensureWritableDir).
+  console.error('Portable data folder is not writable', portableDataError);
+  dialog.showErrorBox(
+    'KeepToMyShelf',
+    `No se puede escribir en la carpeta de datos / The data folder is not writable:\n${userDataLocation.dir}\n\n` +
+      'Mueve KeepToMyShelf a una carpeta en la que puedas escribir, como Documentos o una memoria USB.\n' +
+      'Move KeepToMyShelf to a folder you can write to, such as Documents or a USB drive.\n\n' +
+      String(portableDataError),
+  );
+  app.exit(1);
+} else if (!app.requestSingleInstanceLock()) {
+  // Only one instance may run at a time: two processes writing the same database could corrupt it.
   app.quit();
 } else {
   app.on('second-instance', () => {

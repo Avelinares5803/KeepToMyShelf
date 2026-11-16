@@ -23,17 +23,17 @@ En modo desarrollo, **F12** abre las herramientas de desarrollo del navegador (l
 
 ## Scripts
 
-| Comando               | Qué hace                                               |
-| --------------------- | ------------------------------------------------------ |
-| `npm run dev`         | Ejecuta la app en modo desarrollo                      |
-| `npm run build`       | Compila main, preload y renderer en `out/`             |
-| `npm test`            | Ejecuta las pruebas (Vitest)                           |
-| `npm run test:e2e`    | Compila la app y ejecuta las pruebas E2E (Playwright)  |
-| `npm run lint`        | Analiza el código con ESLint                           |
-| `npm run typecheck`   | Comprueba los tipos de TypeScript                      |
-| `npm run format`      | Formatea el código con Prettier                        |
-| `npm run package`     | Genera el instalador de Windows en `release/<versión>` |
-| `npm run package:dir` | Genera la app empaquetada sin instalador (más rápido)  |
+| Comando               | Qué hace                                                      |
+| --------------------- | ------------------------------------------------------------- |
+| `npm run dev`         | Ejecuta la app en modo desarrollo                             |
+| `npm run build`       | Compila main, preload y renderer en `out/`                    |
+| `npm test`            | Ejecuta las pruebas (Vitest)                                  |
+| `npm run test:e2e`    | Compila la app y ejecuta las pruebas E2E (Playwright)         |
+| `npm run lint`        | Analiza el código con ESLint                                  |
+| `npm run typecheck`   | Comprueba los tipos de TypeScript                             |
+| `npm run format`      | Formatea el código con Prettier                               |
+| `npm run package`     | Genera el instalador y el zip portable en `release/<versión>` |
+| `npm run package:dir` | Genera la app empaquetada sin instalador (más rápido)         |
 
 ## Estructura
 

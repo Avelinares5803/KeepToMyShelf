@@ -90,6 +90,13 @@ export function registerIpcHandlers({
     setNativeTheme: createHandler(ipcInputSchemas.setNativeTheme, ({ theme }) => {
       nativeTheme.themeSource = theme;
     }),
+    // The app has a single window.
+    getFullScreen: createHandler(ipcInputSchemas.getFullScreen, () =>
+      BrowserWindow.getAllWindows().some((window) => window.isFullScreen()),
+    ),
+    setFullScreen: createHandler(ipcInputSchemas.setFullScreen, ({ fullScreen }) => {
+      for (const window of BrowserWindow.getAllWindows()) window.setFullScreen(fullScreen);
+    }),
     listItems: createHandler(ipcInputSchemas.listItems, ({ token, kind, search, filter, sort }) =>
       items.list(token, kind, { search, filter, sort }),
     ),

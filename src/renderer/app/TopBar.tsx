@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { AppSettings, Language, Theme } from '../../shared/settings';
 import { ArrowLeftIcon, GearIcon } from '../components/icons';
+import { FullScreenButton } from './FullScreenButton';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 
@@ -66,6 +67,7 @@ export function TopBar({
       <div className="top-bar__end">
         <LanguageSwitcher onChange={onLanguageChange} />
         <ThemeSwitcher theme={settings.theme} onChange={onThemeChange} />
+        <FullScreenButton />
         <button
           type="button"
           className="icon-button"

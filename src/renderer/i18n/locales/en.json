@@ -404,6 +404,10 @@
     "dark": "Dark",
     "toggle": "Theme: {{current}}. Click to change it"
   },
+  "window": {
+    "enterFullScreen": "Full screen",
+    "leaveFullScreen": "Exit full screen"
+  },
   "settings": {
     "open": "Settings",
     "title": "Settings",

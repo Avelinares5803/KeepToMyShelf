@@ -1,7 +1,7 @@
 {
   "name": "keeptomyshelf",
   "productName": "KeepToMyShelf",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Desktop app to organize your video games, movies and TV series.",
   "author": "Avelinares5803",
   "license": "MIT",
@@ -21,6 +21,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
+    "test:smoke": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-test.ps1",
     "package": "npm run build && electron-builder --win && node scripts/package-portable.mjs",
     "package:dir": "npm run build && electron-builder --win --dir",
     "postinstall": "install-electron"

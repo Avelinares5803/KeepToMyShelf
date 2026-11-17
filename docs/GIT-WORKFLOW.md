@@ -1,57 +1,59 @@
-# Flujo de trabajo con Git
+# Git workflow
 
-## Ramas
+**English** | [Español](GIT-WORKFLOW.es.md)
 
-Se sigue un **GitHub Flow** simplificado:
+## Branches
 
-- `main` siempre está en un estado estable: compila y pasa todas las comprobaciones.
-- Cada cambio se hace en una rama corta creada desde `main`:
-  - `feat/<descripción>`: nueva funcionalidad (`feat/profile-selection`)
-  - `fix/<descripción>`: corrección de errores
-  - `chore/<descripción>`, `docs/<descripción>`, `ci/<descripción>`, `refactor/<descripción>`, `test/<descripción>`
-- La rama se integra en `main` mediante una **pull request**, aunque se trabaje en solitario: la CI se ejecuta antes de integrar y el diff se revisa con calma.
-- Se integra con **squash merge** (un commit limpio por cambio) y la rama se borra después.
+The project follows a simplified **GitHub Flow**:
 
-## Mensajes de commit
+- `main` is always stable: it builds and passes every check.
+- Each change is made on a short branch created from `main`:
+  - `feat/<description>`: new feature (`feat/profile-selection`)
+  - `fix/<description>`: bug fix
+  - `chore/<description>`, `docs/<description>`, `ci/<description>`, `refactor/<description>`, `test/<description>`
+- The branch reaches `main` through a **pull request**, even when working alone: the CI runs before merging and the diff gets a calm review.
+- Pull requests are merged with **squash merge** (one clean commit per change), and the branch is deleted afterwards.
 
-Se usa [Conventional Commits](https://www.conventionalcommits.org/es/):
+## Commit messages
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-<tipo>(<ámbito opcional>): <descripción en imperativo>
+<type>(<optional scope>): <description in the imperative>
 ```
 
-| Tipo       | Uso                                          |
-| ---------- | -------------------------------------------- |
-| `feat`     | Nueva funcionalidad                          |
-| `fix`      | Corrección de un error                       |
-| `refactor` | Cambio interno sin alterar el comportamiento |
-| `test`     | Añadir o corregir pruebas                    |
-| `docs`     | Documentación                                |
-| `ci`       | Integración continua                         |
-| `chore`    | Mantenimiento (dependencias, configuración)  |
+| Type       | Use                                       |
+| ---------- | ----------------------------------------- |
+| `feat`     | New feature                               |
+| `fix`      | Bug fix                                   |
+| `refactor` | Internal change that keeps the behavior   |
+| `test`     | Add or fix tests                          |
+| `docs`     | Documentation                             |
+| `ci`       | Continuous integration                    |
+| `chore`    | Maintenance (dependencies, configuration) |
 
-Ejemplos: `feat(items): add alternate titles`, `fix(dates): reject end date before start date`.
+Examples: `feat(items): add alternate titles`, `fix(dates): reject end date before start date`.
 
-Un cambio incompatible se marca con `!` (`feat(db)!: ...`) y una nota `BREAKING CHANGE:` en el cuerpo.
+A breaking change is marked with `!` (`feat(db)!: ...`) and a `BREAKING CHANGE:` note in the body.
 
-## Ciclo típico
+## Typical cycle
 
 ```bash
 git switch main
 git pull
-git switch -c feat/mi-cambio
-# ...trabajo y commits pequeños...
-git push -u origin feat/mi-cambio
-# abrir la pull request en GitHub, esperar la CI en verde, squash merge
+git switch -c feat/my-change
+# ...work and small commits...
+git push -u origin feat/my-change
+# open the pull request on GitHub, wait for the CI to be green, squash merge
 ```
 
-## Integración continua
+## Continuous integration
 
-El workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) se ejecuta en cada push a `main` y en cada pull request, en Windows y Linux: formato, lint, tipos, pruebas y compilación. En Windows, además, se empaqueta la app para detectar problemas de distribución.
+The [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) workflow runs on every push to `main` and every pull request, on Windows and Linux: format, lint, types, tests and build. On Windows it also runs the end-to-end tests and packages the app, to catch distribution problems.
 
-Las versiones se publican con etiquetas `v*` y el workflow [`.github/workflows/release.yml`](../.github/workflows/release.yml). El procedimiento está en [RELEASING.md](RELEASING.md).
+Versions are published with `v*` tags and the [`.github/workflows/release.yml`](../.github/workflows/release.yml) workflow. The procedure is in [RELEASING.md](RELEASING.md).
 
-## Reglas
+## Rules
 
-- Nunca se versionan credenciales, tokens ni archivos `.env`.
-- No se reescribe el historial de `main` (`push --force`).
+- Credentials, tokens and `.env` files are never committed.
+- The history of `main` is never rewritten (`push --force`).

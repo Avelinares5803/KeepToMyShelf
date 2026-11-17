@@ -35,7 +35,7 @@ La v1.0 se distribuye para Windows 10 y 11, sin firma de código. Hasta la F11, 
 
 ### Cómo se publica (F12-B)
 
-El procedimiento está en [RELEASING.md](../RELEASING.md).
+El procedimiento está en [RELEASING.es.md](../RELEASING.es.md).
 
 - **`release.yml`**, al subir una etiqueta `v*`, tiene dos trabajos:
   - **`build`** (Windows, solo lectura): comprueba que la etiqueta coincide con la versión de `package.json`, hace las mismas comprobaciones que la CI con las E2E, empaqueta, hace la prueba de humo y escribe `SHA256SUMS.txt`.

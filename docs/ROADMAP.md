@@ -4,10 +4,11 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 
 - La especificación original completa está en [SPECIFICATION.md](SPECIFICATION.md). Sirve para consultar cualquier detalle de los requisitos; si contradice este documento, prevalece este.
 - Las decisiones de arquitectura ya implementadas, con su porqué, están en los [ADR](adr/).
-- El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
+- El flujo de ramas y PR está en [GIT-WORKFLOW.es.md](GIT-WORKFLOW.es.md).
+- La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-17, con la F12-B (workflow de release y prueba de humo).
+**Última actualización:** 2026-11-17, con la F12-C1 (documentación final).
 
 ---
 
@@ -45,7 +46,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A a F12-B hechas)     |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A a F12-C1 hechas)    |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -433,50 +434,28 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **Ninguna ventana nueva ni `<webview>`**, y la CSP añade `object-src`, `frame-src`, `base-uri` y `form-action` a `'none'`.
   - **Fusibles:** sin `ELECTRON_RUN_AS_NODE` ni `NODE_OPTIONS`, y validación de la integridad del `app.asar`. `--inspect` sigue activo para la prueba de humo.
   - Revisado sin cambios: no hay credenciales en el código ni en el historial, el SQL usa parámetros, no se inserta HTML, los errores no revelan rutas y las dependencias de la app no tienen vulnerabilidades conocidas.
-- **F12-B: workflow de release y prueba de humo.** ✅ Hecha (falta probarla con la etiqueta `v1.0.0-rc.1` tras el merge). Procedimiento en [RELEASING.md](RELEASING.md). Acordado (2026-11-17):
+- **F12-B: workflow de release y prueba de humo.** ✅ Hecha y probada con la etiqueta `v1.0.0-rc.1` el 2026-11-17 (en verde; el borrador y la etiqueta se borraron después). Procedimiento en [RELEASING.es.md](RELEASING.es.md). Acordado (2026-11-17):
   - **`release.yml`** con dos trabajos: `build` (Windows, solo lectura) comprueba la etiqueta frente a `package.json`, hace las comprobaciones de la CI **con las E2E**, empaqueta, hace la prueba de humo y escribe `SHA256SUMS.txt`. `release` (Linux, el único con `contents: write`) crea el **borrador** con `gh`, como _pre-release_ si la versión lleva sufijo.
   - **Texto del release: plantilla fija** (`.github/release-notes.md`, bilingüe: qué descargar, aviso de SmartScreen, cómo comprobar los checksums y enlace al `CHANGELOG.md`). Los cambios se copian al publicar.
   - **Prueba de humo** (`npm run test:smoke`): instala en silencio en una carpeta temporal, prueba la app instalada (versión, empaquetada, dónde guarda los datos, crear y abrir un perfil, permisos rechazados, fusible `runAsNode`) y la desinstala; después prueba el zip portable. Se niega a empezar si la app ya está instalada en el usuario. Se probó en el equipo del responsable (49 s), sin dejar rastro.
   - **La versión pasa a `1.0.0-rc.1`** para probar el workflow.
-- **F12-C: documentación** (`ARCHITECTURE.md`, `DEVELOPMENT.md`, `TESTING.md`, `CHANGELOG.md` y el README para usuarios), versión `1.0.0` y etiqueta `v1.0.0`.
+- **F12-C: documentación y versión 1.0.0**, en dos entregas (acordado el 2026-11-17):
+  - **F12-C1: documentación final.** ✅ Hecha. Acordado:
+    - **Los documentos públicos son bilingües, en archivos separados: el inglés es el principal** (`README.md`, `docs/ARCHITECTURE.md`…) y el español va en `*.es.md` (`README.es.md`, `docs/ARCHITECTURE.es.md`…). Cada uno empieza con el enlace «English | Español». Son: README, `ARCHITECTURE`, `DEVELOPMENT`, `TESTING`, `GIT-WORKFLOW` y `RELEASING`. **Al cambiar uno, se actualizan los dos.**
+    - **Siguen solo en español** el ROADMAP, los ADR, la especificación y `CLAUDE.md`, que son documentos de trabajo. `ARCHITECTURE` resume los ADR para quien lea en inglés. Los documentos en español enlazan a las versiones `*.es.md`.
+    - **`CHANGELOG.md`, un solo archivo** con dos bloques por versión, «Español» y «English», en el orden de la plantilla del release, para copiarlos tal cual al borrador. La v1.0.0 resume las funciones por área, sin el historial de cada PR.
+    - **El README es para usuarios:** funciones, descarga, SmartScreen, dónde están los datos, copias, actualizar y desinstalar. Lo técnico pasa a `DEVELOPMENT`. **Sin capturas de pantalla**, porque quedarían desfasadas con cada cambio de la interfaz.
+    - La disposición de los datos en disco pasa del apartado 4 de este documento a `ARCHITECTURE`.
+    - `RELEASING` explica que GitHub no muestra la marca _Pre-release_ en los borradores.
+  - **F12-C2: versión 1.0.0** (`chore/release-1.0.0`): `npm version 1.0.0 --no-git-tag-version`, la fecha de la versión en el `CHANGELOG.md` y la F12 marcada como hecha. Después del merge, la etiqueta `v1.0.0`, el borrador del workflow y su publicación.
 
-**Documentación por crear:**
-
-- `docs/ARCHITECTURE.md`
-- `docs/DEVELOPMENT.md`
-- `docs/TESTING.md`
-- `docs/RELEASING.md` ✅ (F12-B)
-- `CHANGELOG.md`
+**Documentación:** `README`, `docs/ARCHITECTURE`, `docs/DEVELOPMENT`, `docs/TESTING`, `docs/GIT-WORKFLOW` y `docs/RELEASING` (en inglés y en español), y `CHANGELOG.md`. ✅ (F12-B y F12-C1)
 
 ---
 
 ## 4. Disposición de los datos en disco
 
-```
-%APPDATA%\KeepToMyShelf\
-├─ app.db                       perfiles y preferencias            (implementado)
-├─ window-state.json            tamaño, posición, maximizada y pantalla completa al cerrar (F12-A2)
-├─ backgrounds\                 fondos importados, comunes          (implementado, F10-A)
-│  ├─ files\  originals\        fondos de la galería y originales guardados
-│  ├─ .tmp\                     importaciones en preparación; se vacía al arrancar
-│  └─ cache\thumbs\             miniaturas regenerables
-├─ backups\                     copias automáticas de perfiles (las 10 últimas) y copias de app.db antes de migrar (implementado, F11-A)
-│  └─ .tmp\                     instantánea de la copia en curso; se vacía al terminar y al arrancar
-├─ profiles\.restoring-<uuid>\  copia que se está restaurando; se borra al terminar y al arrancar (F11-B1)
-└─ profiles\<uuid>\
-   ├─ library.db                biblioteca del perfil               (implementado)
-   ├─ backups\                  copias antes de migrar (las 5 últimas) (implementado)
-   ├─ media\files\              archivos que usan los elementos     (implementado)
-   ├─ media\originals\          originales junto a una copia optimizada (implementado)
-   └─ cache\thumbs\             miniaturas regenerables             (implementado)
-
-%TEMP%\KeepToMyShelf\
-└─ opened-documents\<id>\       copias de los PDF abiertos en el visor (implementado; se borran solas)
-```
-
-**Versión portable** (F12-A): todo lo que va en `%APPDATA%\KeepToMyShelf\` va en la carpeta `KeepToMyShelf Data\`, junto a `KeepToMyShelf.exe`, con la misma estructura.
-
-Las pruebas automáticas usan siempre una carpeta temporal (`KTMS_USER_DATA_DIR`). Los datos reales del usuario nunca se tocan.
+Desde la F12-C1 está en [ARCHITECTURE.es.md](ARCHITECTURE.es.md#datos-en-disco). Al añadir una carpeta o un archivo, se actualiza allí (y en `ARCHITECTURE.md`).
 
 ---
 

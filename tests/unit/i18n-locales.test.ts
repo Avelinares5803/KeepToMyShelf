@@ -67,7 +67,7 @@ describe('translations', () => {
   });
 
   it('translate the generic IPC error codes', () => {
-    for (const code of ['ipc.invalid_input', 'internal', 'unknown']) {
+    for (const code of ['ipc.invalid_input', 'ipc.forbidden_sender', 'internal', 'unknown']) {
       expect(esKeys).toContain(`errors.${code}`);
     }
   });

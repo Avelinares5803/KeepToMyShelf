@@ -1,5 +1,6 @@
 import { join } from 'node:path';
-import { app, BrowserWindow, screen, shell } from 'electron';
+import { pathToFileURL } from 'node:url';
+import { app, BrowserWindow, screen } from 'electron';
 import { IpcEvents } from '../shared/ipc';
 import {
   isOnScreen,
@@ -107,13 +108,10 @@ export function createMainWindow({ stateFile }: MainWindowOptions): BrowserWindo
     if (input.key === 'F12' && !app.isPackaged) window.webContents.toggleDevTools();
   });
 
-  // External links open in the user's browser, never inside the app.
-  window.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://')) {
-      void shell.openExternal(url);
-    }
-    return { action: 'deny' };
-  });
+  // The app has no links to other pages: no new window ever opens, inside or outside the app.
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  // <webview> is disabled by default; refusing it here keeps it so whatever the settings.
+  window.webContents.on('will-attach-webview', (event) => event.preventDefault());
 
   // The app is a single page: block any navigation away from it.
   window.webContents.on('will-navigate', (event, url) => {
@@ -122,12 +120,17 @@ export function createMainWindow({ stateFile }: MainWindowOptions): BrowserWindo
     }
   });
 
-  const devServerUrl = process.env['ELECTRON_RENDERER_URL'];
-  if (!app.isPackaged && devServerUrl) {
-    void window.loadURL(devServerUrl);
-  } else {
-    void window.loadFile(join(__dirname, '../renderer/index.html'));
-  }
+  void window.loadURL(appPageUrl());
 
   return window;
+}
+
+/**
+ * The page the window shows: the built index.html, or the development server while developing.
+ * IPC messages are only answered when they come from it.
+ */
+export function appPageUrl(): string {
+  const devServerUrl = process.env['ELECTRON_RENDERER_URL'];
+  if (!app.isPackaged && devServerUrl) return devServerUrl;
+  return pathToFileURL(join(__dirname, '../renderer/index.html')).href;
 }

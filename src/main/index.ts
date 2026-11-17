@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { app, BrowserWindow, dialog, Menu, protocol, shell } from 'electron';
+import { app, BrowserWindow, dialog, Menu, protocol, session, shell } from 'electron';
 import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
 import {
   BACKGROUND_SETTING_DEFAULTS,
@@ -24,6 +24,7 @@ import { createDataPaths } from './infrastructure/paths';
 import { ensureWritableDir, resolveUserDataLocation } from './infrastructure/user-data-location';
 import { registerIpcHandlers } from './ipc/register-handlers';
 import { createMediaProtocolHandler, MEDIA_SCHEME } from './media-protocol';
+import { denyAllPermissions } from './security';
 import { createMainWindow } from './window';
 
 function startApp(): void {
@@ -137,6 +138,9 @@ function startApp(): void {
   });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
   protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media, backgrounds));
+
+  // Camera, microphone, location, notifications...: the app uses none of them.
+  denyAllPermissions(session.defaultSession);
 
   // The app has its own top bar; the default Electron menu (File, Edit, View...) is removed.
   // Editing shortcuts (copy, paste, undo...) keep working in text fields on Windows and Linux.

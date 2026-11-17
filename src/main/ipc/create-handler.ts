@@ -38,6 +38,14 @@ export function createAsyncHandler<S extends z.ZodType, R>(
   };
 }
 
+/** The answer to a call that does not come from the app's own page. */
+export function forbiddenSender(): IpcResult<never> {
+  return {
+    ok: false,
+    error: { code: 'ipc.forbidden_sender', message: 'The call does not come from the app' },
+  };
+}
+
 function invalidInput(error: z.ZodError): IpcResult<never> {
   return { ok: false, error: { code: 'ipc.invalid_input', message: z.prettifyError(error) } };
 }

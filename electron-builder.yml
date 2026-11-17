@@ -13,6 +13,19 @@ asarUnpack:
   - node_modules/@img/**
 # better-sqlite3 and sharp ship N-API prebuilt binaries that work in Electron as-is.
 npmRebuild: false
+# Switches burnt into the packaged .exe (https://www.electronjs.org/docs/latest/tutorial/fuses).
+electronFuses:
+  # The .exe cannot be used as a plain Node.js with ELECTRON_RUN_AS_NODE (VS Code's terminal
+  # sets it: the app still opens from there).
+  runAsNode: false
+  # NODE_OPTIONS cannot inject code or options at startup.
+  enableNodeOptionsEnvironmentVariable: false
+  # The app only starts from its own app.asar, and only if it has not been modified.
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  # Kept on: Playwright needs --inspect to drive the packaged app in the release smoke test, and
+  # only someone who can already run programs as the user could use it.
+  enableNodeCliInspectArguments: true
 win:
   # Rendered from build/icon.svg (scripts/render-icon.mjs); electron-builder makes the .ico.
   icon: build/icon.png

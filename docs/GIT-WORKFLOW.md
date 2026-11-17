@@ -49,6 +49,8 @@ git push -u origin feat/mi-cambio
 
 El workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) se ejecuta en cada push a `main` y en cada pull request, en Windows y Linux: formato, lint, tipos, pruebas y compilación. En Windows, además, se empaqueta la app para detectar problemas de distribución.
 
+Las versiones se publican con etiquetas `v*` y el workflow [`.github/workflows/release.yml`](../.github/workflows/release.yml). El procedimiento está en [RELEASING.md](RELEASING.md).
+
 ## Reglas
 
 - Nunca se versionan credenciales, tokens ni archivos `.env`.

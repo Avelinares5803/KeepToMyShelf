@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-17, con la F12-A3 (refuerzo de seguridad).
+**Última actualización:** 2026-11-17, con la F12-B (workflow de release y prueba de humo).
 
 ---
 
@@ -45,7 +45,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A a F12-A3 hechas)    |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A a F12-B hechas)     |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -433,7 +433,11 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **Ninguna ventana nueva ni `<webview>`**, y la CSP añade `object-src`, `frame-src`, `base-uri` y `form-action` a `'none'`.
   - **Fusibles:** sin `ELECTRON_RUN_AS_NODE` ni `NODE_OPTIONS`, y validación de la integridad del `app.asar`. `--inspect` sigue activo para la prueba de humo.
   - Revisado sin cambios: no hay credenciales en el código ni en el historial, el SQL usa parámetros, no se inserta HTML, los errores no revelan rutas y las dependencias de la app no tienen vulnerabilidades conocidas.
-- **F12-B: workflow de release, prueba de humo** (instalación silenciosa en una carpeta temporal, abrir la app instalada y la portable con Playwright y desinstalar), `docs/RELEASING.md` y prueba con `v1.0.0-rc.1`.
+- **F12-B: workflow de release y prueba de humo.** ✅ Hecha (falta probarla con la etiqueta `v1.0.0-rc.1` tras el merge). Procedimiento en [RELEASING.md](RELEASING.md). Acordado (2026-11-17):
+  - **`release.yml`** con dos trabajos: `build` (Windows, solo lectura) comprueba la etiqueta frente a `package.json`, hace las comprobaciones de la CI **con las E2E**, empaqueta, hace la prueba de humo y escribe `SHA256SUMS.txt`. `release` (Linux, el único con `contents: write`) crea el **borrador** con `gh`, como _pre-release_ si la versión lleva sufijo.
+  - **Texto del release: plantilla fija** (`.github/release-notes.md`, bilingüe: qué descargar, aviso de SmartScreen, cómo comprobar los checksums y enlace al `CHANGELOG.md`). Los cambios se copian al publicar.
+  - **Prueba de humo** (`npm run test:smoke`): instala en silencio en una carpeta temporal, prueba la app instalada (versión, empaquetada, dónde guarda los datos, crear y abrir un perfil, permisos rechazados, fusible `runAsNode`) y la desinstala; después prueba el zip portable. Se niega a empezar si la app ya está instalada en el usuario. Se probó en el equipo del responsable (49 s), sin dejar rastro.
+  - **La versión pasa a `1.0.0-rc.1`** para probar el workflow.
 - **F12-C: documentación** (`ARCHITECTURE.md`, `DEVELOPMENT.md`, `TESTING.md`, `CHANGELOG.md` y el README para usuarios), versión `1.0.0` y etiqueta `v1.0.0`.
 
 **Documentación por crear:**
@@ -441,7 +445,7 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 - `docs/ARCHITECTURE.md`
 - `docs/DEVELOPMENT.md`
 - `docs/TESTING.md`
-- `docs/RELEASING.md`
+- `docs/RELEASING.md` ✅ (F12-B)
 - `CHANGELOG.md`
 
 ---

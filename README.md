@@ -34,6 +34,7 @@ En modo desarrollo, **F12** abre las herramientas de desarrollo del navegador (l
 | `npm run format`      | Formatea el código con Prettier                               |
 | `npm run package`     | Genera el instalador y el zip portable en `release/<versión>` |
 | `npm run package:dir` | Genera la app empaquetada sin instalador (más rápido)         |
+| `npm run test:smoke`  | Instala, prueba y desinstala lo que generó `npm run package`  |
 
 ## Estructura
 

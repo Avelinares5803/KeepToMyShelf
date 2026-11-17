@@ -19,7 +19,9 @@ import {
   chooseDocumentFiles,
   chooseImageFiles,
 } from '../file-dialogs';
-import { createAsyncHandler, createHandler } from './create-handler';
+import { isTrustedSender } from '../security';
+import { appPageUrl } from '../window';
+import { createAsyncHandler, createHandler, forbiddenSender } from './create-handler';
 
 export interface Services {
   readonly profiles: ProfileService;
@@ -269,8 +271,17 @@ export function registerIpcHandlers({
     ),
   };
 
+  // Only the app's own page may call the main process. Nothing else can show content in the
+  // window today (navigation and new windows are blocked); this keeps it so if that changes.
+  const pageUrl = appPageUrl();
   for (const [name, handler] of Object.entries(handlers)) {
     const channel = IpcChannels[name as keyof typeof IpcChannels];
-    ipcMain.handle(channel, (_event, input: unknown) => handler(input));
+    ipcMain.handle(channel, (event, input: unknown) => {
+      if (!isTrustedSender(event.senderFrame, pageUrl)) {
+        console.warn(`Refused ${channel} from ${event.senderFrame?.url ?? 'a closed frame'}`);
+        return forbiddenSender();
+      }
+      return handler(input);
+    });
   }
 }

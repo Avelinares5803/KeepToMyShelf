@@ -703,7 +703,8 @@
       "invalid_value": "Ese valor no es válido."
     },
     "ipc": {
-      "invalid_input": "Los datos enviados no son válidos."
+      "invalid_input": "Los datos enviados no son válidos.",
+      "forbidden_sender": "La petición no procede de la aplicación."
     },
     "internal": "Ha ocurrido un error inesperado.",
     "unknown": "Ha ocurrido un error inesperado."

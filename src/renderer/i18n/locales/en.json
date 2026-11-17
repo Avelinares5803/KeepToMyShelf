@@ -703,7 +703,8 @@
       "invalid_value": "That value is not valid."
     },
     "ipc": {
-      "invalid_input": "The data sent is not valid."
+      "invalid_input": "The data sent is not valid.",
+      "forbidden_sender": "The request does not come from the app."
     },
     "internal": "Something unexpected went wrong.",
     "unknown": "Something unexpected went wrong."

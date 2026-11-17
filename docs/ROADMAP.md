@@ -7,7 +7,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - El flujo de ramas y PR está en [GIT-WORKFLOW.md](GIT-WORKFLOW.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-16, con la F12-A2 (estado de la ventana y pantalla completa).
+**Última actualización:** 2026-11-17, con la F12-A3 (refuerzo de seguridad).
 
 ---
 
@@ -45,7 +45,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A y F12-A2 hechas)    |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A a F12-A3 hechas)    |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -60,7 +60,7 @@ Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama 
 - Electron + TypeScript + React + SQLite (better-sqlite3) + sharp + electron-builder. Ver [ADR 0001](adr/0001-stack.md).
 - Una base de datos por perfil (`library.db`) más `app.db` para perfiles y preferencias. Ver [ADR 0003](adr/0003-profiles.md).
 - Migraciones solo hacia delante, con copia de seguridad previa y claves foráneas desactivadas durante la migración. Ver [ADR 0002](adr/0002-database-migrations.md).
-- Seguridad de Electron: `contextIsolation`, `sandbox`, sin `nodeIntegration`, CSP estricta y preload mínimo. Todo lo que llega por IPC se valida con zod.
+- Seguridad de Electron: `contextIsolation`, `sandbox`, sin `nodeIntegration`, CSP estricta y preload mínimo. Todo lo que llega por IPC se valida con zod. Reforzada en la F12-A3 (permisos, remitente del IPC, ventanas nuevas y fusibles). Ver [ADR 0011](adr/0011-security.md).
 - Repositorio público con licencia MIT. `main` protegida (PR y CI obligatorias), Dependabot semanal con 7 días de espera.
 
 ### 3.2 Perfiles y preferencias
@@ -427,6 +427,12 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **Pantalla completa con F11 y con un botón** en la barra superior, junto al del tema («Pantalla completa» / «Salir de pantalla completa», con F11 en la descripción). **Esc no sale de la pantalla completa**, porque ya cierra diálogos y sale del modo «Seleccionar».
   - **Escalado de pantalla distinto del 100 %:** Electron redondea los tamaños y muestra la ventana uno o dos píxeles más alta de lo pedido. Para que no crezca en cada arranque, si el usuario no la toca se vuelve a guardar el tamaño leído, no el mostrado.
   - **Limitación de las pruebas:** `page.keyboard` de Playwright no pasa por el proceso principal, así que la E2E pulsa F11 con `webContents.sendInputEvent`, que sí lo hace, como una tecla real.
+- **F12-A3: refuerzo de seguridad** (añadida el 2026-11-17, tras revisar la app con la lista de seguridad de Electron). ✅ Hecha. Ver el [ADR 0011](adr/0011-security.md):
+  - **Se rechazan todos los permisos web** (cámara, micrófono, ubicación, notificaciones…), que Electron concedía por defecto.
+  - **Solo la página de la app puede llamar por IPC:** cada mensaje se comprueba (marco principal y URL de la app); si no, `ipc.forbidden_sender`.
+  - **Ninguna ventana nueva ni `<webview>`**, y la CSP añade `object-src`, `frame-src`, `base-uri` y `form-action` a `'none'`.
+  - **Fusibles:** sin `ELECTRON_RUN_AS_NODE` ni `NODE_OPTIONS`, y validación de la integridad del `app.asar`. `--inspect` sigue activo para la prueba de humo.
+  - Revisado sin cambios: no hay credenciales en el código ni en el historial, el SQL usa parámetros, no se inserta HTML, los errores no revelan rutas y las dependencias de la app no tienen vulnerabilidades conocidas.
 - **F12-B: workflow de release, prueba de humo** (instalación silenciosa en una carpeta temporal, abrir la app instalada y la portable con Playwright y desinstalar), `docs/RELEASING.md` y prueba con `v1.0.0-rc.1`.
 - **F12-C: documentación** (`ARCHITECTURE.md`, `DEVELOPMENT.md`, `TESTING.md`, `CHANGELOG.md` y el README para usuarios), versión `1.0.0` y etiqueta `v1.0.0`.
 
@@ -508,5 +514,6 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - Estadísticas personales.
 - Sincronización entre dispositivos.
 - Actualizaciones automáticas y firma de código.
+- Servir la interfaz con un protocolo propio en lugar de `file://`, para desactivar también el fusible `grantFileProtocolExtraPrivileges` (ver el [ADR 0011](adr/0011-security.md)).
 - Versiones para Linux y macOS.
 - Plugins.

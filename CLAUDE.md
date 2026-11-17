@@ -58,8 +58,9 @@ Los commits locales dentro de una tarea aprobada están permitidos.
 
 1. Actualiza [docs/ROADMAP.md](docs/ROADMAP.md): estado de la fase, decisiones nuevas o cambiadas, decisiones abiertas y mejoras anotadas.
 2. Si la decisión es de arquitectura, crea o actualiza su ADR en `docs/adr/`.
-3. Incluye estos cambios en la misma rama de la entrega.
-4. Cuando una fase termine, recomienda abrir un chat nuevo para la siguiente.
+3. Si cambian README, ARCHITECTURE, DEVELOPMENT, TESTING, GIT-WORKFLOW o RELEASING, actualiza la versión en inglés (`.md`) y la española (`.es.md`).
+4. Incluye estos cambios en la misma rama de la entrega.
+5. Cuando una fase termine, recomienda abrir un chat nuevo para la siguiente.
 
 ## Calidad: comprobaciones antes de cada push
 

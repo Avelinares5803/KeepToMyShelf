@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-17, con la F12-C1 (documentación final).
+**Última actualización:** 2026-11-18, con la F12-C2 (versión 1.0.0).
 
 ---
 
@@ -46,7 +46,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F9 Colecciones          | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | En curso (F12-A a F12-C1 hechas)    |
+| F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
 
@@ -447,7 +447,7 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **El README es para usuarios:** funciones, descarga, SmartScreen, dónde están los datos, copias, actualizar y desinstalar. Lo técnico pasa a `DEVELOPMENT`. **Sin capturas de pantalla**, porque quedarían desfasadas con cada cambio de la interfaz.
     - La disposición de los datos en disco pasa del apartado 4 de este documento a `ARCHITECTURE`.
     - `RELEASING` explica que GitHub no muestra la marca _Pre-release_ en los borradores.
-  - **F12-C2: versión 1.0.0** (`chore/release-1.0.0`): `npm version 1.0.0 --no-git-tag-version`, la fecha de la versión en el `CHANGELOG.md` y la F12 marcada como hecha. Después del merge, la etiqueta `v1.0.0`, el borrador del workflow y su publicación.
+  - **F12-C2: versión 1.0.0** (`chore/release-1.0.0`). ✅ Hecha: `npm version 1.0.0 --no-git-tag-version`, la versión 1.0.0 en el `CHANGELOG.md` con fecha 2026-11-18 y enlaces de comparación, y la F12 marcada como hecha. Antes del merge se pasó la prueba de humo en local con los archivos 1.0.0. Después del merge: la etiqueta `v1.0.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md).
 
 **Documentación:** `README`, `docs/ARCHITECTURE`, `docs/DEVELOPMENT`, `docs/TESTING`, `docs/GIT-WORKFLOW` y `docs/RELEASING` (en inglés y en español), y `CHANGELOG.md`. ✅ (F12-B y F12-C1)
 

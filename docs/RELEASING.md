@@ -71,7 +71,7 @@ git push origin v1.1.0
 
 1. In the **Actions** tab, wait for the **Release** workflow to finish (about 15 minutes).
 2. The draft "KeepToMyShelf 1.1.0" appears in **Releases** with the three files. For a release candidate, GitHub does not show the _Pre-release_ badge while it is a draft: it appears once published. To check it before, click **Edit** and look at the "Set as a pre-release" box.
-3. Click **Edit** and replace the comment at the top with the version's changes, copied from `CHANGELOG.md`. The rest of the text comes from the [`.github/release-notes.md`](../.github/release-notes.md) template.
+3. Click **Edit** and add the version's changes from `CHANGELOG.md`: replace the comment under "Español" with the "Español" block, and the one under "English" with the "English" block, each without its heading (`### Español`, `### English`) and without the link lines at the end of the file (`[1.1.0]: https://…`). The rest of the text comes from the [`.github/release-notes.md`](../.github/release-notes.md) template, with the version already filled in by the workflow.
 4. If you want, download the files and try them.
 5. Click **Publish release**.
 

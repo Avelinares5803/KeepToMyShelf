@@ -1,7 +1,10 @@
-<!-- Plantilla del texto de cada release (ver docs/RELEASING.md). Antes de publicar el borrador,
-     sustituye este comentario por los cambios de la versión, copiados de CHANGELOG.md. -->
+<!-- Plantilla del texto de cada release (ver docs/RELEASING.md). El workflow pone la
+     versión en los nombres de los archivos. -->
 
 ## Español
+
+<!-- Sustituye este comentario por el bloque «Español» de la versión en CHANGELOG.md,
+     sin su título ni las líneas de enlaces del final. -->
 
 Descarga **uno** de estos archivos:
 
@@ -15,6 +18,9 @@ Descarga **uno** de estos archivos:
 Todos los cambios están en el [registro de cambios](https://github.com/Avelinares5803/KeepToMyShelf/blob/main/CHANGELOG.md).
 
 ## English
+
+<!-- Replace this comment with the version's "English" block in CHANGELOG.md,
+     without its heading or the link lines at the end. -->
 
 Download **one** of these files:
 

@@ -105,6 +105,20 @@ jobs:
         with:
           name: release-files
           path: dist
+      # The template names the files with <versión> and <version>. If the result does not name
+      # the real files (because the template changed), stop: a wrong text would go unnoticed.
+      - name: Fill in the version in the release notes
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          notes="$RUNNER_TEMP/release-notes.md"
+          sed -e "s/<versión>/$VERSION/g" -e "s/<version>/$VERSION/g" .github/release-notes.md > "$notes"
+          for file in "KeepToMyShelf-Setup-$VERSION.exe" "KeepToMyShelf-Portable-$VERSION.zip"; do
+            if [[ $(grep -cF "$file" "$notes") -ne 2 ]]; then
+              echo "::error::The release notes must name $file once in each language."
+              exit 1
+            fi
+          done
       # gh comes with GitHub's runners; it uses this workflow's own token, no personal one.
       - name: Create the draft release
         env:
@@ -121,4 +135,4 @@ jobs:
             --verify-tag \
             "${prerelease[@]}" \
             --title "KeepToMyShelf $VERSION" \
-            --notes-file .github/release-notes.md
+            --notes-file "$RUNNER_TEMP/release-notes.md"

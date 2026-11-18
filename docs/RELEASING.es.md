@@ -71,7 +71,7 @@ git push origin v1.1.0
 
 1. En la pestaña **Actions**, espera a que termine el workflow **Release** (unos 15 minutos).
 2. En **Releases** aparece el borrador «KeepToMyShelf 1.1.0» con los tres archivos. En una versión candidata, GitHub no muestra la marca _Pre-release_ mientras es un borrador: aparece al publicarlo. Para comprobarla antes, pulsa **Edit** y mira la casilla «Set as a pre-release».
-3. Pulsa **Edit** y sustituye el comentario del principio por los cambios de la versión, copiados de `CHANGELOG.md`. El resto del texto sale de la plantilla [`.github/release-notes.md`](../.github/release-notes.md).
+3. Pulsa **Edit** y añade los cambios de la versión desde `CHANGELOG.md`: sustituye el comentario bajo «Español» por el bloque «Español», y el que está bajo «English» por el bloque «English», cada uno sin su título (`### Español`, `### English`) y sin las líneas de enlaces del final del archivo (`[1.1.0]: https://…`). El resto del texto sale de la plantilla [`.github/release-notes.md`](../.github/release-notes.md), con la versión ya puesta por el workflow.
 4. Si quieres, descarga los archivos y pruébalos.
 5. Pulsa **Publish release**.
 

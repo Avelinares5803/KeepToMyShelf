@@ -519,6 +519,7 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1. Lo que entra en la 
 **v2.0 o más adelante:**
 
 - **Anime** como cuarto tipo (series, películas, ONA, OVA). Requiere una migración que rehaga `item`.
+- **Libros** como tipo nuevo, junto a videojuegos, películas, series y el futuro anime (añadido el 2026-11-19). Igual que el anime, requiere rehacer `item`, porque los tipos están limitados por un `CHECK` en la migración `0001`. Conviene hacer los dos tipos en la misma migración. Quedan por decidir sus campos propios (autoría, editorial, páginas, ISBN, si se incluyen cómics y audiolibros…), sus estados («Leído», «Releído»), sus papeles en los catálogos y sus listas iniciales de géneros.
 - Visor de PDF integrado (pdf.js).
 - Integración opcional con APIs (IGDB, TMDB) e importación masiva.
 - Sincronización entre dispositivos.

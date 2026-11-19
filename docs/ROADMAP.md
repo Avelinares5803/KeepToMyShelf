@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-18, con la versión en el texto del release (tras la v1.0.0).
+**Última actualización:** 2026-11-19, con el plan de la v1.1 (apartado 3.11) y las mejoras anotadas ordenadas por versión.
 
 ---
 
@@ -47,8 +47,9 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
+| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🔜 Planificada (apartado 3.11)      |
 
-Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR.
+Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
 **Antes de la F10:** la mejora «Seleccionar» (seleccionar varios elementos o colecciones y enviarlos a la papelera, eliminarlos o quitarlos de una colección), acordada el 2026-11-08. ✅ Hecha. Ver el final del apartado 3.7.
 
@@ -222,7 +223,7 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
   - Todos los tipos: Estado, Rejugado/Revisionada, Formato, Valoración (≥, ≤ y «sin valorar»), Favorito, Sagas, Géneros, Países de origen, Etiquetas y Música.
   - Videojuegos: Mis plataformas, Plataformas de lanzamiento, Distribuidoras y Desarrolladoras.
   - Películas y series: Productoras, Dirección y Reparto.
-  - Más adelante: año de lanzamiento, horas, temporadas. Corregido en la revisión de la F8: el registro aún no tiene campos numéricos, y las temporadas están en otra tabla (`series_details`), así que hará falta un tipo de campo nuevo en el motor.
+  - Más adelante: año de lanzamiento, horas, temporadas. Corregido en la revisión de la F8: el registro aún no tiene campos numéricos, y las temporadas están en otra tabla (`series_details`), así que hará falta un tipo de campo nuevo en el motor. Planificado para la v1.1-B (apartado 3.11).
 - **Interfaz: dos pestañas, «Filtros simples» y «Filtros avanzados»** (acordado el 2026-11-04; sustituye a que el panel y el constructor compartieran un solo árbol):
   - Los filtros simples son listas de casillas: OR dentro de un atributo, AND entre atributos. Están en un panel plegable encima de la cuadrícula, que se abre con el botón «Filtros (N)», y se aplican al momento.
   - **En los simples** (acordado el 2026-11-05): una casilla «Favoritos» y otra «Rejugados» («Revisionadas» en películas y series), y en la valoración «Al menos» (en pasos de media estrella) y «Sin valorar», que se suman entre sí.
@@ -454,6 +455,25 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 
 **Documentación:** `README`, `docs/ARCHITECTURE`, `docs/DEVELOPMENT`, `docs/TESTING`, `docs/GIT-WORKFLOW` y `docs/RELEASING` (en inglés y en español), y `CHANGELOG.md`. ✅ (F12-B y F12-C1)
 
+### 3.11 Versión 1.1: uso diario (planificada el 2026-11-19)
+
+**Objetivo:** mejoras pequeñas y medianas para el uso diario de la biblioteca, tomadas de las mejoras anotadas (apartado 6). Sin dependencias nuevas y sin rehacer tablas. Las migraciones nuevas siguen las reglas de siempre (solo hacia delante, con su prueba). Cada entrega tiene su rama y su PR, y se trabaja un chat por entrega. Antes de implementar cada una, se acuerda su detalle y se anota aquí.
+
+**Entregas, en este orden:**
+
+- **v1.1-A: orden natural de los números** en los títulos y los catálogos: «Final Fantasy 2» antes que «Final Fantasy 10». Previsiblemente necesita una migración con una columna de clave de orden, porque SQLite compara texto carácter a carácter. Antes de proponerla, hay que comprobar si better-sqlite3 permite registrar una función de comparación propia (_collation_).
+- **v1.1-B: filtros numéricos:** año de lanzamiento, horas jugadas (videojuegos) y temporadas (series). El registro de campos necesita un tipo de campo nuevo (rango con ≥ y ≤), y las temporadas están en otra tabla (`series_details`). Hay que decidir si aparecen en los filtros simples, en los avanzados o en ambos.
+- **v1.1-C: colecciones:** un filtro «Colección» en las bibliotecas, ordenar una colección por la fecha en que se añadió cada elemento (ya se guarda) y usar como portada de la colección la de uno de sus elementos. El orden manual y los filtros por atributo siguen en las mejoras anotadas.
+- **v1.1-D: tamaño de las portadas** en la biblioteca, con un control para agrandarlas o reducirlas. La cuadrícula virtualizada y la posición recordada tienen que recalcularse con el tamaño elegido.
+- **v1.1-E: arrastrar y soltar** imágenes y PDF en las zonas del formulario del elemento (portada, galería y documentos). Acordado el 2026-11-19:
+  - **La interfaz sigue sin manejar rutas.** La función del preload recibe solo objetos `File` del arrastre, obtiene su ruta con `webUtils.getPathForFile` y la envía ella misma al proceso principal. Un `File` creado por código no tiene ruta, así que la interfaz no puede pedir que se lea un archivo que el usuario no ha soltado.
+  - **El proceso principal rechaza las rutas de red** (`\\servidor\…`), que en Windows pueden enviar al servidor una huella de la contraseña de la sesión (NTLM), y todo lo que no sea un archivo normal. Después, la importación pasa por las mismas comprobaciones de contenido y tamaño que con la ventana «Abrir».
+  - Cada zona acepta solo lo suyo. Lo demás se rechaza con su nombre y el motivo, como en los diálogos. Soltar fuera de una zona no hace nada. Las imágenes arrastradas desde un navegador, sin archivo en el disco, se rechazan con un aviso.
+  - Se documenta en el [ADR 0011](adr/0011-security.md).
+  - **Limitación de las pruebas:** Playwright no puede simular un arrastre real con una ruta real. Las E2E cubren la interfaz, las pruebas unitarias cubren el preload y el proceso principal, y el arrastre desde el Explorador se prueba a mano.
+  - Fuera de esta entrega: arrastrar fondos en Ajustes y la portada de una colección.
+- **v1.1-F: versión 1.1.0**, como la F12-C2: `npm version 1.1.0 --no-git-tag-version`, el `CHANGELOG.md` y, tras el merge, la etiqueta `v1.1.0` y el release según [RELEASING.es.md](RELEASING.es.md).
+
 ---
 
 ## 4. Disposición de los datos en disco
@@ -479,27 +499,40 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 
 ## 6. Mejoras anotadas (fuera del alcance actual)
 
-**Para después de la v1.0 o cuando encaje:**
+Ordenadas por versión el 2026-11-19, al planificar la v1.1. Lo que entra en la v1.1 está en el apartado 3.11. **El reparto de la v1.2 en adelante es provisional** y se revisará al terminar la v1.1.
 
-- **Anime** como cuarto tipo (series, películas, ONA, OVA). Requiere una migración que rehaga `item`.
+**v1.2: catálogos y formularios (provisional):**
+
 - Fusionar valores duplicados de los catálogos: opcional y con sugerencias.
 - Copiar catálogos de otro perfil.
 - Errores por campo en los formularios: todos a la vez, con el campo resaltado.
-- Ejecutar las E2E también en Linux (con xvfb) y medir la cobertura (objetivos: `core/` ≥ 90 %, `application/` e `infrastructure/` ≥ 80 %).
-- Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
-- Visor de PDF integrado (pdf.js).
-- Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.
-- Un control para agrandar o reducir las portadas de la biblioteca.
-- Elegir los valores de los filtros avanzados con autocompletado (también por alias), en lugar de un desplegable, si las listas se hacen muy largas.
-- Orden natural de los números en los títulos y los catálogos: hoy «Final Fantasy 10» va antes que «Final Fantasy 2». Necesita una columna o una función de orden propia en SQLite.
-- Añadir imágenes y documentos arrastrándolos a la ventana. Necesita `webUtils.getPathForFile` en el preload para obtener la ruta del archivo soltado.
-- Colecciones: orden manual, usar la portada de uno de sus elementos, filtros por atributo al elegir un tipo, un filtro «Colección» en las bibliotecas y ordenar por la fecha en que se añadió (ya se guarda).
+
+**v1.3: tus datos (provisional):**
+
 - Exportar e importar bibliotecas (JSON/CSV) y copias programadas.
-- Seguimiento por temporada o episodio; varias sesiones de juego o visionado.
-- Integración opcional con APIs (IGDB, TMDB) e importación masiva.
 - Estadísticas personales.
+
+**Calidad, cuando encaje** (cambia los workflows, así que necesita permiso):
+
+- Ejecutar las E2E también en Linux (con xvfb) y medir la cobertura (objetivos: `core/` ≥ 90 %, `application/` e `infrastructure/` ≥ 80 %).
+
+**v2.0 o más adelante:**
+
+- **Anime** como cuarto tipo (series, películas, ONA, OVA). Requiere una migración que rehaga `item`.
+- **Libros** como tipo nuevo, junto a videojuegos, películas, series y el futuro anime (añadido el 2026-11-19). Igual que el anime, requiere rehacer `item`, porque los tipos están limitados por un `CHECK` en la migración `0001`. Conviene hacer los dos tipos en la misma migración. Quedan por decidir sus campos propios (autoría, editorial, páginas, ISBN, si se incluyen cómics y audiolibros…), sus estados («Leído», «Releído»), sus papeles en los catálogos y sus listas iniciales de géneros.
+- Visor de PDF integrado (pdf.js).
+- Integración opcional con APIs (IGDB, TMDB) e importación masiva.
 - Sincronización entre dispositivos.
 - Actualizaciones automáticas y firma de código.
 - Servir la interfaz con un protocolo propio en lugar de `file://`, para desactivar también el fusible `grantFileProtocolExtraPrivileges` (ver el [ADR 0011](adr/0011-security.md)).
 - Versiones para Linux y macOS.
 - Plugins.
+
+**Sin versión asignada:**
+
+- Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
+- Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.
+- Elegir los valores de los filtros avanzados con autocompletado (también por alias), en lugar de un desplegable, si las listas se hacen muy largas.
+- Colecciones: orden manual y filtros por atributo al elegir un tipo.
+- Arrastrar y soltar también los fondos de Ajustes y la portada de una colección, con el mecanismo de la v1.1-E.
+- Seguimiento por temporada o episodio; varias sesiones de juego o visionado.

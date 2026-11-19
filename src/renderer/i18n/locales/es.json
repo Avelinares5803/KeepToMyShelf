@@ -66,6 +66,14 @@
       "atLeast": "Al menos",
       "anyRating": "Cualquiera",
       "unrated": "Sin valorar",
+      "releaseYear": {
+        "game": "Año de lanzamiento",
+        "screen": "Año de estreno"
+      },
+      "from": "Desde",
+      "to": "Hasta",
+      "fromField": "{{field}}, desde",
+      "toField": "{{field}}, hasta",
       "searchValues": "Buscar en {{field}}",
       "noMatches": "Ningún valor coincide.",
       "tooMany": "Se muestran {{shown}} de {{total}}. Escribe para acotar.",
@@ -107,7 +115,8 @@
         "isNot": "no es",
         "gte": "al menos",
         "lte": "como mucho",
-        "isEmpty": "sin valorar"
+        "isEmpty": "sin valorar",
+        "notSet": "sin indicar"
       },
       "hint": "Las condiciones sin completar no se aplican."
     },

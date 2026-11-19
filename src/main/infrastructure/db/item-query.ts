@@ -11,7 +11,11 @@ import {
   type SqlBool,
 } from 'kysely';
 import type { ItemRole } from '../../../core/catalogs/catalogs';
-import { filterFieldFor, type ItemFlagColumn } from '../../../core/filters/filter-fields';
+import {
+  filterFieldFor,
+  type ItemFlagColumn,
+  type NumberMeasure,
+} from '../../../core/filters/filter-fields';
 import type { FilterCondition, FilterNode } from '../../../core/filters/filter-tree';
 import { DEFAULT_ITEM_SORT, type ItemSort } from '../../../core/filters/item-sort';
 import { normalizeForSearch } from '../../../core/text/normalize';
@@ -114,6 +118,49 @@ function conditionExpression(
     case 'rating':
       if (operator === 'isEmpty') return eb('item.rating', 'is', null);
       return eb('item.rating', operator === 'gte' ? '>=' : '<=', value as number);
+    case 'number': {
+      const measured = measureExpression(source.measure);
+      if (operator === 'isEmpty') return sql<SqlBool>`${measured} IS NULL`;
+      // Hours are whole in the filter and minutes in the item: "at most 11" takes 10:30.
+      const limit = source.measure === 'hoursPlayed' ? (value as number) * 60 : (value as number);
+      // NULL never compares, so items without the number are left out, as with the rating.
+      return operator === 'gte'
+        ? sql<SqlBool>`${measured} >= ${limit}`
+        : sql<SqlBool>`${measured} <= ${limit}`;
+    }
+  }
+}
+
+/**
+ * The lowest and highest number of `measure` among the library's items of `kind`, without the
+ * trash. Both are NULL when no item has it. Hours come in minutes, as stored.
+ */
+export function buildMeasureRangeQuery(kind: ItemKind, measure: NumberMeasure): CompiledQuery {
+  const measured = measureExpression(measure);
+  return builder
+    .selectFrom('item')
+    .select([
+      sql<number | null>`MIN(${measured})`.as('min'),
+      sql<number | null>`MAX(${measured})`.as('max'),
+    ])
+    .where('item.kind', '=', kind)
+    .where('item.deleted_at', 'is', null)
+    .compile();
+}
+
+/** The number each measure filters by, NULL when the item does not have it. */
+function measureExpression(measure: NumberMeasure): Expression<number | null> {
+  switch (measure) {
+    case 'releaseYear':
+      // The earliest release, as the sort by release date. Dates start with their 4-digit year.
+      return sql`(SELECT CAST(substr(MIN(item_release.date), 1, 4) AS INTEGER)
+        FROM item_release WHERE item_release.item_id = item.id)`;
+    case 'hoursPlayed':
+      return sql.ref('item.minutes_played');
+    case 'seasons':
+      // Not every series has a row of details: without one, it has no seasons to compare.
+      return sql`(SELECT series_details.seasons_count
+        FROM series_details WHERE series_details.item_id = item.id)`;
   }
 }
 

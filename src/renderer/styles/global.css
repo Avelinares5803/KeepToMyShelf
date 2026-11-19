@@ -738,6 +738,26 @@ h1 {
   font-size: 0.9rem;
 }
 
+.simple-filters__range {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.simple-filters__range label {
+  min-width: 3.5rem;
+}
+
+.simple-filters__number,
+.advanced-filters__number {
+  width: 8rem;
+  min-width: 0;
+}
+
+.simple-filters__number[aria-invalid='true'],
+.advanced-filters__number[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
 .simple-filters__search {
   width: 100%;
   padding: 0.35rem 0.5rem;

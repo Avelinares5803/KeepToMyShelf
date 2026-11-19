@@ -1,4 +1,5 @@
 import type { ItemRole } from '../../../core/catalogs/catalogs';
+import { isValidNumber, type NumberMeasure } from '../../../core/filters/filter-fields';
 import type { FilterCondition, FilterNode } from '../../../core/filters/filter-tree';
 import type { ItemStatus } from '../../../core/items/item-draft';
 import type { ItemFilterValues } from '../../../shared/items';
@@ -17,6 +18,13 @@ export interface SimpleFilters {
   readonly unrated: boolean;
   /** Ids of the catalog values marked in each role. */
   readonly roles: Readonly<Partial<Record<ItemRole, readonly number[]>>>;
+  /** "From" and "to" of each number, as typed: only valid numbers apply. */
+  readonly ranges: Readonly<Partial<Record<NumberMeasure, NumberRangeText>>>;
+}
+
+export interface NumberRangeText {
+  readonly from: string;
+  readonly to: string;
 }
 
 export const NO_SIMPLE_FILTERS: SimpleFilters = {
@@ -27,7 +35,31 @@ export const NO_SIMPLE_FILTERS: SimpleFilters = {
   minRating: null,
   unrated: false,
   roles: {},
+  ranges: {},
 };
+
+/** The number typed, if `measure` can have it; null when empty or not valid. */
+export function parseBound(measure: NumberMeasure, text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d{1,9}$/.test(trimmed)) return null;
+  const value = Number(trimmed);
+  return isValidNumber(measure, value) ? value : null;
+}
+
+/** Whether `text` is something that does not apply: neither empty nor a valid number. */
+export const isInvalidBound = (measure: NumberMeasure, text: string) =>
+  text.trim() !== '' && parseBound(measure, text) === null;
+
+/** The bounds of a range that apply, as conditions on its field. */
+function rangeConditions(measure: NumberMeasure, range: NumberRangeText): FilterCondition[] {
+  const bounds = [
+    ['gte', parseBound(measure, range.from)],
+    ['lte', parseBound(measure, range.to)],
+  ] as const;
+  return bounds.flatMap(([operator, value]) =>
+    value === null ? [] : [{ type: 'condition', field: measure, operator, value } as const],
+  );
+}
 
 const is = (field: string, value: FilterCondition['value']): FilterCondition => ({
   type: 'condition',
@@ -38,7 +70,8 @@ const is = (field: string, value: FilterCondition['value']): FilterCondition => 
 
 /**
  * The tree the simple filters mean: any of the marks of an attribute (OR), and all the
- * attributes with marks (AND). Undefined when nothing is marked.
+ * attributes with marks (AND). A range must keep both its bounds (AND). Undefined when nothing
+ * is marked.
  */
 export function toFilterTree(filters: SimpleFilters): FilterNode | undefined {
   const anyOf: FilterNode[][] = [
@@ -63,13 +96,22 @@ export function toFilterTree(filters: SimpleFilters): FilterNode | undefined {
     ],
     ...Object.entries(filters.roles).map(([role, ids]) => ids.map((id) => is(role, id))),
   ];
-  const children: FilterNode[] = anyOf
-    .filter((marks) => marks.length > 0)
-    .map((marks) => ({ type: 'group', op: 'or', children: marks }));
+  const allOf = rangeEntries(filters).map(([measure, range]) => rangeConditions(measure, range));
+  const children: FilterNode[] = [
+    ...anyOf
+      .filter((marks) => marks.length > 0)
+      .map((marks) => ({ type: 'group', op: 'or', children: marks }) as const),
+    ...allOf
+      .filter((bounds) => bounds.length > 0)
+      .map((bounds) => ({ type: 'group', op: 'and', children: bounds }) as const),
+  ];
   return children.length === 0 ? undefined : { type: 'group', op: 'and', children };
 }
 
-/** How many marks there are, for the "Filters (3)" button. */
+const rangeEntries = (filters: SimpleFilters) =>
+  Object.entries(filters.ranges) as [NumberMeasure, NumberRangeText][];
+
+/** How many marks there are, for the "Filters (3)" button. Each bound that applies is one. */
 export function countMarks(filters: SimpleFilters): number {
   return (
     Number(filters.favorite) +
@@ -78,7 +120,11 @@ export function countMarks(filters: SimpleFilters): number {
     filters.format.length +
     Number(filters.minRating !== null) +
     Number(filters.unrated) +
-    Object.values(filters.roles).reduce((total, ids) => total + ids.length, 0)
+    Object.values(filters.roles).reduce((total, ids) => total + ids.length, 0) +
+    rangeEntries(filters).reduce(
+      (total, [measure, range]) => total + rangeConditions(measure, range).length,
+      0,
+    )
   );
 }
 
@@ -98,7 +144,7 @@ export function withoutMissingValues(
   let changed = false;
   const roles: Partial<Record<ItemRole, readonly number[]>> = {};
   for (const [role, ids] of Object.entries(filters.roles) as [ItemRole, readonly number[]][]) {
-    const known = new Set((values[role] ?? []).map((value) => value.id));
+    const known = new Set((values.roles[role] ?? []).map((value) => value.id));
     const kept = ids.filter((id) => known.has(id));
     if (kept.length !== ids.length) changed = true;
     if (kept.length > 0) roles[role] = kept;

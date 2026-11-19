@@ -3,15 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { type ItemRole, ITEM_ROLES } from '../../../core/catalogs/catalogs';
 import {
   filterFieldFor,
+  isValidNumber,
+  NUMBER_LIMITS,
+  NUMBER_MEASURES,
   operatorsFor,
   type FilterOperator,
   type FilterSource,
+  type NumberMeasure,
 } from '../../../core/filters/filter-fields';
 import type { ItemStatus } from '../../../core/items/item-draft';
 import { RATING_MAX, RATING_MIN, ratingToStars } from '../../../core/items/rating';
 import type { ItemKind } from '../../../shared/content';
 import type { ItemFilterValues } from '../../../shared/items';
 import {
+  measureLabel,
   notReplayPluralLabel,
   replayLabel,
   replayPluralLabel,
@@ -161,6 +166,9 @@ function Condition({
 
   const fieldLabel = (field: string) => {
     if (ITEM_ROLES.includes(field as ItemRole)) return roleLabel(t, field as ItemRole);
+    if (NUMBER_MEASURES.includes(field as NumberMeasure)) {
+      return measureLabel(t, kind, field as NumberMeasure);
+    }
     switch (field) {
       case 'replay':
         return replayLabel(t, kind);
@@ -173,10 +181,10 @@ function Condition({
     }
   };
 
-  const valueOptions = (from: FilterSource): ValueOption[] => {
+  const valueOptions = (from: Exclude<FilterSource, { type: 'number' }>): ValueOption[] => {
     switch (from.type) {
       case 'role':
-        return (values?.[from.role] ?? []).map(({ id, name }) => ({
+        return (values?.roles[from.role] ?? []).map(({ id, name }) => ({
           value: String(id),
           label: name,
         }));
@@ -212,6 +220,12 @@ function Condition({
   };
 
   const operators = source ? operatorsFor(source) : [];
+  // "Not rated" for the rating; numbers are "not set".
+  const operatorLabel = (operator: FilterOperator) =>
+    source?.type === 'number' && operator === 'isEmpty'
+      ? t('library.advanced.operators.notSet')
+      : t(`library.advanced.operators.${operator}`);
+  const range = source?.type === 'number' ? values?.ranges[source.measure] : undefined;
 
   return (
     <div className="advanced-filters__condition inline-field">
@@ -240,13 +254,31 @@ function Condition({
         >
           {operators.map((operator) => (
             <option key={operator} value={operator}>
-              {t(`library.advanced.operators.${operator}`)}
+              {operatorLabel(operator)}
             </option>
           ))}
         </select>
       )}
 
-      {source && condition.operator !== 'isEmpty' && (
+      {source?.type === 'number' && condition.operator !== 'isEmpty' && (
+        <input
+          type="number"
+          inputMode="numeric"
+          className="advanced-filters__number"
+          aria-label={t('library.advanced.value')}
+          min={NUMBER_LIMITS[source.measure].min}
+          max={NUMBER_LIMITS[source.measure].max}
+          step={1}
+          placeholder={range === undefined ? undefined : `${range.min}–${range.max}`}
+          aria-invalid={condition.value !== null && !isValidNumber(source.measure, condition.value)}
+          value={condition.value === null ? '' : String(condition.value)}
+          onChange={(event) =>
+            onChange(setValue(root, condition.id, parseValue(source, event.target.value)))
+          }
+        />
+      )}
+
+      {source && source.type !== 'number' && condition.operator !== 'isEmpty' && (
         <select
           className="advanced-filters__value"
           aria-label={t('library.advanced.value')}

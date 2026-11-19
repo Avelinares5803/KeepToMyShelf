@@ -15,7 +15,8 @@ describe('ItemService.filterValues', () => {
   const item = (kind: ItemKind, title: string, relations: ItemRelationsDraft) =>
     fx.items.create(token, kind, { ...EMPTY_ITEM_DRAFT, title, relations });
   const names = (kind: ItemKind, role: 'tag' | 'owned_on' | 'released_on') =>
-    fx.items.filterValues(token, kind)[role]?.map((value) => value.name);
+    fx.items.filterValues(token, kind).roles[role]?.map((value) => value.name);
+  const ranges = (kind: ItemKind) => fx.items.filterValues(token, kind).ranges;
 
   beforeEach(() => {
     fx = createProfileFixture();
@@ -28,7 +29,7 @@ describe('ItemService.filterValues', () => {
   });
 
   it('offers nothing for an empty library, even with catalogs full of values', () => {
-    expect(fx.items.filterValues(token, 'game')).toEqual({});
+    expect(fx.items.filterValues(token, 'game')).toEqual({ roles: {}, ranges: {} });
   });
 
   it('offers only the values used by items of that kind', () => {
@@ -84,7 +85,7 @@ describe('ItemService.filterValues', () => {
     const drive = entry('platform', 'Mega Drive de prueba', ['Genesis de prueba']);
     item('game', 'Juego', { owned_on: existing(drive) });
 
-    expect(fx.items.filterValues(token, 'game').owned_on).toEqual([
+    expect(fx.items.filterValues(token, 'game').roles.owned_on).toEqual([
       { id: drive, name: 'Mega Drive de prueba', aliases: ['Genesis de prueba'] },
     ]);
   });
@@ -124,6 +125,61 @@ describe('ItemService.filterValues', () => {
     const start = performance.now();
     const values = fx.items.filterValues(token, 'game');
     expect(performance.now() - start).toBeLessThan(1_000);
-    expect(values.tag).toHaveLength(2_000);
+    expect(values.roles.tag).toHaveLength(2_000);
+  });
+
+  describe('ranges', () => {
+    const game = (title: string, draft: Partial<typeof EMPTY_ITEM_DRAFT>) =>
+      fx.items.create(token, 'game', { ...EMPTY_ITEM_DRAFT, title, ...draft });
+
+    it('offers the earliest release year of each item, from the lowest to the highest', () => {
+      game('Antiguo', {
+        releases: [
+          { region: null, date: { year: 2004 } },
+          { region: null, date: { year: 1998, month: 3 } },
+        ],
+      });
+      game('Nuevo', { releases: [{ region: null, date: { year: 2021, month: 5, day: 2 } }] });
+      // Its later release does not make the range wider: the year is its earliest one.
+      game('Reeditado', {
+        releases: [
+          { region: null, date: { year: 2000 } },
+          { region: null, date: { year: 2030 } },
+        ],
+      });
+      game('Sin fecha', {});
+
+      expect(ranges('game')).toEqual({ releaseYear: { min: 1998, max: 2021 } });
+    });
+
+    it('offers whole hours that take in every item: 10:30 is at most 11', () => {
+      game('Corto', { minutesPlayed: 90 });
+      game('Largo', { minutesPlayed: 10 * 60 + 30 });
+
+      expect(ranges('game').hoursPlayed).toEqual({ min: 1, max: 11 });
+    });
+
+    it('offers seasons to series only', () => {
+      fx.items.create(token, 'series', { ...EMPTY_ITEM_DRAFT, title: 'Una', seasonsCount: 1 });
+      fx.items.create(token, 'series', { ...EMPTY_ITEM_DRAFT, title: 'Siete', seasonsCount: 7 });
+      fx.items.create(token, 'series', { ...EMPTY_ITEM_DRAFT, title: 'Sin dato' });
+
+      expect(ranges('series')).toEqual({ seasons: { min: 1, max: 7 } });
+      expect(ranges('movie')).toEqual({});
+    });
+
+    it('leaves out the trash and the other kinds', () => {
+      const { id } = game('Basura', { minutesPlayed: 6000 });
+      game('Juego', { minutesPlayed: 120 });
+      fx.items.create(token, 'movie', {
+        ...EMPTY_ITEM_DRAFT,
+        title: 'Película',
+        releases: [{ region: null, date: { year: 1950 } }],
+      });
+      fx.items.moveToTrash(token, id);
+
+      expect(ranges('game')).toEqual({ hoursPlayed: { min: 2, max: 2 } });
+      expect(ranges('movie')).toEqual({ releaseYear: { min: 1950, max: 1950 } });
+    });
   });
 });

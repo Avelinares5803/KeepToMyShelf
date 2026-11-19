@@ -158,6 +158,65 @@ test('filters by each kind of control', async () => {
   await expectTitles(['Ambos', 'Digital', 'Físico']);
 });
 
+test('filters by numbers from and to, with the range of the library as a hint', async () => {
+  await openFilters([
+    { title: 'Clásico', releaseDate: '1994-05', minutesPlayed: 600 },
+    { title: 'Moderno', releaseDate: '2019', minutesPlayed: 630 },
+    { title: 'Sin datos' },
+  ]);
+  const number = (name: string) => panel().getByRole('spinbutton', { name, exact: true });
+
+  await section('Año de lanzamiento').click();
+  const yearFrom = number('Año de lanzamiento, desde');
+  await expect(yearFrom).toHaveAttribute('placeholder', '1994');
+  await expect(number('Año de lanzamiento, hasta')).toHaveAttribute('placeholder', '2019');
+  await yearFrom.fill('2000');
+  await expectTitles(['Moderno']);
+  await expect(button('Filtros (1)')).toBeVisible();
+  await number('Año de lanzamiento, hasta').fill('2018');
+  await expect(heading('Videojuegos (0)')).toBeVisible();
+  await expect(button('Filtros (2)')).toBeVisible();
+
+  // A number the field cannot have does not apply, and is marked.
+  await number('Año de lanzamiento, hasta').fill('');
+  await yearFrom.fill('0');
+  await expect(yearFrom).toHaveAttribute('aria-invalid', 'true');
+  await expectTitles(['Clásico', 'Moderno', 'Sin datos']);
+  // Like a half-filled advanced row, it counts for nothing, so there is nothing to remove.
+  await expect(button('Filtros')).toBeVisible();
+  await expect(button('Quitar filtros').first()).toBeDisabled();
+  await yearFrom.fill('');
+
+  // Whole hours: 10:30 is not "to 10", but it is "to 11".
+  await section('Horas jugadas').click();
+  await expect(number('Horas jugadas, hasta')).toHaveAttribute('placeholder', '11');
+  await number('Horas jugadas, hasta').fill('10');
+  await expectTitles(['Clásico']);
+  await number('Horas jugadas, hasta').fill('11');
+  await expectTitles(['Clásico', 'Moderno']);
+});
+
+test('offers each kind its numbers, only when some item has them', async () => {
+  seedItems(dataDir, [
+    { title: 'Larga', kind: 'series', seasons: 7 },
+    { title: 'Corta', kind: 'series', seasons: 1 },
+    { title: 'Juego' },
+  ]);
+  await button('Series').click();
+  await button('Filtros').click();
+  await expect(section('Año de estreno')).toHaveCount(0);
+  await expect(section('Horas jugadas')).toHaveCount(0);
+  await section('Temporadas').click();
+  await panel().getByRole('spinbutton', { name: 'Temporadas, desde', exact: true }).fill('2');
+  await expectTitles(['Larga']);
+
+  await button('Volver').click();
+  await button('Videojuegos').click();
+  await button('Filtros').click();
+  await expect(section('Año de lanzamiento')).toHaveCount(0);
+  await expect(section('Temporadas')).toHaveCount(0);
+});
+
 test('calls the replay filter by the name of the kind', async () => {
   seedItems(dataDir, [{ title: 'Película', kind: 'movie', entries: [tag('Óscar')] }]);
   await button('Películas').click();

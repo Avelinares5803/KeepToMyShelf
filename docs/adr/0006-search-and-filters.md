@@ -1,7 +1,7 @@
 # ADR 0006: Búsqueda, filtros y ordenación
 
-- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples), F7-E (filtros avanzados) y v1.1-A (orden natural de los números)
-- **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes, y el 2026-11-19 con el orden natural)
+- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples), F7-E (filtros avanzados), v1.1-A (orden natural de los números) y v1.1-B (filtros numéricos)
+- **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes, y el 2026-11-19 con el orden natural y los filtros numéricos)
 
 ## Contexto
 
@@ -24,8 +24,19 @@ Un filtro es un árbol de grupos (`and`, `or`) y condiciones (`src/core/filters/
 | `flag`   | Favorito, Rejugado/Revisionada          | es                |
 | `flags`  | Formato (físico, digital)               | es, no es         |
 | `rating` | Valoración                              | ≥, ≤, sin valorar |
+| `number` | Año de lanzamiento, horas, temporadas   | ≥, ≤, sin indicar |
 
 Los papeles se filtran por separado aunque compartan catálogo: «Lo tengo en» y «Publicado en» son campos distintos.
+
+### Campos numéricos (v1.1-B)
+
+El tipo `number` lleva una **medida** (`NUMBER_MEASURES`) con sus límites (`NUMBER_LIMITS`, los mismos que admite el elemento). La consulta obtiene cada medida con una expresión que vale NULL cuando el elemento no tiene el dato (`measureExpression`, en `item-query.ts`):
+
+- **Año de lanzamiento** (los tres tipos; «de estreno» en películas y series): el del **lanzamiento más temprano**, `CAST(substr(MIN(date), 1, 4) AS INTEGER)`, la misma fecha que ordena por lanzamiento. Con «cualquiera de sus lanzamientos», «≥ 1995 Y ≤ 1999» podría cumplirse con dos lanzamientos distintos.
+- **Horas jugadas** (videojuegos): el filtro usa horas enteras y la consulta compara con los minutos guardados (`horas × 60`), así que 10:30 está en «como mucho 11» pero no en «como mucho 10».
+- **Temporadas** (series): subconsulta a `series_details`; una serie sin fila no tiene el dato.
+
+Como con la valoración, un elemento sin el dato no cumple ≥ ni ≤; «sin indicar» lo busca. En los **filtros simples**, cada número es una sección con «Desde» y «Hasta» que se combinan con AND (cada límite válido cuenta como una marca); «sin indicar» solo está en los **avanzados**, porque en casillas daría «(≥ a Y ≤ b) O sin dato». Un número a medias o imposible no se aplica y la casilla lo marca, igual que una fila avanzada sin completar.
 
 ### Consulta
 
@@ -69,7 +80,7 @@ Kysely construye la consulta y `.compile()` devuelve el SQL y sus parámetros; l
 
 El estado de las casillas (`simple-filters.ts`) no es un árbol, sino lo marcado en cada atributo. `toFilterTree` lo convierte en el árbol del motor: un grupo `or` por atributo dentro de un grupo `and`. Así, el motor no sabe de dónde viene un filtro.
 
-Los valores que ofrecen salen del canal `items.filterValues`: por papel, los que usa algún elemento de ese tipo fuera de la papelera, con sus alias. No se reutiliza la lista de «Catálogos» porque esa cuenta también la papelera y mezcla los papeles que comparten catálogo.
+Los valores que ofrecen salen del canal `items.filterValues`: por papel (`roles`), los que usa algún elemento de ese tipo fuera de la papelera, con sus alias; y por medida (`ranges`, desde la v1.1-B), el mínimo y el máximo, en horas enteras para las horas. Una sección numérica solo aparece si algún elemento tiene el dato (o si hay algo escrito, para poder borrarlo), y su rango se muestra como texto de ejemplo. En los avanzados los números se ofrecen siempre, como la valoración. No se reutiliza la lista de «Catálogos» porque esa cuenta también la papelera y mezcla los papeles que comparten catálogo.
 
 ### Filtros avanzados y modos
 

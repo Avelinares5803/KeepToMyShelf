@@ -13,6 +13,10 @@ export interface SeedItem {
   readonly createdAt?: string;
   readonly alternateTitle?: string;
   readonly releaseDate?: string;
+  /** Games only. */
+  readonly minutesPlayed?: number;
+  /** Series only. */
+  readonly seasons?: number;
   readonly status?: string;
   readonly favorite?: boolean;
   readonly replay?: boolean;
@@ -84,10 +88,10 @@ export function seedItems(dataDir: string, items: readonly SeedItem[]): void {
   const db = openLibrary(dataDir);
   const insert = db.prepare(
     `INSERT INTO item (uuid, kind, title, title_norm, placeholder_no, rating, started_on,
-       finished_on, status, is_favorite, is_replay, owns_physical, owns_digital, created_at,
-       updated_at)
+       finished_on, minutes_played, status, is_favorite, is_replay, owns_physical, owns_digital,
+       created_at, updated_at)
      VALUES (@uuid, @kind, @title, @titleNorm, @placeholder, @rating, @startedOn, @finishedOn,
-       @status, @favorite, @replay, @physical, @digital, @createdAt, @createdAt)`,
+       @minutesPlayed, @status, @favorite, @replay, @physical, @digital, @createdAt, @createdAt)`,
   );
   const entryId = (entry: SeedEntry): number => {
     const found = db
@@ -119,6 +123,7 @@ export function seedItems(dataDir: string, items: readonly SeedItem[]): void {
         rating: item.rating ?? null,
         startedOn: item.startedOn ?? null,
         finishedOn: item.finishedOn ?? null,
+        minutesPlayed: item.minutesPlayed ?? null,
         status: item.status ?? null,
         favorite: item.favorite ? 1 : 0,
         replay: item.replay ? 1 : 0,
@@ -144,6 +149,12 @@ export function seedItems(dataDir: string, items: readonly SeedItem[]): void {
         db.prepare('INSERT INTO item_release (item_id, date) VALUES (?, ?)').run(
           id,
           item.releaseDate,
+        );
+      }
+      if (item.seasons !== undefined) {
+        db.prepare('INSERT INTO series_details (item_id, seasons_count) VALUES (?, ?)').run(
+          id,
+          item.seasons,
         );
       }
     });

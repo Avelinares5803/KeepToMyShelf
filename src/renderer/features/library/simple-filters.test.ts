@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { validateFilter } from '../../../core/filters/filter-tree';
+import type { ItemFilterValues } from '../../../shared/items';
 import {
   countMarks,
+  isInvalidBound,
   NO_SIMPLE_FILTERS,
+  parseBound,
   toFilterTree,
   toggled,
   withoutMissingValues,
   type SimpleFilters,
 } from './simple-filters';
 
+const valuesOf = (roles: ItemFilterValues['roles']): ItemFilterValues => ({ roles, ranges: {} });
 const filters = (change: Partial<SimpleFilters>): SimpleFilters => ({
   ...NO_SIMPLE_FILTERS,
   ...change,
@@ -63,6 +67,27 @@ describe('toFilterTree', () => {
     );
   });
 
+  it('keeps both bounds of a range (AND), each one only if it is a valid number', () => {
+    const bound = (operator: 'gte' | 'lte', value: number) => ({
+      type: 'condition',
+      field: 'releaseYear',
+      operator,
+      value,
+    });
+    expect(
+      toFilterTree(filters({ ranges: { releaseYear: { from: '1990', to: '1999' } } })),
+    ).toEqual(and(and(bound('gte', 1990), bound('lte', 1999))));
+    expect(toFilterTree(filters({ ranges: { releaseYear: { from: '', to: ' 1999 ' } } }))).toEqual(
+      and(and(bound('lte', 1999))),
+    );
+    // Year 0, decimals, signs and letters do not apply, and neither does an empty range.
+    for (const text of ['0', '19.5', '-5', '1e3', 'abc', '']) {
+      expect(
+        toFilterTree(filters({ ranges: { releaseYear: { from: text, to: '' } } })),
+      ).toBeUndefined();
+    }
+  });
+
   it('builds what the engine accepts, with every kind of mark', () => {
     const tree = toFilterTree({
       favorite: true,
@@ -72,13 +97,25 @@ describe('toFilterTree', () => {
       minRating: 8,
       unrated: true,
       roles: { genre: [1], owned_on: [2] },
+      ranges: { releaseYear: { from: '1990', to: '2000' }, hoursPlayed: { from: '0', to: '' } },
     });
     expect(validateFilter('game', tree!)).not.toBeNull();
   });
 });
 
+describe('parseBound and isInvalidBound', () => {
+  it('take whole numbers that the measure can have', () => {
+    expect(parseBound('hoursPlayed', '0')).toBe(0);
+    expect(parseBound('releaseYear', '0')).toBeNull();
+    expect(parseBound('seasons', '100001')).toBeNull();
+    expect(isInvalidBound('releaseYear', '0')).toBe(true);
+    expect(isInvalidBound('releaseYear', '  ')).toBe(false);
+    expect(isInvalidBound('releaseYear', '1995')).toBe(false);
+  });
+});
+
 describe('countMarks', () => {
-  it('counts every mark', () => {
+  it('counts every mark, and each bound of a range that applies', () => {
     expect(countMarks(NO_SIMPLE_FILTERS)).toBe(0);
     expect(
       countMarks({
@@ -89,8 +126,9 @@ describe('countMarks', () => {
         minRating: 8,
         unrated: true,
         roles: { genre: [1, 2], tag: [3] },
+        ranges: { releaseYear: { from: '1990', to: '1999' }, hoursPlayed: { from: 'x', to: '' } },
       }),
-    ).toBe(9);
+    ).toBe(11);
   });
 });
 
@@ -106,14 +144,19 @@ describe('withoutMissingValues', () => {
 
   it('takes out marks of values that no item uses', () => {
     const current = filters({ favorite: true, roles: { genre: [1, 2], tag: [9] } });
-    expect(withoutMissingValues(current, { genre: [genre(1)] })).toEqual(
+    expect(withoutMissingValues(current, valuesOf({ genre: [genre(1)] }))).toEqual(
       filters({ favorite: true, roles: { genre: [1] } }),
     );
   });
 
   it('returns the same object when nothing is missing', () => {
     const current = filters({ roles: { genre: [1] } });
-    expect(withoutMissingValues(current, { genre: [genre(1)] })).toBe(current);
-    expect(withoutMissingValues(NO_SIMPLE_FILTERS, {})).toBe(NO_SIMPLE_FILTERS);
+    expect(withoutMissingValues(current, valuesOf({ genre: [genre(1)] }))).toBe(current);
+    expect(withoutMissingValues(NO_SIMPLE_FILTERS, valuesOf({}))).toBe(NO_SIMPLE_FILTERS);
+  });
+
+  it('keeps what is typed in the ranges, which remains in sight to undo', () => {
+    const current = filters({ ranges: { seasons: { from: '2', to: '' } } });
+    expect(withoutMissingValues(current, valuesOf({}))).toBe(current);
   });
 });

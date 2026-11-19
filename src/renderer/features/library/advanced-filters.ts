@@ -2,6 +2,7 @@ import { rolesForKind, type ItemRole } from '../../../core/catalogs/catalogs';
 import {
   filterFieldFor,
   isValidFilterValue,
+  NUMBER_MEASURES,
   operatorsFor,
   type FilterOperator,
   type FilterSource,
@@ -154,7 +155,7 @@ export function withoutMissingAdvancedValues(
     return (
       source?.type === 'role' &&
       condition.value !== null &&
-      !(values[source.role] ?? []).some(({ id }) => id === condition.value)
+      !(values.roles[source.role] ?? []).some(({ id }) => id === condition.value)
     );
   };
   const visit = (group: AdvancedGroup): AdvancedGroup => {
@@ -174,25 +175,31 @@ export function withoutMissingAdvancedValues(
   return visit(root);
 }
 
-/** The fields to offer, in the form's order; catalog fields only if the library uses them. */
+/**
+ * The fields to offer, in the form's order; catalog fields only if the library uses them.
+ * Numbers are always offered, like the rating: "no year" means something in any library.
+ */
 export function fieldsToOffer(kind: ItemKind, values: ItemFilterValues | null): string[] {
-  const hasValues = (role: ItemRole) => (values?.[role]?.length ?? 0) > 0;
+  const hasValues = (role: ItemRole) => (values?.roles[role]?.length ?? 0) > 0;
+  const numbers = NUMBER_MEASURES.filter((measure) => filterFieldFor(kind, measure) !== null);
   return [
     'favorite',
     'replay',
     'status',
     'rating',
     'format',
+    ...numbers,
     ...rolesForKind(kind).filter(hasValues),
   ];
 }
 
-/** What a <select> holds, always text, as the value of a condition. */
+/** What a <select> or a number box holds, always text, as the value of a condition. */
 export function parseValue(source: FilterSource, text: string): FilterCondition['value'] {
-  if (text === '') return null;
+  if (text.trim() === '') return null;
   switch (source.type) {
     case 'role':
     case 'rating':
+    case 'number':
       return Number(text);
     case 'flag':
       return text === 'true';

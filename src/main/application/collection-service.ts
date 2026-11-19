@@ -73,10 +73,10 @@ const membershipKey = ({ collectionId, itemId }: CollectionMembership) =>
 export class CollectionService {
   constructor(private readonly deps: CollectionServiceDeps) {}
 
-  /** Every collection, ordered by name ignoring case and accents. */
+  /** Every collection, ordered by name ignoring case and accents, numbers by value. */
   list(token: string): CollectionSummary[] {
     const rows = this.db(token)
-      .prepare(`${COLLECTION_QUERY} ORDER BY c.name_key, c.name`)
+      .prepare(`${COLLECTION_QUERY} ORDER BY natural_key(c.name_key), c.name_key, c.name`)
       .all() as CollectionRow[];
     return rows.map((row) => ({
       id: row.id,
@@ -205,7 +205,7 @@ export class CollectionService {
     return db
       .prepare(
         `SELECT c.id, c.name FROM collection_item ci JOIN collection c ON c.id = ci.collection_id
-         WHERE ci.item_id = ? ORDER BY c.name_key, c.name`,
+         WHERE ci.item_id = ? ORDER BY natural_key(c.name_key), c.name_key, c.name`,
       )
       .all(itemId) as CollectionName[];
   }

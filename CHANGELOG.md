@@ -6,6 +6,18 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 
 ## [Unreleased]
 
+### Español
+
+#### Cambiado
+
+- Los **números de los títulos y los nombres** se ordenan por su valor: «Final Fantasy 2» va antes que «Final Fantasy 10». Afecta a las bibliotecas, las colecciones, los catálogos, los filtros y los perfiles.
+
+### English
+
+#### Changed
+
+- **Numbers in titles and names** are sorted by value: "Final Fantasy 2" comes before "Final Fantasy 10". This applies to libraries, collections, catalogs, filters and profiles.
+
 ## [1.0.0] - 2026-11-18
 
 ### Español

@@ -130,6 +130,12 @@ describe('ProfileService', () => {
 
       expect(fx.profiles.list().map((p) => p.name)).toEqual(['Álvaro', 'beatriz', 'zoe']);
     });
+
+    it('sorts the numbers in names by value', () => {
+      for (const name of ['Jugador 10', 'Jugador 2']) fx.profiles.create({ name });
+
+      expect(fx.profiles.list().map((p) => p.name)).toEqual(['Jugador 2', 'Jugador 10']);
+    });
   });
 
   describe('rename', () => {

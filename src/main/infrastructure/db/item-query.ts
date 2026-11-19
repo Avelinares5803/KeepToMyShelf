@@ -198,14 +198,20 @@ export function buildItemListQuery(kind: ItemKind | null, options: ItemListOptio
   const withTitle =
     sort.field === 'title'
       ? sorted
-      : sorted.orderBy('item.title_norm', (order) => order.asc().nullsLast());
-  return withTitle.orderBy('item.placeholder_no').orderBy('item.id').compile();
+      : sorted.orderBy(sql`natural_key(item.title_norm)`, (order) => order.asc().nullsLast());
+  // "Agent 007" and "Agent 7" share a natural key; the plain text decides between them.
+  return withTitle
+    .orderBy('item.title_norm')
+    .orderBy('item.placeholder_no')
+    .orderBy('item.id')
+    .compile();
 }
 
 function sortExpression(sort: ItemSort): Expression<unknown> {
   switch (sort.field) {
     case 'title':
-      return sql.ref('item.title_norm');
+      // Numbers by value (see NATURAL_KEY in connection.ts): "Halo 2" before "Halo 10".
+      return sql`natural_key(item.title_norm)`;
     case 'createdAt':
       return sql.ref('item.created_at');
     case 'rating':

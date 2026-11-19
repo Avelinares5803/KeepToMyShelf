@@ -47,7 +47,8 @@ export class ProfileService {
   list(): Profile[] {
     const rows = this.deps.appDb
       .prepare(
-        'SELECT id, name, created_at, last_opened_at FROM profile ORDER BY name_key, created_at',
+        `SELECT id, name, created_at, last_opened_at FROM profile
+         ORDER BY natural_key(name_key), name_key, created_at`,
       )
       .all() as ProfileRow[];
     return rows.map((row) => this.toProfile(row));

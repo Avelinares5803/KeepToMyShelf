@@ -146,6 +146,14 @@ describe('CatalogService', () => {
       expect(names('person')).toEqual(['Álvaro', 'beta', 'zeta']);
     });
 
+    it('orders the numbers in names by value', () => {
+      for (const name of ['Final Fantasy 10', 'Final Fantasy 2', 'Final Fantasy']) {
+        add('franchise', name);
+      }
+
+      expect(names('franchise')).toEqual(['Final Fantasy', 'Final Fantasy 2', 'Final Fantasy 10']);
+    });
+
     it('counts the items that use each value, per kind and including the trash', () => {
       const nintendo = add('company', 'Nintendo').id;
       const zelda = createItem('game', 'Zelda');

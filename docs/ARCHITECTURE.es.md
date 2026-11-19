@@ -104,6 +104,7 @@ Detalles: [ADR 0005](adr/0005-media.md) y, para los fondos, [ADR 0008](adr/0008-
 
 - Los filtros son un **árbol de expresiones** (grupos Y/O de condiciones) en [`core/filters/`](../src/core/filters/). Un **registro de campos** (`FILTER_FIELDS`) describe cada filtro; el motor de consultas sabe filtrar cada tipo de campo, así que un campo nuevo de un tipo existente es solo un descriptor más.
 - Los títulos se buscan en columnas normalizadas (`title_norm`: en minúsculas y sin tildes).
+- Los títulos y los nombres (catálogos, colecciones y perfiles) se ordenan con los **números por su valor** («Final Fantasy 2» antes que «Final Fantasy 10»), con la función SQL `natural_key`, que cada conexión registra en [`connection.ts`](../src/main/infrastructure/db/connection.ts).
 - La cuadrícula de la biblioteca está **virtualizada** (TanStack Virtual): solo existen las tarjetas visibles, y se prueba con 10 000 elementos.
 
 Detalles: [ADR 0006](adr/0006-search-and-filters.md).

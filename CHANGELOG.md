@@ -8,11 +8,19 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 
 ### Español
 
+#### Añadido
+
+- **Filtros numéricos:** año de lanzamiento (o de estreno), horas jugadas y temporadas. En los filtros simples, con «Desde» y «Hasta»; en los avanzados, con «al menos», «como mucho» y «sin indicar».
+
 #### Cambiado
 
 - Los **números de los títulos y los nombres** se ordenan por su valor: «Final Fantasy 2» va antes que «Final Fantasy 10». Afecta a las bibliotecas, las colecciones, los catálogos, los filtros y los perfiles.
 
 ### English
+
+#### Added
+
+- **Number filters:** release (or premiere) year, hours played and seasons. In the simple filters, with "From" and "To"; in the advanced filters, with "at least", "at most" and "not set".
 
 #### Changed
 

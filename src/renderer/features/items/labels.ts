@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import type { ItemRole } from '../../../core/catalogs/catalogs';
+import type { NumberMeasure } from '../../../core/filters/filter-fields';
 import type { ItemStatus } from '../../../core/items/item-draft';
 import type { ItemKind } from '../../../shared/content';
 
@@ -25,6 +26,13 @@ export const datesLabel = (t: TFunction, kind: ItemKind) => t(`items.dates.${gra
 
 /** "Release dates" for games, "Premiere dates" for movies and series. */
 export const releasesLabel = (t: TFunction, kind: ItemKind) => t(`items.releases.${grammar(kind)}`);
+
+/** Name of a number the filters offer: "Release year" for games, "Premiere year" for the rest. */
+export function measureLabel(t: TFunction, kind: ItemKind, measure: NumberMeasure): string {
+  return measure === 'releaseYear'
+    ? t(`library.filters.releaseYear.${grammar(kind)}`)
+    : t(`items.fields.${measure}`);
+}
 
 /** Name of a role in the form and the detail view ("Developers", "Cast"...). */
 export const roleLabel = (t: TFunction, role: ItemRole) => t(`items.roles.${role}`);

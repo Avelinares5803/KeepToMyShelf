@@ -8,6 +8,7 @@ import {
 import { parseIsoPartialDate, toIsoPartialDate } from '../../core/dates/partial-date';
 import { parseStoredUsageDate, toStoredUsageDate } from '../../core/dates/usage-period';
 import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
+import { filterFieldsFor, type NumberMeasure } from '../../core/filters/filter-fields';
 import { validateFilter, type FilterNode } from '../../core/filters/filter-tree';
 import type { ItemSort } from '../../core/filters/item-sort';
 import { validateItemDraft, type ItemDraft, type ItemStatus } from '../../core/items/item-draft';
@@ -18,13 +19,18 @@ import type { ItemKind } from '../../shared/content';
 import type {
   EntryName,
   ItemDetails,
+  ItemFilterRange,
   ItemFilterValue,
   ItemFilterValues,
   ItemRelease,
   ItemSummary,
 } from '../../shared/items';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
-import { buildItemListQuery, type ItemSearch } from '../infrastructure/db/item-query';
+import {
+  buildItemListQuery,
+  buildMeasureRangeQuery,
+  type ItemSearch,
+} from '../infrastructure/db/item-query';
 import type { ItemMediaPlan } from '../../shared/media';
 import type { MediaForItems, StagedMedia } from './media-service';
 import type { SessionManager } from './session-manager';
@@ -123,8 +129,9 @@ export class ItemService {
   }
 
   /**
-   * What the filters of a library can offer: per role, the values its items use. Items in the
-   * trash do not count, because they are not in the library: their values would find nothing.
+   * What the filters of a library can offer: per role, the values its items use, and the range
+   * of each number. Items in the trash do not count, because they are not in the library: their
+   * values would find nothing.
    */
   filterValues(token: string, kind: ItemKind): ItemFilterValues {
     const db = this.db(token);
@@ -151,11 +158,28 @@ export class ItemService {
     for (const { entry_id, name } of aliasRows) {
       aliases.set(entry_id, [...(aliases.get(entry_id) ?? []), name]);
     }
-    const values: Partial<Record<ItemRole, ItemFilterValue[]>> = {};
+    const roles: Partial<Record<ItemRole, ItemFilterValue[]>> = {};
     for (const { role, id, name } of rows) {
-      (values[role] ??= []).push({ id, name, aliases: aliases.get(id) ?? [] });
+      (roles[role] ??= []).push({ id, name, aliases: aliases.get(id) ?? [] });
     }
-    return values;
+
+    const ranges: Partial<Record<NumberMeasure, ItemFilterRange>> = {};
+    for (const field of filterFieldsFor(kind)) {
+      if (field.source.type !== 'number') continue;
+      const { measure } = field.source;
+      const query = buildMeasureRangeQuery(kind, measure);
+      const { min, max } = db.prepare(query.sql).get(...query.parameters) as {
+        min: number | null;
+        max: number | null;
+      };
+      if (min === null || max === null) continue;
+      // The filter takes whole hours: 10:30 is between 10 and 11.
+      ranges[measure] =
+        measure === 'hoursPlayed'
+          ? { min: Math.floor(min / 60), max: Math.ceil(max / 60) }
+          : { min, max };
+    }
+    return { roles, ranges };
   }
 
   /** Items in the trash, most recently deleted first; all kinds when `kind` is null. */

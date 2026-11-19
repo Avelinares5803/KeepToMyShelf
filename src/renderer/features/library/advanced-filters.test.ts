@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { filterFieldFor } from '../../../core/filters/filter-fields';
 import { validateFilter } from '../../../core/filters/filter-tree';
+import type { ItemFilterValues } from '../../../shared/items';
 import {
   addCondition,
   addGroup,
@@ -21,6 +22,7 @@ import {
 } from './advanced-filters';
 
 const lastChild = (group: AdvancedGroup): AdvancedNode => group.children.at(-1)!;
+const valuesOf = (roles: ItemFilterValues['roles']): ItemFilterValues => ({ roles, ranges: {} });
 
 /** Adds a filled-in row to the group. */
 function withRow(
@@ -212,7 +214,7 @@ describe('withoutMissingAdvancedValues', () => {
     const group = lastChild(withGroup) as AdvancedGroup;
     const root = withRow(withRow(withGroup, group.id, 'genre', 2), group.id, 'genre', 3);
 
-    const kept = withoutMissingAdvancedValues('game', root, { genre: [value(3)] });
+    const kept = withoutMissingAdvancedValues('game', root, valuesOf({ genre: [value(3)] }));
     expect(toAdvancedTree('game', kept)).toEqual({
       type: 'group',
       op: 'and',
@@ -228,33 +230,58 @@ describe('withoutMissingAdvancedValues', () => {
       'status',
       'completed',
     );
-    expect(withoutMissingAdvancedValues('game', root, {})).toBe(root);
+    expect(withoutMissingAdvancedValues('game', root, valuesOf({}))).toBe(root);
   });
 
   it('returns the same object when nothing is missing', () => {
     const root = withRow(NO_ADVANCED_FILTERS, 0, 'genre', 1);
-    expect(withoutMissingAdvancedValues('game', root, { genre: [value(1)] })).toBe(root);
+    expect(withoutMissingAdvancedValues('game', root, valuesOf({ genre: [value(1)] }))).toBe(root);
+  });
+
+  it('keeps number rows, even when no item has the number', () => {
+    const root = withRow(NO_ADVANCED_FILTERS, 0, 'releaseYear', 1995);
+    expect(withoutMissingAdvancedValues('game', root, valuesOf({}))).toBe(root);
   });
 });
 
 describe('fieldsToOffer', () => {
+  const ITEM_FIELDS = ['favorite', 'replay', 'status', 'rating', 'format', 'releaseYear'];
+
   it('always offers the fields of the item, and catalogs only with values', () => {
     const genreValue = [{ id: 1, name: 'RPG', aliases: [] }];
-    expect(fieldsToOffer('game', null)).toEqual([
-      'favorite',
-      'replay',
-      'status',
-      'rating',
-      'format',
-    ]);
-    expect(fieldsToOffer('game', { genre: genreValue, actor: genreValue })).toEqual([
-      'favorite',
-      'replay',
-      'status',
-      'rating',
-      'format',
+    expect(fieldsToOffer('game', null)).toEqual([...ITEM_FIELDS, 'hoursPlayed']);
+    expect(fieldsToOffer('game', valuesOf({ genre: genreValue, actor: genreValue }))).toEqual([
+      ...ITEM_FIELDS,
+      'hoursPlayed',
       'genre',
     ]);
+  });
+
+  it('offers each kind its own numbers', () => {
+    expect(fieldsToOffer('movie', null)).toEqual(ITEM_FIELDS);
+    expect(fieldsToOffer('series', null)).toEqual([...ITEM_FIELDS, 'seasons']);
+  });
+});
+
+describe('a number row', () => {
+  const inMainGroup = (condition: object) => ({ type: 'group', op: 'and', children: [condition] });
+
+  it('applies only with a whole number the measure can have', () => {
+    const tree = (value: AdvancedCondition['value']) =>
+      toAdvancedTree('game', withRow(NO_ADVANCED_FILTERS, 0, 'releaseYear', value));
+    expect(tree(1995)).toEqual(
+      inMainGroup({ type: 'condition', field: 'releaseYear', operator: 'gte', value: 1995 }),
+    );
+    expect(tree(0)).toBeUndefined();
+    expect(tree(1995.5)).toBeUndefined();
+    expect(tree(Number.NaN)).toBeUndefined();
+  });
+
+  it('asks for items without the number with "not set"', () => {
+    const root = withRow(NO_ADVANCED_FILTERS, 0, 'hoursPlayed', null, 'isEmpty');
+    expect(toAdvancedTree('game', root)).toEqual(
+      inMainGroup({ type: 'condition', field: 'hoursPlayed', operator: 'isEmpty', value: null }),
+    );
   });
 });
 
@@ -268,10 +295,12 @@ describe('parseValue', () => {
     expect(parseValue(source('favorite'), 'true')).toBe(true);
     expect(parseValue(source('status'), 'completed')).toBe('completed');
     expect(parseValue(source('format'), 'digital')).toBe('digital');
+    expect(parseValue(source('releaseYear'), '1995')).toBe(1995);
   });
 
   it('reads the empty choice as no value', () => {
     expect(parseValue(source('genre'), '')).toBeNull();
     expect(parseValue(source('favorite'), '')).toBeNull();
+    expect(parseValue(source('hoursPlayed'), ' ')).toBeNull();
   });
 });

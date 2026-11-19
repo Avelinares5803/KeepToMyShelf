@@ -31,6 +31,12 @@ const rating = (operator: 'gte' | 'lte' | 'isEmpty', value: number | null): Filt
   value,
 });
 
+const number = (
+  field: 'releaseYear' | 'hoursPlayed' | 'seasons',
+  operator: 'gte' | 'lte' | 'isEmpty',
+  value: number | null,
+): FilterNode => ({ type: 'condition', field, operator, value });
+
 describe('ItemService.list', () => {
   let fx: ProfileFixture;
   let token: string;
@@ -233,6 +239,73 @@ describe('ItemService.list', () => {
       expect(filtered(rating('isEmpty', null))).toEqual(['Sin valorar']);
     });
 
+    it('filters by the year of the earliest release, whatever its precision', () => {
+      const year = (value: number, month?: number) => ({
+        region: null,
+        date: month === undefined ? { year: value } : { year: value, month },
+      });
+      game('De 1995', { releases: [year(1995, 12)] });
+      game('De 1998 y 2005', { releases: [year(2005), year(1998, 3)] });
+      game('De 2001', { releases: [year(2001)] });
+      game('Sin fecha');
+
+      expect(filtered(number('releaseYear', 'gte', 1998))).toEqual(['De 1998 y 2005', 'De 2001']);
+      expect(filtered(number('releaseYear', 'lte', 1998))).toEqual(['De 1995', 'De 1998 y 2005']);
+      // Its 2005 release does not count: the year is that of the earliest one.
+      expect(
+        filtered(and(number('releaseYear', 'gte', 2003), number('releaseYear', 'lte', 2010))),
+      ).toEqual([]);
+      expect(filtered(number('releaseYear', 'isEmpty', null))).toEqual(['Sin fecha']);
+    });
+
+    it('filters by whole hours played, compared with the minutes', () => {
+      game('Diez horas', { minutesPlayed: 600 });
+      game('Diez y media', { minutesPlayed: 630 });
+      game('Nada', { minutesPlayed: 0 });
+      game('Sin horas');
+
+      expect(filtered(number('hoursPlayed', 'lte', 10))).toEqual(['Diez horas', 'Nada']);
+      expect(filtered(number('hoursPlayed', 'lte', 11))).toEqual([
+        'Diez horas',
+        'Diez y media',
+        'Nada',
+      ]);
+      expect(filtered(number('hoursPlayed', 'gte', 10))).toEqual(['Diez horas', 'Diez y media']);
+      expect(filtered(number('hoursPlayed', 'isEmpty', null))).toEqual(['Sin horas']);
+    });
+
+    it('filters series by seasons, with or without their details', () => {
+      const series = (title: string, seasonsCount: number | null, episodesCount: number | null) =>
+        fx.items.create(token, 'series', {
+          ...EMPTY_ITEM_DRAFT,
+          title,
+          seasonsCount,
+          episodesCount,
+        });
+      series('Una', 1, null);
+      series('Cinco', 5, 50);
+      series('Solo capítulos', null, 12);
+      series('Sin nada', null, null);
+      const seasons = (operator: 'gte' | 'lte' | 'isEmpty', value: number | null) =>
+        fx.items
+          .list(token, 'series', { filter: number('seasons', operator, value) })
+          .map((item) => item.title);
+
+      expect(seasons('gte', 2)).toEqual(['Cinco']);
+      expect(seasons('lte', 5)).toEqual(['Cinco', 'Una']);
+      expect(seasons('isEmpty', null)).toEqual(['Sin nada', 'Solo capítulos']);
+    });
+
+    it('rejects numbers out of range and fields of another kind', () => {
+      expect(() => filtered(number('releaseYear', 'gte', 0))).toThrow(ValidationError);
+      expect(() => filtered(number('releaseYear', 'gte', 1999.5))).toThrow(ValidationError);
+      expect(() => filtered(number('hoursPlayed', 'gte', -1))).toThrow(ValidationError);
+      expect(() => filtered(number('seasons', 'gte', 1))).toThrow(ValidationError);
+      expect(() =>
+        fx.items.list(token, 'movie', { filter: number('hoursPlayed', 'gte', 1) }),
+      ).toThrow(ValidationError);
+    });
+
     it('applies the examples of the specification', () => {
       const romhack = entry('tag', 'Romhack');
       game('Sí', { status: 'completed', ...withRelations({ tag: related([romhack]) }) });
@@ -351,13 +424,17 @@ describe('ItemService.list', () => {
       const text = 'zzsearchzz';
       const query = buildItemListQuery('game', {
         search: { text, untitledLabel: 'ZZLABELZZ' },
-        filter: and(is('status', 'completed'), is('genre', 987654)),
+        filter: and(
+          is('status', 'completed'),
+          is('genre', 987654),
+          number('hoursPlayed', 'gte', 4321),
+        ),
         sort: { field: 'rating', direction: 'desc' },
       });
 
-      expect(query.sql).not.toMatch(/zzsearchzz|zzlabelzz|completed|987654/i);
+      expect(query.sql).not.toMatch(/zzsearchzz|zzlabelzz|completed|987654|259260/i);
       expect(query.parameters).toEqual(
-        expect.arrayContaining(['%zzsearchzz%', 'zzlabelzz ', 'completed', 987654]),
+        expect.arrayContaining(['%zzsearchzz%', 'zzlabelzz ', 'completed', 987654, 259_260]),
       );
     });
   });
@@ -431,11 +508,16 @@ describe('ItemService.list', () => {
         filter: and(or(is('tag', tags[0]!), is('tag', tags[1]!)), rating('gte', 5)),
         sort: { field: 'releaseDate', direction: 'desc' },
       });
+      const years = timed({
+        filter: and(number('releaseYear', 'gte', 1990), number('releaseYear', 'lte', 1999)),
+      });
 
       expect(everything.count).toBe(10_000);
       expect(search.count).toBe(111);
       expect(filter.count).toBeGreaterThan(0);
-      for (const { elapsed } of [everything, search, filter]) {
+      // 1980 + index % 45: 10 years of 45, and 10,000 = 222 rounds of 45 plus 10 (1980..1989).
+      expect(years.count).toBe(2_220);
+      for (const { elapsed } of [everything, search, filter, years]) {
         expect(elapsed).toBeLessThan(LIMIT_MS);
       }
 

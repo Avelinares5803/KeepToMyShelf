@@ -1,5 +1,6 @@
 import type { ItemRole } from '../core/catalogs/catalogs';
 import type { PartialDate } from '../core/dates/partial-date';
+import type { NumberMeasure } from '../core/filters/filter-fields';
 import type { ItemDraft, ItemStatus } from '../core/items/item-draft';
 import type { ItemKind } from './content';
 
@@ -37,8 +38,19 @@ export interface ItemFilterValue extends EntryName {
   readonly aliases: readonly string[];
 }
 
-/** Per role, the values that the items of a library use, by name. */
-export type ItemFilterValues = Readonly<Partial<Record<ItemRole, readonly ItemFilterValue[]>>>;
+/** The lowest and highest number the items of a library have for a measure. */
+export interface ItemFilterRange {
+  readonly min: number;
+  readonly max: number;
+}
+
+/** What the filters of a library can offer. */
+export interface ItemFilterValues {
+  /** Per role, the values that the items use, by name. */
+  readonly roles: Readonly<Partial<Record<ItemRole, readonly ItemFilterValue[]>>>;
+  /** Per measure of the kind, its range; left out when no item has the number. */
+  readonly ranges: Readonly<Partial<Record<NumberMeasure, ItemFilterRange>>>;
+}
 
 export interface ItemRelease {
   /** Null when no region was given or the region was deleted. */

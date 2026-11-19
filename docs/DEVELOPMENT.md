@@ -91,7 +91,7 @@ Add the same key to [`src/renderer/i18n/locales/es.json`](../src/renderer/i18n/l
 
 ### Add a filter
 
-Add a descriptor to `FILTER_FIELDS` in [`src/core/filters/filter-fields.ts`](../src/core/filters/filter-fields.ts). If its type already exists (catalog role, choice, yes/no, rating), the query engine needs no change. Then offer it in the UI (`fieldsToOffer` in `advanced-filters.ts`, and `simple-filters.ts` for the simple filters) and add its label in both languages. A new type of field also needs the engine in [`item-query.ts`](../src/main/infrastructure/db/item-query.ts).
+Add a descriptor to `FILTER_FIELDS` in [`src/core/filters/filter-fields.ts`](../src/core/filters/filter-fields.ts). If its type already exists (catalog role, choice, yes/no, rating, number), the query engine needs no change. Then offer it in the UI (`fieldsToOffer` in `advanced-filters.ts`, and `simple-filters.ts` for the simple filters) and add its label in both languages. A new type of field also needs the engine in [`item-query.ts`](../src/main/infrastructure/db/item-query.ts). A new number is a measure in `NUMBER_MEASURES`, with its bounds in `NUMBER_LIMITS` and its SQL in `measureExpression`; the UI offers it on its own.
 
 ### Change the default catalogs
 

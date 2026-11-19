@@ -1,14 +1,27 @@
 import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rolesForKind, type ItemRole } from '../../../core/catalogs/catalogs';
+import {
+  filterFieldFor,
+  NUMBER_LIMITS,
+  NUMBER_MEASURES,
+  type NumberMeasure,
+} from '../../../core/filters/filter-fields';
 import { ITEM_STATUSES } from '../../../core/items/item-draft';
 import { RATING_MAX, RATING_MIN, ratingToStars } from '../../../core/items/rating';
 import { normalizeForSearch } from '../../../core/text/normalize';
 import type { ItemKind } from '../../../shared/content';
-import type { ItemFilterValue, ItemFilterValues } from '../../../shared/items';
-import { replayPluralLabel, roleLabel, statusLabel } from '../items/labels';
+import type { ItemFilterRange, ItemFilterValue, ItemFilterValues } from '../../../shared/items';
+import { measureLabel, replayPluralLabel, roleLabel, statusLabel } from '../items/labels';
 import { useStarsText } from '../items/StarRating';
-import { FORMAT_OPTIONS, toggled, type SimpleFilters as Filters } from './simple-filters';
+import {
+  FORMAT_OPTIONS,
+  isInvalidBound,
+  parseBound,
+  toggled,
+  type NumberRangeText,
+  type SimpleFilters as Filters,
+} from './simple-filters';
 
 /** With more values than this, an attribute gets its own search box. */
 const SEARCH_FROM_VALUES = 10;
@@ -104,8 +117,31 @@ export function SimpleFilters({ kind, filters, values, onChange }: SimpleFilters
           ))}
         </Section>
 
+        {NUMBER_MEASURES.filter((measure) => filterFieldFor(kind, measure) !== null).map(
+          (measure) => {
+            const range = values?.ranges[measure];
+            const typed = filters.ranges[measure] ?? { from: '', to: '' };
+            // Hidden while no item has the number, unless something is typed to undo.
+            if (range === undefined && typed.from === '' && typed.to === '') return null;
+            const marks =
+              Number(parseBound(measure, typed.from) !== null) +
+              Number(parseBound(measure, typed.to) !== null);
+            return (
+              <Section key={measure} label={measureLabel(t, kind, measure)} marks={marks}>
+                <RangeFields
+                  label={measureLabel(t, kind, measure)}
+                  measure={measure}
+                  range={range}
+                  typed={typed}
+                  onChange={(next) => change({ ranges: { ...filters.ranges, [measure]: next } })}
+                />
+              </Section>
+            );
+          },
+        )}
+
         {rolesForKind(kind).map((role) => {
-          const options = values?.[role];
+          const options = values?.roles[role];
           if (options === undefined || options.length === 0) return null;
           const marked = filters.roles[role] ?? [];
           return (
@@ -171,6 +207,52 @@ function Checkbox({
         {detail !== undefined && <span className="muted"> ({detail})</span>}
       </span>
     </label>
+  );
+}
+
+/** "From" and "to" boxes; each applies on its own when it holds a valid number. */
+function RangeFields({
+  label,
+  measure,
+  range,
+  typed,
+  onChange,
+}: {
+  label: string;
+  measure: NumberMeasure;
+  /** What the library's items have, shown as a hint. */
+  range: ItemFilterRange | undefined;
+  typed: NumberRangeText;
+  onChange: (typed: NumberRangeText) => void;
+}) {
+  const { t } = useTranslation();
+  const id = useId();
+  const { min, max } = NUMBER_LIMITS[measure];
+  const bound = (side: 'from' | 'to', hint: number | undefined) => (
+    <div className="inline-field">
+      <label htmlFor={`${id}-${side}`}>{t(`library.filters.${side}`)}</label>
+      <input
+        id={`${id}-${side}`}
+        type="number"
+        inputMode="numeric"
+        className="simple-filters__number"
+        // "From" alone would not say which number, among several sections.
+        aria-label={t(`library.filters.${side}Field`, { field: label })}
+        min={min}
+        max={max}
+        step={1}
+        placeholder={hint === undefined ? undefined : String(hint)}
+        aria-invalid={isInvalidBound(measure, typed[side])}
+        value={typed[side]}
+        onChange={(event) => onChange({ ...typed, [side]: event.target.value })}
+      />
+    </div>
+  );
+  return (
+    <div className="simple-filters__range">
+      {bound('from', range?.min)}
+      {bound('to', range?.max)}
+    </div>
   );
 }
 

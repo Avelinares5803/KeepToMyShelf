@@ -91,7 +91,7 @@ Añade la misma clave a [`src/renderer/i18n/locales/es.json`](../src/renderer/i1
 
 ### Añadir un filtro
 
-Añade un descriptor a `FILTER_FIELDS`, en [`src/core/filters/filter-fields.ts`](../src/core/filters/filter-fields.ts). Si su tipo ya existe (papel de catálogo, lista cerrada, sí/no, valoración), el motor de consultas no cambia. Después, ofrécelo en la interfaz (`fieldsToOffer`, en `advanced-filters.ts`, y `simple-filters.ts` para los filtros simples) y añade su nombre en los dos idiomas. Un tipo de campo nuevo necesita además cambios en el motor, en [`item-query.ts`](../src/main/infrastructure/db/item-query.ts).
+Añade un descriptor a `FILTER_FIELDS`, en [`src/core/filters/filter-fields.ts`](../src/core/filters/filter-fields.ts). Si su tipo ya existe (papel de catálogo, lista cerrada, sí/no, valoración, número), el motor de consultas no cambia. Después, ofrécelo en la interfaz (`fieldsToOffer`, en `advanced-filters.ts`, y `simple-filters.ts` para los filtros simples) y añade su nombre en los dos idiomas. Un tipo de campo nuevo necesita además cambios en el motor, en [`item-query.ts`](../src/main/infrastructure/db/item-query.ts). Un número nuevo es una medida de `NUMBER_MEASURES`, con sus límites en `NUMBER_LIMITS` y su SQL en `measureExpression`; la interfaz lo ofrece sola.
 
 ### Cambiar las listas iniciales de los catálogos
 

@@ -83,6 +83,44 @@ test('finds items with both values, which the simple filters cannot do', async (
   await expectTitles(['Las dos', 'Solo acción', 'Solo RPG']);
 });
 
+test('compares numbers, and finds the items without them', async () => {
+  await openBuilder([
+    { title: 'Corto', minutesPlayed: 120, releaseDate: '1990' },
+    { title: 'Largo', minutesPlayed: 3000, releaseDate: '2010-04-02' },
+    { title: 'Sin horas' },
+  ]);
+  await addRow('Horas jugadas', null, 'al menos');
+  const row = builder().locator('.advanced-filters__condition').last();
+  const value = row.getByRole('spinbutton', { name: 'Valor', exact: true });
+  await expect(value).toHaveAttribute('placeholder', '2–50');
+  await value.fill('10');
+  await expectTitles(['Largo']);
+  await row.getByLabel('Operador', { exact: true }).selectOption({ label: 'como mucho' });
+  await expectTitles(['Corto']);
+
+  // Half-typed or impossible numbers do not apply.
+  await value.fill('-3');
+  await expect(value).toHaveAttribute('aria-invalid', 'true');
+  await expectTitles(['Corto', 'Largo', 'Sin horas']);
+  await expect(button('Filtros')).toBeVisible();
+
+  await row.getByLabel('Operador', { exact: true }).selectOption({ label: 'sin indicar' });
+  await expect(value).toHaveCount(0);
+  await expectTitles(['Sin horas']);
+
+  await addRow('Año de lanzamiento', null, 'como mucho');
+  await builder()
+    .locator('.advanced-filters__condition')
+    .last()
+    .getByRole('spinbutton', { name: 'Valor', exact: true })
+    .fill('2000');
+  await expect(heading('Videojuegos (0)')).toBeVisible();
+  await builder()
+    .getByLabel('Cumple', { exact: true })
+    .selectOption({ label: 'alguna de estas condiciones' });
+  await expectTitles(['Corto', 'Sin horas']);
+});
+
 test('mixes "all" and "any" with a group', async () => {
   await openBuilder([
     { title: 'RPG terminado', status: 'completed', entries: [genre('RPG uno')] },

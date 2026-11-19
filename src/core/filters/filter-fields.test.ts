@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ITEM_ROLES } from '../catalogs/catalogs';
+import { MAX_HOURS_PLAYED } from '../items/duration';
 import {
   FILTER_FIELDS,
   filterFieldFor,
@@ -9,7 +10,7 @@ import {
   type FilterSource,
 } from './filter-fields';
 
-const COMMON = ['status', 'replay', 'format', 'rating', 'favorite'];
+const COMMON = ['status', 'replay', 'format', 'rating', 'favorite', 'releaseYear'];
 const statusSource = filterFieldFor('game', 'status')!.source;
 const formatSource = filterFieldFor('game', 'format')!.source;
 const ratingSource: FilterSource = { type: 'rating' };
@@ -31,6 +32,7 @@ describe('filter fields', () => {
     expect(ids('game').sort()).toEqual(
       [
         ...COMMON,
+        'hoursPlayed',
         'franchise',
         'owned_on',
         'released_on',
@@ -54,12 +56,14 @@ describe('filter fields', () => {
       'tag',
     ].sort();
     expect(ids('movie').sort()).toEqual(screen);
-    expect(ids('series').sort()).toEqual(screen);
+    expect(ids('series').sort()).toEqual([...screen, 'seasons'].sort());
   });
 
   it('do not offer a field to a kind that does not have it', () => {
     expect(filterFieldFor('game', 'actor')).toBeNull();
     expect(filterFieldFor('movie', 'owned_on')).toBeNull();
+    expect(filterFieldFor('movie', 'hoursPlayed')).toBeNull();
+    expect(filterFieldFor('game', 'seasons')).toBeNull();
     expect(filterFieldFor('game', 'no_such_field')).toBeNull();
   });
 
@@ -104,5 +108,27 @@ describe('filter values', () => {
     expect(isValidFilterValue(ratingSource, 'gte', null)).toBe(false);
     expect(isValidFilterValue(ratingSource, 'isEmpty', null)).toBe(true);
     expect(isValidFilterValue(ratingSource, 'isEmpty', 8)).toBe(false);
+  });
+
+  it('accept whole numbers within what items can store, and nothing for "not set"', () => {
+    const year: FilterSource = { type: 'number', measure: 'releaseYear' };
+    const hours: FilterSource = { type: 'number', measure: 'hoursPlayed' };
+    const seasons: FilterSource = { type: 'number', measure: 'seasons' };
+
+    for (const value of [1, 1998, 9999]) expect(isValidFilterValue(year, 'gte', value)).toBe(true);
+    for (const value of [0, 10_000, 1998.5, '1998', null, Number.NaN]) {
+      expect(isValidFilterValue(year, 'lte', value)).toBe(false);
+    }
+    expect(isValidFilterValue(hours, 'gte', 0)).toBe(true);
+    expect(isValidFilterValue(hours, 'gte', MAX_HOURS_PLAYED)).toBe(true);
+    expect(isValidFilterValue(hours, 'gte', MAX_HOURS_PLAYED + 1)).toBe(false);
+    expect(isValidFilterValue(hours, 'lte', -1)).toBe(false);
+    expect(isValidFilterValue(seasons, 'gte', 0)).toBe(true);
+    expect(isValidFilterValue(seasons, 'isEmpty', null)).toBe(true);
+    expect(isValidFilterValue(seasons, 'isEmpty', 3)).toBe(false);
+  });
+
+  it('allow comparing numbers and asking for those not set', () => {
+    expect(operatorsFor({ type: 'number', measure: 'seasons' })).toEqual(['gte', 'lte', 'isEmpty']);
   });
 });

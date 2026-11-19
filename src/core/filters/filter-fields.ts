@@ -1,6 +1,7 @@
 import { ITEM_KINDS, type ItemKind } from '../../shared/content';
 import { catalogForRole, ITEM_ROLES, type ItemRole } from '../catalogs/catalogs';
-import { ITEM_STATUSES } from '../items/item-draft';
+import { MAX_HOURS_PLAYED } from '../items/duration';
+import { ITEM_LIMITS, ITEM_STATUSES } from '../items/item-draft';
 import { isValidRating } from '../items/rating';
 
 export const FILTER_OPERATORS = ['is', 'isNot', 'gte', 'lte', 'isEmpty'] as const;
@@ -8,6 +9,22 @@ export type FilterOperator = (typeof FILTER_OPERATORS)[number];
 
 /** A column of `item` that holds 0 or 1. */
 export type ItemFlagColumn = 'is_favorite' | 'is_replay' | 'owns_physical' | 'owns_digital';
+
+/**
+ * A whole number about an item, which may be missing:
+ * - `releaseYear`: the year of its earliest release, the same date that sorts by release;
+ * - `hoursPlayed`: whole hours, compared with the minutes stored, so 10:30 is "at most 11";
+ * - `seasons`: the seasons of a series.
+ */
+export const NUMBER_MEASURES = ['releaseYear', 'hoursPlayed', 'seasons'] as const;
+export type NumberMeasure = (typeof NUMBER_MEASURES)[number];
+
+/** The values each measure can have, the same that items can store. */
+export const NUMBER_LIMITS: Readonly<Record<NumberMeasure, { min: number; max: number }>> = {
+  releaseYear: { min: 1, max: 9999 },
+  hoursPlayed: { min: 0, max: MAX_HOURS_PLAYED },
+  seasons: { min: 0, max: ITEM_LIMITS.count },
+};
 
 /**
  * Where a field's data lives. The query engine knows how to filter each type, so a new field
@@ -23,7 +40,9 @@ export type FilterSource =
   /** Named options stored as yes/no columns, so an item can match several of them. */
   | { readonly type: 'flags'; readonly columns: Readonly<Record<string, ItemFlagColumn>> }
   /** The stored rating (1..10), which may be missing. */
-  | { readonly type: 'rating' };
+  | { readonly type: 'rating' }
+  /** A whole number, which may be missing. */
+  | { readonly type: 'number'; readonly measure: NumberMeasure };
 
 export interface FilterField {
   readonly id: string;
@@ -37,6 +56,7 @@ const SOURCE_OPERATORS: Record<FilterSource['type'], readonly FilterOperator[]> 
   flag: ['is'],
   flags: ['is', 'isNot'],
   rating: ['gte', 'lte', 'isEmpty'],
+  number: ['gte', 'lte', 'isEmpty'],
 };
 
 const roleField = (role: ItemRole): FilterField => ({
@@ -63,6 +83,9 @@ export const FILTER_FIELDS: readonly FilterField[] = [
   },
   { id: 'rating', kinds: ITEM_KINDS, source: { type: 'rating' } },
   { id: 'favorite', kinds: ITEM_KINDS, source: { type: 'flag', column: 'is_favorite' } },
+  { id: 'releaseYear', kinds: ITEM_KINDS, source: { type: 'number', measure: 'releaseYear' } },
+  { id: 'hoursPlayed', kinds: ['game'], source: { type: 'number', measure: 'hoursPlayed' } },
+  { id: 'seasons', kinds: ['series'], source: { type: 'number', measure: 'seasons' } },
   ...ITEM_ROLES.map(roleField),
 ];
 
@@ -98,5 +121,13 @@ export function isValidFilterValue(
       return operator === 'isEmpty'
         ? value === null
         : typeof value === 'number' && isValidRating(value);
+    case 'number':
+      return operator === 'isEmpty' ? value === null : isValidNumber(source.measure, value);
   }
+}
+
+/** Whether `value` is a whole number that `measure` can have. */
+export function isValidNumber(measure: NumberMeasure, value: unknown): value is number {
+  const { min, max } = NUMBER_LIMITS[measure];
+  return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
 }

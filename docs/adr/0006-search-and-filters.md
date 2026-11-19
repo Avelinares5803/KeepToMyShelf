@@ -1,7 +1,7 @@
 # ADR 0006: Búsqueda, filtros y ordenación
 
-- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples) y F7-E (filtros avanzados)
-- **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes)
+- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples), F7-E (filtros avanzados) y v1.1-A (orden natural de los números)
+- **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes, y el 2026-11-19 con el orden natural)
 
 ## Contexto
 
@@ -37,7 +37,25 @@ Los papeles se filtran por separado aunque compartan catálogo: «Lo tengo en» 
 - **Elementos sin título:** se encuentran por el nombre que muestran («Sin nombre 3»). Ese texto no está guardado y depende del idioma, así que la interfaz envía la etiqueta traducida.
 - **Ordenación:** por título, fecha de adición, valoración, fecha de lanzamiento más temprana, inicio o fin de uso. Lo que no tiene dato por el que ordenar queda siempre al final, también en orden descendente. Los empates siguen el orden por título y, después, el `id`.
 - **Fechas parciales:** se ordenan como texto, así que en orden ascendente «2021» queda antes que «2021-03».
+- **Orden natural de los números** (v1.1-A): ver el apartado siguiente.
 - **Colecciones** (F9): la misma consulta admite «todos los tipos» y limitarse a una colección. Sin tipo no se admiten filtros, porque sus campos dependen del tipo. Ver el [ADR 0007](0007-collections.md).
+
+### Orden natural de los números (v1.1-A)
+
+SQLite compara el texto carácter a carácter, así que «final fantasy 10» quedaba antes que «final fantasy 2». Desde la v1.1-A, los títulos y los nombres de los catálogos, las colecciones y los perfiles se ordenan con los números por su valor:
+
+- **Clave:** `naturalSortKey` (`src/core/text/natural-sort.ts`) sustituye cada grupo de dígitos por su valor sin ceros a la izquierda, precedido de su longitud, y esta de la suya: «2» pasa a ser «112» y «10», «1210». Así, un número más corto siempre va antes y los de igual longitud se comparan cifra a cifra, sea cual sea su tamaño. Las cifras siguen antes que las letras. Los números romanos no se interpretan.
+- **Función SQL:** `openDatabase` registra en cada conexión la función determinista `natural_key`, que aplica la clave a `title_norm` o `name_key`: `ORDER BY natural_key(item.title_norm)`. Solo aparece en las consultas, nunca en el esquema, así que cualquier otra herramienta puede seguir abriendo la base de datos.
+- **Desempate:** «Agente 007» y «Agente 7» tienen la misma clave; decide el texto normalizado y después el `id`, como antes.
+- **Coste:** medido con 10 000 títulos, ordenar pasa de unos 5 ms a 18 ms por consulta. La prueba de 10 000 elementos de `item-list.test.ts` sigue comprobando el límite de 1 s.
+
+Alternativas descartadas:
+
+| Alternativa                                | Por qué se descartó                                                                                                                                                                 |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Una _collation_ propia                     | better-sqlite3 (13.0) no permite registrarlas: solo funciones, agregados y tablas virtuales                                                                                         |
+| Una columna con la clave, en una migración | Hay ocho sitios que escriben nombres y todos tendrían que mantenerla al día. Cambiar el algoritmo exigiría otra migración. El índice que permitiría no hace falta con estos tiempos |
+| Ordenar en la interfaz o en el servicio    | El orden por título es también el desempate de los demás criterios; partirlo entre SQL y JavaScript complica el motor                                                               |
 
 ### Kysely solo genera el SQL
 

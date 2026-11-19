@@ -133,7 +133,8 @@ export class ItemService {
       JOIN item ON item.id = item_entry.item_id
       JOIN catalog_entry entry ON entry.id = item_entry.entry_id
       WHERE item.kind = ? AND item.deleted_at IS NULL`;
-    const rows = db.prepare(`${used} ORDER BY entry.name_key, entry.name`).all(kind) as {
+    const order = 'ORDER BY natural_key(entry.name_key), entry.name_key, entry.name';
+    const rows = db.prepare(`${used} ${order}`).all(kind) as {
       role: ItemRole;
       id: number;
       name: string;
@@ -414,7 +415,8 @@ export class ItemService {
       .prepare(
         `SELECT ie.role, e.id, e.name FROM item_entry ie
          JOIN catalog_entry e ON e.id = ie.entry_id
-         WHERE ie.item_id = ? ORDER BY ie.sort_order, e.name_key, e.name`,
+         WHERE ie.item_id = ?
+         ORDER BY ie.sort_order, natural_key(e.name_key), e.name_key, e.name`,
       )
       .all(id) as (EntryName & { role: ItemRole })[];
     const relations: Partial<Record<ItemRole, EntryName[]>> = {};

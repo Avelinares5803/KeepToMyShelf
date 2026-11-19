@@ -59,11 +59,14 @@ const toSummary = (row: EntryRow, aliases: string[]): CatalogEntrySummary => ({
 export class CatalogService {
   constructor(private readonly deps: { readonly sessions: SessionManager }) {}
 
-  /** Values of one catalog, ordered by name ignoring case and accents. */
+  /** Values of one catalog, ordered by name ignoring case and accents, numbers by value. */
   list(token: string, catalog: Catalog): CatalogEntrySummary[] {
     const db = this.db(token);
     const rows = db
-      .prepare(`${USAGE_QUERY} WHERE e.catalog = ? GROUP BY e.id ORDER BY e.name_key, e.name`)
+      .prepare(
+        `${USAGE_QUERY} WHERE e.catalog = ? GROUP BY e.id
+         ORDER BY natural_key(e.name_key), e.name_key, e.name`,
+      )
       .all(catalog) as EntryRow[];
 
     const aliases = new Map<number, string[]>();

@@ -156,6 +156,20 @@ test('sorts by every field both ways, always with missing data last', async () =
   await expectOrder(['Ábaco', 'zelda', 'Sin datos', 'Sin nombre 1']);
 });
 
+test('sorts the numbers in titles by value', async () => {
+  seedItems([
+    { title: 'Final Fantasy 10' },
+    { title: 'Final Fantasy 2' },
+    { title: 'Final Fantasy' },
+    { title: 'Final Fantasy 9' },
+  ]);
+  await reopenGames();
+
+  await expectOrder(['Final Fantasy', 'Final Fantasy 2', 'Final Fantasy 9', 'Final Fantasy 10']);
+  await button('A-Z').click();
+  await expectOrder(['Final Fantasy 10', 'Final Fantasy 9', 'Final Fantasy 2', 'Final Fantasy']);
+});
+
 test('calls the release date a premiere date in movies and series', async () => {
   await expect(sortField().locator('option', { hasText: 'Fecha de lanzamiento' })).toHaveCount(1);
 

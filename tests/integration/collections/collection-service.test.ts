@@ -84,6 +84,25 @@ describe('CollectionService', () => {
       ]);
     });
 
+    it('lists the numbers in names by value, also for the collections of an item', () => {
+      const sonic = item('game', 'Sonic');
+      const tenth = collection('Lista 10');
+      const second = collection('Lista 2');
+      fx.collections.changeMemberships(token, {
+        add: [
+          { collectionId: tenth, itemId: sonic },
+          { collectionId: second, itemId: sonic },
+        ],
+        remove: [],
+      });
+
+      expect(fx.collections.list(token).map((c) => c.name)).toEqual(['Lista 2', 'Lista 10']);
+      expect(fx.collections.forItem(token, sonic).map((c) => c.name)).toEqual([
+        'Lista 2',
+        'Lista 10',
+      ]);
+    });
+
     it('refuses a name that differs from another only in case or accents', () => {
       const favorites = collection('Favoritos');
       collection('Pendientes');

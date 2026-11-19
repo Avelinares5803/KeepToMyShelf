@@ -263,6 +263,37 @@ describe('ItemService.list', () => {
       expect(sorted('title', 'desc')).toEqual(['zelda', 'Ábaco', '#1', '#2']);
     });
 
+    it('sorts the numbers in titles by value, and ties by the plain text', () => {
+      game('Final Fantasy 10');
+      game('Agent 7');
+      game('Final Fantasy 2');
+      game('Agent 007');
+      game('Final Fantasy');
+
+      const natural = [
+        'Agent 007',
+        'Agent 7',
+        'Final Fantasy',
+        'Final Fantasy 2',
+        'Final Fantasy 10',
+      ];
+      expect(sorted('title', 'asc')).toEqual(natural);
+      expect(sorted('title', 'desc')).toEqual([
+        'Final Fantasy 10',
+        'Final Fantasy 2',
+        'Final Fantasy',
+        'Agent 007',
+        'Agent 7',
+      ]);
+    });
+
+    it('breaks ties of other criteria by title with numbers by value', () => {
+      game('Halo 10', { rating: 8 });
+      game('Halo 2', { rating: 8 });
+
+      expect(sorted('rating', 'desc')).toEqual(['Halo 2', 'Halo 10']);
+    });
+
     it('sorts by date added', () => {
       game('Primero');
       game('Segundo');

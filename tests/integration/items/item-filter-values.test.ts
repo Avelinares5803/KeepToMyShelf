@@ -73,6 +73,13 @@ describe('ItemService.filterValues', () => {
     expect(names('game', 'tag')).toEqual(['Ábaco', 'Metroid', 'zelda']);
   });
 
+  it('sorts the numbers in names by value', () => {
+    const tags = ['Parte 10', 'Parte 2', 'Parte 1'].map((name) => entry('tag', name));
+    item('game', 'Juego', { tag: existing(...tags) });
+
+    expect(names('game', 'tag')).toEqual(['Parte 1', 'Parte 2', 'Parte 10']);
+  });
+
   it('includes the other names of each value', () => {
     const drive = entry('platform', 'Mega Drive de prueba', ['Genesis de prueba']);
     item('game', 'Juego', { owned_on: existing(drive) });

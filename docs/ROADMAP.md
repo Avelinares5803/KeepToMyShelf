@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-19, con el plan de la v1.1 (apartado 3.11) y las mejoras anotadas ordenadas por versión.
+**Última actualización:** 2026-11-19, con la v1.1-A (orden natural de los números, apartado 3.11).
 
 ---
 
@@ -47,7 +47,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
-| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🔜 Planificada (apartado 3.11)      |
+| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🚧 En curso: v1.1-A hecha (3.11)    |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -461,7 +461,10 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 
 **Entregas, en este orden:**
 
-- **v1.1-A: orden natural de los números** en los títulos y los catálogos: «Final Fantasy 2» antes que «Final Fantasy 10». Previsiblemente necesita una migración con una columna de clave de orden, porque SQLite compara texto carácter a carácter. Antes de proponerla, hay que comprobar si better-sqlite3 permite registrar una función de comparación propia (_collation_).
+- **v1.1-A: orden natural de los números** en los títulos y los catálogos: «Final Fantasy 2» antes que «Final Fantasy 10». ✅ Hecha (`feat/natural-sort`). Ver el [ADR 0006](adr/0006-search-and-filters.md#orden-natural-de-los-números-v11-a). Acordado el 2026-11-19:
+  - **Sin migración:** better-sqlite3 13 no permite registrar una _collation_, así que cada conexión registra la función SQL `natural_key` y las consultas ordenan con `ORDER BY natural_key(…)`. Se eligió frente a una columna con la clave porque no puede quedarse desfasada y el algoritmo se puede cambiar sin migrar. Con 10 000 títulos, ordenar cuesta unos 13 ms más.
+  - **Se aplica también a las colecciones y los perfiles**, además de a los títulos (bibliotecas y colecciones, también como desempate de los demás criterios), los catálogos, los valores de los filtros y las relaciones de la ficha a igualdad de orden manual.
+  - «007» y «7» empatan y decide el texto. Los números romanos no se interpretan.
 - **v1.1-B: filtros numéricos:** año de lanzamiento, horas jugadas (videojuegos) y temporadas (series). El registro de campos necesita un tipo de campo nuevo (rango con ≥ y ≤), y las temporadas están en otra tabla (`series_details`). Hay que decidir si aparecen en los filtros simples, en los avanzados o en ambos.
 - **v1.1-C: colecciones:** un filtro «Colección» en las bibliotecas, ordenar una colección por la fecha en que se añadió cada elemento (ya se guarda) y usar como portada de la colección la de uno de sus elementos. El orden manual y los filtros por atributo siguen en las mejoras anotadas.
 - **v1.1-D: tamaño de las portadas** en la biblioteca, con un control para agrandarlas o reducirlas. La cuadrícula virtualizada y la posición recordada tienen que recalcularse con el tamaño elegido.

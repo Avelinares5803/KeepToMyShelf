@@ -104,6 +104,7 @@ Details: [ADR 0005](adr/0005-media.md) and, for backgrounds, [ADR 0008](adr/0008
 
 - The filters are an **expression tree** (AND/OR groups of conditions) in [`core/filters/`](../src/core/filters/). A **field registry** (`FILTER_FIELDS`) describes each filter; the query engine knows how to filter each type of field, so a new field of an existing type is just a new descriptor.
 - Titles are searched through normalized columns (`title_norm`: lower case, no accents).
+- Titles and names (catalogs, collections and profiles) are sorted with **numbers by value** ("Final Fantasy 2" before "Final Fantasy 10"), through the `natural_key` SQL function that every connection registers in [`connection.ts`](../src/main/infrastructure/db/connection.ts).
 - The library grid is **virtualized** (TanStack Virtual): only the visible cards exist, and it is tested with 10,000 items.
 
 Details: [ADR 0006](adr/0006-search-and-filters.md).

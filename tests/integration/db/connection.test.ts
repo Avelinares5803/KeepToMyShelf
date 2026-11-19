@@ -34,4 +34,18 @@ describe('openDatabase', () => {
       /FOREIGN KEY constraint failed/,
     );
   });
+
+  it('registers natural_key, which sorts numbers by value and keeps NULL', () => {
+    db.exec(`CREATE TABLE t (name TEXT);
+      INSERT INTO t VALUES ('ff 10'), ('ff 2'), (NULL), ('ff 1')`);
+    const names = db
+      .prepare('SELECT name FROM t ORDER BY natural_key(name) NULLS LAST')
+      .pluck()
+      .all();
+    expect(names).toEqual(['ff 1', 'ff 2', 'ff 10', null]);
+  });
+
+  it('rejects anything but text in natural_key', () => {
+    expect(() => db.prepare('SELECT natural_key(12)').get()).toThrow(/expects text/);
+  });
 });

@@ -12,7 +12,10 @@ import {
   type SimpleFilters,
 } from './simple-filters';
 
-const valuesOf = (roles: ItemFilterValues['roles']): ItemFilterValues => ({ roles, ranges: {} });
+const valuesOf = (
+  roles: ItemFilterValues['roles'],
+  collections: ItemFilterValues['collections'] = [],
+): ItemFilterValues => ({ roles, ranges: {}, collections });
 const filters = (change: Partial<SimpleFilters>): SimpleFilters => ({
   ...NO_SIMPLE_FILTERS,
   ...change,
@@ -88,6 +91,12 @@ describe('toFilterTree', () => {
     }
   });
 
+  it('uses OR between collections, and AND with the other attributes', () => {
+    expect(toFilterTree(filters({ favorite: true, collections: [4, 5] }))).toEqual(
+      and(or(is('favorite', true)), or(is('collection', 4), is('collection', 5))),
+    );
+  });
+
   it('builds what the engine accepts, with every kind of mark', () => {
     const tree = toFilterTree({
       favorite: true,
@@ -98,6 +107,7 @@ describe('toFilterTree', () => {
       unrated: true,
       roles: { genre: [1], owned_on: [2] },
       ranges: { releaseYear: { from: '1990', to: '2000' }, hoursPlayed: { from: '0', to: '' } },
+      collections: [3],
     });
     expect(validateFilter('game', tree!)).not.toBeNull();
   });
@@ -127,8 +137,9 @@ describe('countMarks', () => {
         unrated: true,
         roles: { genre: [1, 2], tag: [3] },
         ranges: { releaseYear: { from: '1990', to: '1999' }, hoursPlayed: { from: 'x', to: '' } },
+        collections: [4, 5],
       }),
-    ).toBe(11);
+    ).toBe(13);
   });
 });
 
@@ -149,9 +160,22 @@ describe('withoutMissingValues', () => {
     );
   });
 
+  it('takes out collections deleted or left without items of the library', () => {
+    const collection = (id: number) => ({ id, name: `Colección ${id}`, aliases: [] });
+    const current = filters({ roles: { genre: [1] }, collections: [4, 5] });
+    expect(withoutMissingValues(current, valuesOf({ genre: [genre(1)] }, [collection(5)]))).toEqual(
+      filters({ roles: { genre: [1] }, collections: [5] }),
+    );
+  });
+
   it('returns the same object when nothing is missing', () => {
-    const current = filters({ roles: { genre: [1] } });
-    expect(withoutMissingValues(current, valuesOf({ genre: [genre(1)] }))).toBe(current);
+    const current = filters({ roles: { genre: [1] }, collections: [4] });
+    expect(
+      withoutMissingValues(
+        current,
+        valuesOf({ genre: [genre(1)] }, [{ id: 4, name: 'Favoritos', aliases: [] }]),
+      ),
+    ).toBe(current);
     expect(withoutMissingValues(NO_SIMPLE_FILTERS, valuesOf({}))).toBe(NO_SIMPLE_FILTERS);
   });
 

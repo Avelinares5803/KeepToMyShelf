@@ -1,7 +1,7 @@
 # ADR 0006: Búsqueda, filtros y ordenación
 
-- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples), F7-E (filtros avanzados), v1.1-A (orden natural de los números) y v1.1-B (filtros numéricos)
-- **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes, y el 2026-11-19 con el orden natural y los filtros numéricos)
+- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples), F7-E (filtros avanzados), v1.1-A (orden natural de los números), v1.1-B (filtros numéricos) y v1.1-C (filtro por colección y orden por fecha de adición)
+- **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes, el 2026-11-19 con el orden natural y los filtros numéricos, y el 2026-11-20 con la v1.1-C)
 
 ## Contexto
 
@@ -17,16 +17,17 @@ Un filtro es un árbol de grupos (`and`, `or`) y condiciones (`src/core/filters/
 
 `FILTER_FIELDS` (`src/core/filters/filter-fields.ts`) describe cada campo de forma declarativa: su identificador, los tipos de elemento que lo tienen y de dónde sale el dato. Añadir un campo de un tipo existente consiste en añadir un descriptor. El motor solo cambia si aparece un tipo de campo nuevo.
 
-| Tipo     | Campos                                  | Operadores        |
-| -------- | --------------------------------------- | ----------------- |
-| `role`   | Todos los papeles (géneros, etiquetas…) | es, no es         |
-| `choice` | Estado                                  | es, no es         |
-| `flag`   | Favorito, Rejugado/Revisionada          | es                |
-| `flags`  | Formato (físico, digital)               | es, no es         |
-| `rating` | Valoración                              | ≥, ≤, sin valorar |
-| `number` | Año de lanzamiento, horas, temporadas   | ≥, ≤, sin indicar |
+| Tipo         | Campos                                  | Operadores        |
+| ------------ | --------------------------------------- | ----------------- |
+| `role`       | Todos los papeles (géneros, etiquetas…) | es, no es         |
+| `choice`     | Estado                                  | es, no es         |
+| `flag`       | Favorito, Rejugado/Revisionada          | es                |
+| `flags`      | Formato (físico, digital)               | es, no es         |
+| `rating`     | Valoración                              | ≥, ≤, sin valorar |
+| `number`     | Año de lanzamiento, horas, temporadas   | ≥, ≤, sin indicar |
+| `collection` | Colecciones (v1.1-C)                    | es, no es         |
 
-Los papeles se filtran por separado aunque compartan catálogo: «Lo tengo en» y «Publicado en» son campos distintos.
+Los papeles se filtran por separado aunque compartan catálogo: «Lo tengo en» y «Publicado en» son campos distintos. El filtro por colección funciona como un papel (un `EXISTS` por condición) y se explica en el [ADR 0007](0007-collections.md#mejoras-de-la-v11-c-2026-11-20).
 
 ### Campos numéricos (v1.1-B)
 
@@ -46,7 +47,7 @@ Como con la valoración, un elemento sin el dato no cumple ≥ ni ≤; «sin ind
 - **«No es»:** incluye los elementos sin ese dato. Un juego sin estado «no es» Terminado.
 - **Búsqueda:** parcial, con `LIKE` sobre `title_norm` y `item_alt_title.title_norm`, sin distinguir mayúsculas ni acentos. `%`, `_` y `\` se tratan como texto normal.
 - **Elementos sin título:** se encuentran por el nombre que muestran («Sin nombre 3»). Ese texto no está guardado y depende del idioma, así que la interfaz envía la etiqueta traducida.
-- **Ordenación:** por título, fecha de adición, valoración, fecha de lanzamiento más temprana, inicio o fin de uso. Lo que no tiene dato por el que ordenar queda siempre al final, también en orden descendente. Los empates siguen el orden por título y, después, el `id`.
+- **Ordenación:** por título, fecha de alta en la biblioteca (`createdAt`, «Fecha de alta» desde la v1.1-C), valoración, fecha de lanzamiento más temprana, inicio o fin de uso. Dentro de una colección, también por la fecha en que se añadió cada elemento (`addedToCollection`, v1.1-C). Lo que no tiene dato por el que ordenar queda siempre al final, también en orden descendente. Los empates siguen el orden por título y, después, el `id`.
 - **Fechas parciales:** se ordenan como texto, así que en orden ascendente «2021» queda antes que «2021-03».
 - **Orden natural de los números** (v1.1-A): ver el apartado siguiente.
 - **Colecciones** (F9): la misma consulta admite «todos los tipos» y limitarse a una colección. Sin tipo no se admiten filtros, porque sus campos dependen del tipo. Ver el [ADR 0007](0007-collections.md).

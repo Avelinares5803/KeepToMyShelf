@@ -29,7 +29,40 @@ describe('ItemService.filterValues', () => {
   });
 
   it('offers nothing for an empty library, even with catalogs full of values', () => {
-    expect(fx.items.filterValues(token, 'game')).toEqual({ roles: {}, ranges: {} });
+    fx.collections.create(token, { name: 'Vacía' });
+    expect(fx.items.filterValues(token, 'game')).toEqual({
+      roles: {},
+      ranges: {},
+      collections: [],
+    });
+  });
+
+  it('offers the collections with items of that kind outside the trash, by name', () => {
+    const game = item('game', 'Juego', {}).id;
+    const trashed = item('game', 'En la papelera', {}).id;
+    const movie = item('movie', 'Película', {}).id;
+    const tenth = fx.collections.create(token, { name: 'Lista 10' }).id;
+    const second = fx.collections.create(token, { name: 'Lista 2' }).id;
+    const onlyTrash = fx.collections.create(token, { name: 'Solo papelera' }).id;
+    const movies = fx.collections.create(token, { name: 'Cine' }).id;
+    fx.collections.create(token, { name: 'Vacía' });
+    fx.collections.changeMemberships(token, {
+      add: [
+        { collectionId: tenth, itemId: game },
+        { collectionId: second, itemId: game },
+        { collectionId: onlyTrash, itemId: trashed },
+        { collectionId: movies, itemId: movie },
+      ],
+      remove: [],
+    });
+    fx.items.moveToTrash(token, trashed);
+
+    expect(fx.items.filterValues(token, 'game').collections).toEqual([
+      { id: second, name: 'Lista 2', aliases: [] },
+      { id: tenth, name: 'Lista 10', aliases: [] },
+    ]);
+    expect(fx.items.filterValues(token, 'movie').collections.map((c) => c.name)).toEqual(['Cine']);
+    expect(fx.items.filterValues(token, 'series').collections).toEqual([]);
   });
 
   it('offers only the values used by items of that kind', () => {

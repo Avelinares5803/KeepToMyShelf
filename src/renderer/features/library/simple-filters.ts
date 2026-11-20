@@ -20,6 +20,8 @@ export interface SimpleFilters {
   readonly roles: Readonly<Partial<Record<ItemRole, readonly number[]>>>;
   /** "From" and "to" of each number, as typed: only valid numbers apply. */
   readonly ranges: Readonly<Partial<Record<NumberMeasure, NumberRangeText>>>;
+  /** Ids of the collections marked. */
+  readonly collections: readonly number[];
 }
 
 export interface NumberRangeText {
@@ -36,6 +38,7 @@ export const NO_SIMPLE_FILTERS: SimpleFilters = {
   unrated: false,
   roles: {},
   ranges: {},
+  collections: [],
 };
 
 /** The number typed, if `measure` can have it; null when empty or not valid. */
@@ -95,6 +98,7 @@ export function toFilterTree(filters: SimpleFilters): FilterNode | undefined {
         : []),
     ],
     ...Object.entries(filters.roles).map(([role, ids]) => ids.map((id) => is(role, id))),
+    filters.collections.map((id) => is('collection', id)),
   ];
   const allOf = rangeEntries(filters).map(([measure, range]) => rangeConditions(measure, range));
   const children: FilterNode[] = [
@@ -121,6 +125,7 @@ export function countMarks(filters: SimpleFilters): number {
     Number(filters.minRating !== null) +
     Number(filters.unrated) +
     Object.values(filters.roles).reduce((total, ids) => total + ids.length, 0) +
+    filters.collections.length +
     rangeEntries(filters).reduce(
       (total, [measure, range]) => total + rangeConditions(measure, range).length,
       0,
@@ -134,8 +139,9 @@ export function toggled<T>(list: readonly T[], value: T): T[] {
 }
 
 /**
- * Takes out the marks of values no item uses any more (e.g. deleted from its catalog), which
- * would find nothing without any way to see why. Returns the same object if none is missing.
+ * Takes out the marks of values no item uses any more (e.g. deleted from its catalog, or a
+ * collection deleted or left without items of the library), which would find nothing without
+ * any way to see why. Returns the same object if none is missing.
  */
 export function withoutMissingValues(
   filters: SimpleFilters,
@@ -149,5 +155,8 @@ export function withoutMissingValues(
     if (kept.length !== ids.length) changed = true;
     if (kept.length > 0) roles[role] = kept;
   }
-  return changed ? { ...filters, roles } : filters;
+  const knownCollections = new Set(values.collections.map((value) => value.id));
+  const collections = filters.collections.filter((id) => knownCollections.has(id));
+  if (collections.length !== filters.collections.length) changed = true;
+  return changed ? { ...filters, roles, collections } : filters;
 }

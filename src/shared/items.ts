@@ -50,6 +50,8 @@ export interface ItemFilterValues {
   readonly roles: Readonly<Partial<Record<ItemRole, readonly ItemFilterValue[]>>>;
   /** Per measure of the kind, its range; left out when no item has the number. */
   readonly ranges: Readonly<Partial<Record<NumberMeasure, ItemFilterRange>>>;
+  /** The collections that have items of the library, by name; they have no aliases. */
+  readonly collections: readonly ItemFilterValue[];
 }
 
 export interface ItemRelease {

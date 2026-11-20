@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ITEM_SORT_FIELDS } from '../../../core/filters/item-sort';
 import type { ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -137,6 +138,7 @@ export function LibraryScreen({
       <LibraryToolbar
         kind={kind}
         search={view.search}
+        sortFields={ITEM_SORT_FIELDS}
         sort={sort}
         filters={{
           marks: activeFilterCount(kind, view),

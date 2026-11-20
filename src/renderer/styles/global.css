@@ -1055,6 +1055,16 @@ h1 {
   background: var(--color-bg);
 }
 
+/* The same row as a button: the whole row chooses the item. */
+.item-cover-picker__option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
 /* Covers have their own shapes: each fits in the same small box. */
 .membership__cover {
   display: grid;

@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-19, con la v1.1-B (filtros numéricos, apartado 3.11).
+**Última actualización:** 2026-11-20, con la v1.1-C (mejoras de colecciones, apartado 3.11).
 
 ---
 
@@ -47,7 +47,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
-| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🚧 En curso: v1.1-A y B (3.11)      |
+| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🚧 En curso: v1.1-A a C (3.11)      |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -471,7 +471,11 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **Horas enteras**, comparadas con los minutos: 10:30 está en «Hasta 11», no en «Hasta 10».
   - **En los dos modos:** en los simples, una sección con «Desde» y «Hasta»; en los avanzados, una casilla numérica. **«Sin indicar» solo en los avanzados.** Un número no válido no se aplica, se marca en rojo y no cuenta, así que no activa «Quitar filtros» (igual que una fila avanzada a medias).
   - **`items.filterValues` devuelve también el rango** de cada número. En los simples, la sección solo aparece si algún elemento tiene el dato, y el rango se muestra como texto de ejemplo. En los avanzados los números se ofrecen siempre, como la valoración.
-- **v1.1-C: colecciones:** un filtro «Colección» en las bibliotecas, ordenar una colección por la fecha en que se añadió cada elemento (ya se guarda) y usar como portada de la colección la de uno de sus elementos. El orden manual y los filtros por atributo siguen en las mejoras anotadas.
+- **v1.1-C: colecciones:** un filtro «Colecciones» en las bibliotecas, ordenar una colección por la fecha en que se añadió cada elemento (ya se guardaba) y usar como portada de la colección la de uno de sus elementos. ✅ Hecha (`feat/collection-improvements`). Ver el [ADR 0007](adr/0007-collections.md#mejoras-de-la-v11-c-2026-11-20). El orden manual y los filtros por atributo siguen en las mejoras anotadas. Acordado el 2026-11-20:
+  - **Una sola PR**, sin migración: `collection_item.added_at` ya existía y la portada usa la misma fila de `media_file` que el elemento.
+  - **Filtro:** en los simples, una sección «Colecciones» con casillas (OR entre ellas y AND con lo demás) y su buscador a partir de 10. En los avanzados, el campo «Colecciones» con «es» y «no es». Solo se ofrecen las colecciones con algún elemento de esa biblioteca fuera de la papelera, y una colección marcada que se borra se desmarca sola.
+  - **Orden:** «Fecha de adición» solo existe dentro de una colección y empieza por la más reciente. **El orden por la fecha de alta en la biblioteca, que antes se llamaba «Fecha de adición», pasa a llamarse «Fecha de alta»** («Date added to library» en inglés) en todas partes. La ficha sigue diciendo «Añadido el».
+  - **Portada de un elemento:** un botón «Usar la portada de un elemento…» en la ventana de editar la colección, que no aparece al crearla (aún no tiene elementos). Se complementa con la portada propia, no la sustituye: se puede seguir importando una imagen. **Es una copia del momento, no un enlace:** si después cambia la portada del elemento, la de la colección no cambia.
 - **v1.1-D: tamaño de las portadas** en la biblioteca, con un control para agrandarlas o reducirlas. La cuadrícula virtualizada y la posición recordada tienen que recalcularse con el tamaño elegido.
 - **v1.1-E: arrastrar y soltar** imágenes y PDF en las zonas del formulario del elemento (portada, galería y documentos). Acordado el 2026-11-19:
   - **La interfaz sigue sin manejar rutas.** La función del preload recibe solo objetos `File` del arrastre, obtiene su ruta con `webUtils.getPathForFile` y la envía ella misma al proceso principal. Un `File` creado por código no tiene ruta, así que la interfaz no puede pedir que se lea un archivo que el usuario no ha soltado.

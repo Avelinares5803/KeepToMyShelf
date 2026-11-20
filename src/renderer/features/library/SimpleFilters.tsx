@@ -155,6 +155,17 @@ export function SimpleFilters({ kind, filters, values, onChange }: SimpleFilters
             </Section>
           );
         })}
+
+        {values !== null && values.collections.length > 0 && (
+          <Section label={t('collections.title')} marks={filters.collections.length}>
+            <ValueList
+              label={t('collections.title')}
+              options={values.collections}
+              marked={filters.collections}
+              onChange={(ids) => change({ collections: ids })}
+            />
+          </Section>
+        )}
       </div>
     </section>
   );

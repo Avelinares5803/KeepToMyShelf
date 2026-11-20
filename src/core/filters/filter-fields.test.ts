@@ -10,7 +10,7 @@ import {
   type FilterSource,
 } from './filter-fields';
 
-const COMMON = ['status', 'replay', 'format', 'rating', 'favorite', 'releaseYear'];
+const COMMON = ['status', 'replay', 'format', 'rating', 'favorite', 'releaseYear', 'collection'];
 const statusSource = filterFieldFor('game', 'status')!.source;
 const formatSource = filterFieldFor('game', 'format')!.source;
 const ratingSource: FilterSource = { type: 'rating' };
@@ -130,5 +130,14 @@ describe('filter values', () => {
 
   it('allow comparing numbers and asking for those not set', () => {
     expect(operatorsFor({ type: 'number', measure: 'seasons' })).toEqual(['gte', 'lte', 'isEmpty']);
+  });
+
+  it('accept only positive whole ids for collections, which an item is in or not', () => {
+    const source = filterFieldFor('series', 'collection')!.source;
+    expect(operatorsFor(source)).toEqual(['is', 'isNot']);
+    expect(isValidFilterValue(source, 'isNot', 4)).toBe(true);
+    for (const value of [0, -1, 1.5, '4', null]) {
+      expect(isValidFilterValue(source, 'is', value)).toBe(false);
+    }
   });
 });

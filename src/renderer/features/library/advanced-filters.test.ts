@@ -22,7 +22,10 @@ import {
 } from './advanced-filters';
 
 const lastChild = (group: AdvancedGroup): AdvancedNode => group.children.at(-1)!;
-const valuesOf = (roles: ItemFilterValues['roles']): ItemFilterValues => ({ roles, ranges: {} });
+const valuesOf = (
+  roles: ItemFilterValues['roles'],
+  collections: ItemFilterValues['collections'] = [],
+): ItemFilterValues => ({ roles, ranges: {}, collections });
 
 /** Adds a filled-in row to the group. */
 function withRow(
@@ -133,6 +136,7 @@ describe('toAdvancedTree', () => {
     root = withRow(root, 0, 'rating', 8);
     root = withRow(root, 0, 'rating', 4, 'lte');
     root = withRow(root, 0, 'replay', false);
+    root = withRow(root, 0, 'collection', 5, 'isNot');
 
     expect(validateFilter('game', toAdvancedTree('game', root)!)).not.toBeNull();
   });
@@ -238,6 +242,16 @@ describe('withoutMissingAdvancedValues', () => {
     expect(withoutMissingAdvancedValues('game', root, valuesOf({ genre: [value(1)] }))).toBe(root);
   });
 
+  it('takes out rows with collections deleted or without items of the library', () => {
+    const root = withRow(withRow(NO_ADVANCED_FILTERS, 0, 'collection', 4), 0, 'collection', 5);
+    const kept = withoutMissingAdvancedValues('game', root, valuesOf({}, [value(5)]));
+    expect(toAdvancedTree('game', kept)).toEqual({
+      type: 'group',
+      op: 'and',
+      children: [{ type: 'condition', field: 'collection', operator: 'is', value: 5 }],
+    });
+  });
+
   it('keeps number rows, even when no item has the number', () => {
     const root = withRow(NO_ADVANCED_FILTERS, 0, 'releaseYear', 1995);
     expect(withoutMissingAdvancedValues('game', root, valuesOf({}))).toBe(root);
@@ -255,6 +269,15 @@ describe('fieldsToOffer', () => {
       'hoursPlayed',
       'genre',
     ]);
+  });
+
+  it('offers collections, last, only when some have items of the library', () => {
+    const collections = [{ id: 4, name: 'Favoritos', aliases: [] }];
+    expect(fieldsToOffer('movie', valuesOf({}, collections))).toEqual([
+      ...ITEM_FIELDS,
+      'collection',
+    ]);
+    expect(fieldsToOffer('movie', valuesOf({}))).toEqual(ITEM_FIELDS);
   });
 
   it('offers each kind its own numbers', () => {
@@ -296,6 +319,7 @@ describe('parseValue', () => {
     expect(parseValue(source('status'), 'completed')).toBe('completed');
     expect(parseValue(source('format'), 'digital')).toBe('digital');
     expect(parseValue(source('releaseYear'), '1995')).toBe(1995);
+    expect(parseValue(source('collection'), '4')).toBe(4);
   });
 
   it('reads the empty choice as no value', () => {

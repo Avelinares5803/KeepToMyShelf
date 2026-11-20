@@ -21,6 +21,7 @@ import {
   type MediaFormat,
   type MediaKind,
 } from '../../core/media/media-format';
+import type { CollectionCoverPlan } from '../../shared/collections';
 import type {
   DocumentPlanEntry,
   ImagePlanEntry,
@@ -74,7 +75,7 @@ export interface MediaForItems {
  * reading it, and removing the files nothing uses after a collection is deleted.
  */
 export interface MediaForCollections {
-  stageCollectionCover(token: string, cover: ImagePlanEntry | null): StagedMedia;
+  stageCollectionCover(token: string, cover: CollectionCoverPlan | null): StagedMedia;
   collectionCover(token: string, collectionId: number): MediaAttachment | null;
   sweep(token: string): void;
 }
@@ -328,11 +329,15 @@ export class MediaService implements MediaForItems, MediaForCollections {
   /**
    * Puts in place the file of a collection's new cover (null: none). Like `stageMedia`,
    * nothing is written to the database until `write`, in the collection's transaction.
+   * An item's cover needs no new file: the collection uses the same one.
    */
-  stageCollectionCover(token: string, cover: ImagePlanEntry | null): StagedMedia {
+  stageCollectionCover(token: string, cover: CollectionCoverPlan | null): StagedMedia {
     const session = this.deps.sessions.require(token);
     const store = this.store(session);
-    const entry = cover === null ? null : this.resolveImage(token, session.db, store, cover);
+    const entry =
+      cover === null || cover.kind === 'item_cover'
+        ? null
+        : this.resolveImage(token, session.db, store, cover);
     const resolved = entry === null ? [] : [entry];
     placeImageFiles(store, resolved);
 
@@ -340,15 +345,18 @@ export class MediaService implements MediaForItems, MediaForCollections {
     return {
       write: (db, collectionId) => {
         const current = collectionCoverIdOf(db, collectionId);
-        const coverId =
-          entry === null
-            ? null
-            : this.storedImageId(
-                db,
-                entry,
-                current === null ? [] : [current],
-                `Collection ${collectionId}`,
-              );
+        let coverId: number | null = null;
+        if (cover?.kind === 'item_cover') {
+          // Checked here, in the transaction, so the item cannot change in between.
+          coverId = memberCoverIdOf(db, collectionId, cover.itemId);
+        } else if (entry !== null) {
+          coverId = this.storedImageId(
+            db,
+            entry,
+            current === null ? [] : [current],
+            `Collection ${collectionId}`,
+          );
+        }
         removesFiles = current !== null && current !== coverId;
         db.prepare('UPDATE collection SET cover_media_id = ? WHERE id = ?').run(
           coverId,
@@ -903,6 +911,31 @@ function collectionCoverIdOf(db: SqliteDatabase, collectionId: number): number |
     (db.prepare('SELECT cover_media_id FROM collection WHERE id = ?').pluck().get(collectionId) as
       number | null | undefined) ?? null
   );
+}
+
+/**
+ * The cover of an item of the collection, to use as the collection's. An item in the trash is
+ * not shown in its collections, so it cannot lend its cover either.
+ */
+function memberCoverIdOf(db: SqliteDatabase, collectionId: number, itemId: number): number {
+  const row = db
+    .prepare(
+      `SELECT i.cover_media_id, i.deleted_at FROM collection_item ci
+       JOIN item i ON i.id = ci.item_id
+       WHERE ci.collection_id = ? AND ci.item_id = ?`,
+    )
+    .get(collectionId, itemId) as
+    { cover_media_id: number | null; deleted_at: string | null } | undefined;
+  if (row === undefined || row.deleted_at !== null) {
+    throw new NotFoundError(
+      'collection.item_not_member',
+      `Item ${itemId} is not in collection ${collectionId}`,
+    );
+  }
+  if (row.cover_media_id === null) {
+    throw new NotFoundError('item.no_cover', `Item ${itemId} has no cover`);
+  }
+  return row.cover_media_id;
 }
 
 /** Copies the files of new cover or gallery images to their place, with their thumbnails. */

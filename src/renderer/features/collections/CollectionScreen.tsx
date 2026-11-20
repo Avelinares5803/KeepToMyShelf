@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { COLLECTION_SORT_FIELDS } from '../../../core/filters/item-sort';
 import { ITEM_KINDS, type ItemKind } from '../../../shared/content';
 import type { ItemSummary } from '../../../shared/items';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -152,6 +153,7 @@ export function CollectionScreen({
         <LibraryToolbar
           kind={kind}
           search={view.search}
+          sortFields={COLLECTION_SORT_FIELDS}
           sort={sort}
           onSearch={(search) => changeResults({ search })}
           onSort={(next) => changeResults({ sort: next })}

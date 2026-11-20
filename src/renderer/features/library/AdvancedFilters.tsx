@@ -176,6 +176,8 @@ function Condition({
         return t('items.fields.favorite');
       case 'rating':
         return t('items.rating.label');
+      case 'collection':
+        return t('collections.title');
       default:
         return t(`items.fields.${field}`);
     }
@@ -185,6 +187,11 @@ function Condition({
     switch (from.type) {
       case 'role':
         return (values?.roles[from.role] ?? []).map(({ id, name }) => ({
+          value: String(id),
+          label: name,
+        }));
+      case 'collection':
+        return (values?.collections ?? []).map(({ id, name }) => ({
           value: String(id),
           label: name,
         }));

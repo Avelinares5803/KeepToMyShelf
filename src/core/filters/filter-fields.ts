@@ -42,7 +42,9 @@ export type FilterSource =
   /** The stored rating (1..10), which may be missing. */
   | { readonly type: 'rating' }
   /** A whole number, which may be missing. */
-  | { readonly type: 'number'; readonly measure: NumberMeasure };
+  | { readonly type: 'number'; readonly measure: NumberMeasure }
+  /** The collections the item is in. The value is the collection's id. */
+  | { readonly type: 'collection' };
 
 export interface FilterField {
   readonly id: string;
@@ -57,6 +59,7 @@ const SOURCE_OPERATORS: Record<FilterSource['type'], readonly FilterOperator[]> 
   flags: ['is', 'isNot'],
   rating: ['gte', 'lte', 'isEmpty'],
   number: ['gte', 'lte', 'isEmpty'],
+  collection: ['is', 'isNot'],
 };
 
 const roleField = (role: ItemRole): FilterField => ({
@@ -87,6 +90,7 @@ export const FILTER_FIELDS: readonly FilterField[] = [
   { id: 'hoursPlayed', kinds: ['game'], source: { type: 'number', measure: 'hoursPlayed' } },
   { id: 'seasons', kinds: ['series'], source: { type: 'number', measure: 'seasons' } },
   ...ITEM_ROLES.map(roleField),
+  { id: 'collection', kinds: ITEM_KINDS, source: { type: 'collection' } },
 ];
 
 /** The field `id` if items of `kind` can be filtered by it. */
@@ -110,6 +114,7 @@ export function isValidFilterValue(
 ): boolean {
   switch (source.type) {
     case 'role':
+    case 'collection':
       return typeof value === 'number' && Number.isInteger(value) && value > 0;
     case 'choice':
       return typeof value === 'string' && source.values.includes(value);

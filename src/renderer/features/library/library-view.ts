@@ -2,6 +2,7 @@ import {
   DEFAULT_ITEM_SORT,
   type ItemSort,
   type ItemSortField,
+  type LibrarySortField,
   type SortDirection,
 } from '../../../core/filters/item-sort';
 import type { FilterNode } from '../../../core/filters/filter-tree';
@@ -26,7 +27,7 @@ export interface LibraryAnchor {
 /** How the user left a library. It lasts until the profile is closed, not across restarts. */
 export interface LibraryView {
   readonly search: string;
-  readonly sort: ItemSort;
+  readonly sort: ItemSort<LibrarySortField>;
   readonly filterMode: FilterMode;
   readonly filters: SimpleFilters;
   readonly advanced: AdvancedGroup;
@@ -66,12 +67,12 @@ function initialDirection(field: ItemSortField): SortDirection {
   return field === 'title' ? 'asc' : 'desc';
 }
 
-export const sortByField = (field: ItemSortField): ItemSort => ({
+export const sortByField = <F extends ItemSortField>(field: F): ItemSort<F> => ({
   field,
   direction: initialDirection(field),
 });
 
-export const reversedSort = (sort: ItemSort): ItemSort => ({
+export const reversedSort = <F extends ItemSortField>(sort: ItemSort<F>): ItemSort<F> => ({
   ...sort,
   direction: sort.direction === 'asc' ? 'desc' : 'asc',
 });

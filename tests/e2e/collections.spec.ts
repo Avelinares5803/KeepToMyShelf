@@ -173,6 +173,93 @@ test('shows the items of every kind, by kind, searched and sorted, and opens the
   );
 });
 
+test('sorts a collection by when each item was added to it', async () => {
+  seedItems(dataDir, [
+    { title: 'Sonic', createdAt: '2020-01-01T00:00:00.000Z' },
+    { title: 'Alien', kind: 'movie', createdAt: '2021-01-01T00:00:00.000Z' },
+    { title: 'Dark', kind: 'series', createdAt: '2022-01-01T00:00:00.000Z' },
+  ]);
+  seedCollections(dataDir, [
+    {
+      name: 'Favoritos',
+      items: [
+        { title: 'Dark', addedAt: '2026-01-01T00:00:00.000Z' },
+        { title: 'Sonic', addedAt: '2026-02-01T00:00:00.000Z' },
+        { title: 'Alien', addedAt: '2026-03-01T00:00:00.000Z' },
+      ],
+    },
+  ]);
+  await button('Colecciones').click();
+  await button('Favoritos 3 elementos').click();
+
+  const sort = page.getByLabel('Ordenar por', { exact: true });
+  await sort.selectOption({ label: 'Fecha de adición' });
+  // Like the other dates, the newest first.
+  await expect(shownTitles()).toHaveText(['Alien', 'Sonic', 'Dark']);
+  await button('Más reciente primero').click();
+  await expect(shownTitles()).toHaveText(['Dark', 'Sonic', 'Alien']);
+
+  // The date added to the library is another criterion, with its own name.
+  await sort.selectOption({ label: 'Fecha de alta' });
+  await expect(shownTitles()).toHaveText(['Dark', 'Alien', 'Sonic']);
+
+  // A library has no date added to a collection.
+  await breadcrumbs().getByRole('button', { name: 'Ana', exact: true }).click();
+  await button('Videojuegos').click();
+  await expect(sort.locator('option')).toHaveText([
+    'Título',
+    'Fecha de alta',
+    'Valoración',
+    'Fecha de lanzamiento',
+    'Fecha de inicio',
+    'Fecha de fin',
+  ]);
+});
+
+test('uses the cover of one of its items as its own', async () => {
+  seedItems(dataDir, [{ title: 'Sonic' }, { title: 'Tails' }]);
+  seedCollections(dataDir, [{ name: 'Favoritos', items: ['Sonic', 'Tails'] }]);
+  await button('Colecciones').click();
+  await button('Favoritos 2 elementos').click();
+
+  // Sonic gets a cover from its own form.
+  await page
+    .locator('.item-grid')
+    .getByRole('button', { name: /^Sonic/ })
+    .click();
+  await button('Editar').click();
+  await chooseFile(await coverFile('portada.png'));
+  await button('Añadir portada').click();
+  await dialog('Añadir «portada.png»').getByRole('button', { name: 'Añadir', exact: true }).click();
+  await button('Guardar').click();
+  await expect(heading('Sonic')).toBeVisible();
+  await button('Volver').click();
+
+  await button('Editar colección').click();
+  const edit = dialog('Editar «Favoritos»');
+  await edit.getByRole('button', { name: 'Usar la portada de un elemento…', exact: true }).click();
+  const picker = dialog('Elegir la portada de un elemento');
+  // Only the items with a cover are offered.
+  await expect(picker.getByRole('button', { name: 'Sonic', exact: true })).toBeVisible();
+  await expect(picker.getByRole('button', { name: 'Tails', exact: true })).toHaveCount(0);
+  await picker.getByRole('button', { name: 'Sonic', exact: true }).click();
+
+  await expect(picker).toHaveCount(0);
+  await expect(edit.getByRole('img', { name: 'Portada', exact: true })).toBeVisible();
+  await expect(edit.getByText('De «Sonic»', { exact: true })).toBeVisible();
+  await edit.getByRole('button', { name: 'Guardar', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await button('Volver').click();
+  await expect(button('Favoritos 2 elementos').locator('img')).toBeVisible();
+  // The file is shared with the item, not copied.
+  const [profile] = readdirSync(join(dataDir, 'profiles'));
+  const files = join(dataDir, 'profiles', profile!, 'media', 'files');
+  expect(
+    readdirSync(files, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile()),
+  ).toHaveLength(1);
+});
+
 test('hides an item in the trash and shows it again when restored', async () => {
   seedItems(dataDir, [{ title: 'Sonic' }, { title: 'Tails' }]);
   seedCollections(dataDir, [{ name: 'Favoritos', items: ['Sonic', 'Tails'] }]);

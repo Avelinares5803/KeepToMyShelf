@@ -7,7 +7,11 @@ import { z } from 'zod';
 import { CATALOGS, ITEM_ROLES } from '../core/catalogs/catalogs';
 import { FILTER_OPERATORS } from '../core/filters/filter-fields';
 import type { FilterNode } from '../core/filters/filter-tree';
-import { ITEM_SORT_FIELDS, SORT_DIRECTIONS } from '../core/filters/item-sort';
+import {
+  COLLECTION_SORT_FIELDS,
+  ITEM_SORT_FIELDS,
+  SORT_DIRECTIONS,
+} from '../core/filters/item-sort';
 import { ITEM_STATUSES } from '../core/items/item-draft';
 import { IMAGE_STORAGE_CHOICES } from '../core/media/import-rules';
 import { ITEM_KINDS } from './content';
@@ -100,6 +104,11 @@ const itemSortSchema = z.object({
   field: z.enum(ITEM_SORT_FIELDS),
   direction: z.enum(SORT_DIRECTIONS),
 });
+// A collection can also be sorted by when each item was added to it.
+const collectionItemSortSchema = z.object({
+  field: z.enum(COLLECTION_SORT_FIELDS),
+  direction: z.enum(SORT_DIRECTIONS),
+});
 
 const preparedIdSchema = z.uuid();
 const mediaIdSchema = z.number().int().positive();
@@ -138,6 +147,10 @@ const collectionInputSchema = {
   // null removes the cover; left out, it does not change.
   cover: coverPlanSchema.optional(),
 };
+// An existing collection can also take the cover of one of its items.
+const collectionCoverPlanSchema = z
+  .union([imagePlanEntrySchema, z.object({ kind: z.literal('item_cover'), itemId: itemIdSchema })])
+  .nullable();
 const membershipsSchema = z
   .array(z.object({ collectionId: collectionIdSchema, itemId: itemIdSchema }))
   .max(100_000)
@@ -238,6 +251,7 @@ export const ipcInputSchemas = {
     token: sessionTokenSchema,
     id: collectionIdSchema,
     ...collectionInputSchema,
+    cover: collectionCoverPlanSchema.optional(),
   }),
   deleteCollection: z.object({ token: sessionTokenSchema, id: collectionIdSchema }),
   deleteCollections: z.object({
@@ -250,7 +264,7 @@ export const ipcInputSchemas = {
     id: collectionIdSchema,
     kind: itemKindSchema.nullable(),
     search: itemSearchSchema.optional(),
-    sort: itemSortSchema.optional(),
+    sort: collectionItemSortSchema.optional(),
   }),
   listCollectionMemberIds: z.object({ token: sessionTokenSchema, id: collectionIdSchema }),
   listItemCollections: z.object({ token: sessionTokenSchema, itemId: itemIdSchema }),

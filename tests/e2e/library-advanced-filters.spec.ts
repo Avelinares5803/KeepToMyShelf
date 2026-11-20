@@ -3,7 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Locator, type Page } from '@playwright/test';
 import { launchApp } from './launch-app';
-import { seedItems, type SeedEntry, type SeedItem } from './seed-items';
+import {
+  seedCollections,
+  seedItems,
+  type SeedCollection,
+  type SeedEntry,
+  type SeedItem,
+} from './seed-items';
 
 let dataDir: string;
 let app: ElectronApplication | undefined;
@@ -21,9 +27,13 @@ const tag = (name: string): SeedEntry => ({ role: 'tag', catalog: 'tag', name })
 
 const expectTitles = (expected: string[]) => expect(titles()).toHaveText(expected);
 
-/** Opens the games library with the given items, and its advanced filters. */
-async function openBuilder(items: readonly SeedItem[]): Promise<void> {
+/** Opens the games library with the given items and collections, and its advanced filters. */
+async function openBuilder(
+  items: readonly SeedItem[],
+  collections: readonly SeedCollection[] = [],
+): Promise<void> {
   seedItems(dataDir, items);
+  seedCollections(dataDir, collections);
   await button('Videojuegos').click();
   await expect(heading(`Videojuegos (${items.length})`)).toBeVisible();
   await button('Filtros').click();
@@ -119,6 +129,26 @@ test('compares numbers, and finds the items without them', async () => {
     .getByLabel('Cumple', { exact: true })
     .selectOption({ label: 'alguna de estas condiciones' });
   await expectTitles(['Corto', 'Sin horas']);
+});
+
+test('finds the items in a collection, or in no collection but one', async () => {
+  await openBuilder(
+    [{ title: 'Favorito' }, { title: 'En las dos' }, { title: 'Suelto' }],
+    [
+      { name: 'Favoritos', items: ['Favorito', 'En las dos'] },
+      { name: 'Pendientes', items: ['En las dos'] },
+    ],
+  );
+  await addRow('Colecciones', 'Favoritos');
+  await addRow('Colecciones', 'Pendientes');
+  await expectTitles(['En las dos']);
+
+  await builder()
+    .locator('.advanced-filters__condition')
+    .last()
+    .getByLabel('Operador', { exact: true })
+    .selectOption({ label: 'no es' });
+  await expectTitles(['Favorito']);
 });
 
 test('mixes "all" and "any" with a group', async () => {

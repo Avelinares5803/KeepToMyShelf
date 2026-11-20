@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ImageIcon } from '../../components/icons';
 import { FormImageTile, Problems } from './ImagesField';
@@ -8,13 +9,21 @@ interface CoverFieldProps extends ImageImportOptions {
   token: string;
   cover: FormImage | null;
   onChange: (cover: FormImage | null) => void;
+  /** More ways to choose a cover (e.g. a collection's from one of its items), with the rest. */
+  extraActions?: ReactNode;
 }
 
 /**
  * The item's cover in the edit form, apart from the gallery. Choosing one only prepares it;
  * it is saved when the item is saved.
  */
-export function CoverField({ token, cover, onChange, ...importOptions }: CoverFieldProps) {
+export function CoverField({
+  token,
+  cover,
+  onChange,
+  extraActions,
+  ...importOptions
+}: CoverFieldProps) {
   const { t } = useTranslation();
   const importer = useImageImport({
     token,
@@ -28,15 +37,18 @@ export function CoverField({ token, cover, onChange, ...importOptions }: CoverFi
   return (
     <div className="cover-field">
       {cover === null ? (
-        <button
-          type="button"
-          className="cover-field__empty"
-          disabled={importer.busy}
-          onClick={() => void importer.pick()}
-        >
-          <ImageIcon />
-          <span>{t('media.cover.add')}</span>
-        </button>
+        <>
+          <button
+            type="button"
+            className="cover-field__empty"
+            disabled={importer.busy}
+            onClick={() => void importer.pick()}
+          >
+            <ImageIcon />
+            <span>{t('media.cover.add')}</span>
+          </button>
+          {extraActions !== undefined && <div className="image-list__actions">{extraActions}</div>}
+        </>
       ) : (
         <div className="image-list__item">
           <figure className="image-tile">
@@ -73,6 +85,7 @@ export function CoverField({ token, cover, onChange, ...importOptions }: CoverFi
                 {t(cover.useOriginal ? 'media.images.keepOptimized' : 'media.images.useOriginal')}
               </button>
             )}
+            {extraActions}
             <button
               type="button"
               className="link-button link-button--danger"

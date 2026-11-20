@@ -996,6 +996,22 @@ h1 {
   text-align: left;
 }
 
+/* A collection's cover is alone in its frame: the image and its actions go in the middle. */
+.collection-form__cover .cover-field,
+.collection-form__cover .image-list__item,
+.collection-form__cover .image-tile {
+  justify-items: center;
+}
+
+.collection-form__cover .image-tile__badges {
+  justify-content: center;
+}
+
+.collection-form__cover .image-list__actions {
+  flex-direction: column;
+  max-width: none;
+}
+
 /* Names listed one after the other, separated by commas (an item's collections). */
 .inline-list {
   display: inline;

@@ -117,7 +117,8 @@ export function CollectionDialog({
           </div>
         </form>
 
-        <fieldset className="fieldset">
+        {/* Centered here, alone in its frame; in an item's form it is aligned with the rest. */}
+        <fieldset className="fieldset collection-form__cover">
           <legend>{t('collections.fields.cover')}</legend>
           {itemCover === null ? (
             <CoverField
@@ -127,6 +128,18 @@ export function CollectionDialog({
               importChoice={imageImport.importChoice}
               optimizedMaxSide={imageImport.optimizedMaxSide}
               onRememberChoice={imageImport.onRememberChoice}
+              // A new collection has no items yet to take a cover from.
+              extraActions={
+                collection !== null && collection.itemCount > 0 ? (
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setPickingItemCover(true)}
+                  >
+                    {t('collections.itemCover.use')}
+                  </button>
+                ) : undefined
+              }
             />
           ) : (
             <ChosenItemCover
@@ -134,12 +147,6 @@ export function CollectionDialog({
               onPickOther={() => setPickingItemCover(true)}
               onRemove={() => setItemCover(null)}
             />
-          )}
-          {/* A new collection has no items yet to take a cover from. */}
-          {collection !== null && collection.itemCount > 0 && itemCover === null && (
-            <button type="button" className="link-button" onClick={() => setPickingItemCover(true)}>
-              {t('collections.itemCover.use')}
-            </button>
           )}
         </fieldset>
         {pickingItemCover && collection !== null && (

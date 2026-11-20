@@ -124,7 +124,8 @@
       "label": "Ordenar por",
       "reverse": "Invertir el orden",
       "title": "Título",
-      "createdAt": "Fecha de adición",
+      "createdAt": "Fecha de alta",
+      "addedToCollection": "Fecha de adición",
       "rating": "Valoración",
       "releaseDate": "Fecha de lanzamiento",
       "premiereDate": "Fecha de estreno",
@@ -327,6 +328,13 @@
     "fields": {
       "name": "Nombre",
       "cover": "Portada"
+    },
+    "itemCover": {
+      "use": "Usar la portada de un elemento…",
+      "other": "Elegir otro elemento",
+      "title": "Elegir la portada de un elemento",
+      "none": "Ningún elemento de esta colección tiene portada.",
+      "from": "De «{{title}}»"
     },
     "items": {
       "manage": "Añadir o quitar elementos",
@@ -625,7 +633,8 @@
       "name_too_long": "El nombre no puede tener más de 100 caracteres.",
       "duplicate_name": "Ya existe una colección con ese nombre.",
       "not_found": "Esa colección ya no existe.",
-      "invalid_change": "No se puede añadir y quitar a la vez el mismo elemento de una colección."
+      "invalid_change": "No se puede añadir y quitar a la vez el mismo elemento de una colección.",
+      "item_not_member": "Ese elemento ya no está en la colección."
     },
     "date": {
       "invalid_format": "La fecha no tiene un formato válido.",
@@ -653,6 +662,7 @@
       "counts_only_for_series": "Solo las series tienen temporadas y capítulos.",
       "invalid_count": "Debe ser un número entero de 0 o más.",
       "not_found": "Ese elemento ya no existe.",
+      "no_cover": "Ese elemento ya no tiene portada.",
       "in_trash": "Ese elemento está en la papelera. Restáuralo para editarlo.",
       "not_in_trash": "Solo se pueden eliminar definitivamente los elementos de la papelera.",
       "role_not_allowed": "Ese atributo no corresponde a este tipo de elemento.",

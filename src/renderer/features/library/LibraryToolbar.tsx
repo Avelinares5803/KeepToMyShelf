@@ -1,18 +1,16 @@
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ITEM_SORT_FIELDS,
-  type ItemSort,
-  type ItemSortField,
-} from '../../../core/filters/item-sort';
+import type { ItemSort, ItemSortField } from '../../../core/filters/item-sort';
 import type { ItemKind } from '../../../shared/content';
 import { reversedSort, sortByField } from './library-view';
 
-interface LibraryToolbarProps {
+interface LibraryToolbarProps<F extends ItemSortField> {
   /** The kind listed; null when every kind is (e.g. in a collection). */
   kind: ItemKind | null;
   search: string;
-  sort: ItemSort;
+  /** What this screen can be sorted by, in the order to offer it. */
+  sortFields: readonly F[];
+  sort: ItemSort<F>;
   /** The button of the filters; left out where there are none (e.g. in a collection). */
   filters?: {
     /** How many filters are marked, shown in the button that opens them. */
@@ -23,7 +21,7 @@ interface LibraryToolbarProps {
   /** More controls, between the search box and the sort controls. */
   children?: ReactNode;
   onSearch: (search: string) => void;
-  onSort: (sort: ItemSort) => void;
+  onSort: (sort: ItemSort<F>) => void;
 }
 
 /** What each direction means depends on what is being sorted. */
@@ -39,15 +37,16 @@ function releaseDateKey(kind: ItemKind | null): string {
 }
 
 /** The search box, the button of the filters and the sort controls of a library. */
-export function LibraryToolbar({
+export function LibraryToolbar<F extends ItemSortField>({
   kind,
   search,
+  sortFields,
   sort,
   filters,
   children,
   onSearch,
   onSort,
-}: LibraryToolbarProps) {
+}: LibraryToolbarProps<F>) {
   const { t } = useTranslation();
   const id = useId();
 
@@ -82,9 +81,9 @@ export function LibraryToolbar({
         <select
           id={`${id}-sort`}
           value={sort.field}
-          onChange={(event) => onSort(sortByField(event.target.value as ItemSortField))}
+          onChange={(event) => onSort(sortByField(event.target.value as F))}
         >
-          {ITEM_SORT_FIELDS.map((field) => (
+          {sortFields.map((field) => (
             <option key={field} value={field}>
               {fieldLabel(field)}
             </option>

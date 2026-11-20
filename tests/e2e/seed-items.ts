@@ -35,8 +35,8 @@ export interface SeedEntry {
 
 export interface SeedCollection {
   readonly name: string;
-  /** Titles of items already seeded. */
-  readonly items?: readonly string[];
+  /** Titles of items already seeded, or their titles and when they were added. */
+  readonly items?: readonly (string | { readonly title: string; readonly addedAt: string })[];
 }
 
 /** The open profile's library database. */
@@ -67,13 +67,15 @@ export function seedCollections(dataDir: string, collections: readonly SeedColle
           now,
           now,
         ).lastInsertRowid;
-      for (const title of collection.items ?? []) {
+      for (const member of collection.items ?? []) {
+        const { title, addedAt } =
+          typeof member === 'string' ? { title: member, addedAt: now } : member;
         const item = db.prepare('SELECT id FROM item WHERE title = ?').get(title) as
           { id: number } | undefined;
         if (item === undefined) throw new Error(`No seeded item is called ${title}`);
         db.prepare(
           'INSERT INTO collection_item (collection_id, item_id, added_at) VALUES (?, ?, ?)',
-        ).run(id, item.id, now);
+        ).run(id, item.id, addedAt);
       }
     });
   })();

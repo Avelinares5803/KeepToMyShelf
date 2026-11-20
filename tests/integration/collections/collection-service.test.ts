@@ -148,6 +148,61 @@ describe('CollectionService', () => {
       expect(fx.collections.get(token, id).itemCount).toBe(3);
     });
 
+    it('sorts by when each item was added to the collection, not to the library', () => {
+      const id = collection('Favoritos');
+      const alpha = item('game', 'Alpha');
+      const beta = item('movie', 'Beta');
+      const gamma = item('series', 'Gamma');
+      const delta = item('game', 'Delta');
+      // Each call is a later moment; Beta and Delta are added at the same one.
+      add(id, gamma);
+      add(id, alpha);
+      add(id, delta, beta);
+      const byAdded = (direction: 'asc' | 'desc', kind: ItemKind | null = null) =>
+        fx.collections
+          .listItems(token, id, { kind, sort: { field: 'addedToCollection', direction } })
+          .map((summary) => summary.title);
+
+      // Ties follow the title, whatever the direction.
+      expect(byAdded('desc')).toEqual(['Beta', 'Delta', 'Alpha', 'Gamma']);
+      expect(byAdded('asc')).toEqual(['Gamma', 'Alpha', 'Beta', 'Delta']);
+      expect(byAdded('desc', 'game')).toEqual(['Delta', 'Alpha']);
+    });
+
+    it('keeps the date an item was added when it goes to the trash and back', () => {
+      const id = collection('Favoritos');
+      const alpha = item('game', 'Alpha');
+      const beta = item('game', 'Beta');
+      add(id, alpha);
+      add(id, beta);
+
+      fx.items.moveToTrash(token, alpha);
+      fx.items.restore(token, alpha);
+
+      expect(
+        fx.collections
+          .listItems(token, id, {
+            kind: null,
+            sort: { field: 'addedToCollection', direction: 'desc' },
+          })
+          .map((summary) => summary.title),
+      ).toEqual(['Beta', 'Alpha']);
+    });
+
+    it('accepts the date added as the sort of a collection over IPC', () => {
+      const parse = (field: string) =>
+        ipcInputSchemas.listCollectionItems.safeParse({
+          token: '4f8a2a1e-3c55-4b7e-9a10-0d6c7f1b2e3a',
+          id: 1,
+          kind: null,
+          sort: { field, direction: 'desc' },
+        }).success;
+
+      expect(parse('addedToCollection')).toBe(true);
+      expect(parse('createdAt')).toBe(true);
+      expect(parse('added_at')).toBe(false);
+    });
+
     it('stores references: an item edited elsewhere shows its new data', () => {
       const id = collection('Favoritos');
       const sonic = item('game', 'Sonic');
@@ -478,6 +533,123 @@ describe('CollectionService', () => {
 
       expectCode(() => fx.collections.create(token, { name: 'Favoritos', cover }), code);
       expect(fx.collections.list(token)).toEqual([]);
+    });
+
+    describe('the cover of one of its items', () => {
+      const withCover = async (title: string, bytes: Buffer, name: string) =>
+        fx.items.create(
+          token,
+          'game',
+          { ...EMPTY_ITEM_DRAFT, title },
+          { cover: prepared(await prepare(name, bytes)) },
+        ).id;
+      const useItemCover = (id: number, itemId: number) =>
+        fx.collections.update(token, id, {
+          name: 'Favoritos',
+          cover: { kind: 'item_cover', itemId },
+        });
+
+      it('uses the same file as the item, without copying it', async () => {
+        const sonic = await withCover('Sonic', wide, 'ancha.png');
+        const id = collection('Favoritos');
+        add(id, sonic);
+
+        const saved = useItemCover(id, sonic);
+
+        expect(saved.cover?.mediaId).toBe(fx.media.list(token, sonic).cover!.mediaId);
+        expect(fx.collections.list(token)[0]!.cover).toEqual({
+          sha256: sha256(wide),
+          width: 40,
+          height: 20,
+        });
+        expect(storedFiles()).toEqual([`${sha256(wide)}.png`]);
+      });
+
+      it('replaces its own cover, deleting the file nothing else uses', async () => {
+        const sonic = await withCover('Sonic', wide, 'ancha.png');
+        const id = fx.collections.create(token, {
+          name: 'Favoritos',
+          cover: prepared(await prepare('alta.png', tall)),
+        }).id;
+        add(id, sonic);
+
+        useItemCover(id, sonic);
+
+        expect(fx.collections.get(token, id).cover?.sha256).toBe(sha256(wide));
+        expect(storedFiles()).toEqual([`${sha256(wide)}.png`]);
+      });
+
+      it('keeps the cover when the item changes or loses its own', async () => {
+        const sonic = await withCover('Sonic', wide, 'ancha.png');
+        const id = collection('Favoritos');
+        add(id, sonic);
+        useItemCover(id, sonic);
+
+        fx.items.update(
+          token,
+          sonic,
+          { ...EMPTY_ITEM_DRAFT, title: 'Sonic' },
+          { cover: prepared(await prepare('alta.png', tall)) },
+        );
+        expect(fx.collections.get(token, id).cover?.sha256).toBe(sha256(wide));
+        expect(storedFiles()).toEqual([`${sha256(wide)}.png`, `${sha256(tall)}.png`].sort());
+
+        fx.items.update(token, sonic, { ...EMPTY_ITEM_DRAFT, title: 'Sonic' }, { cover: null });
+        remove(id, sonic);
+        expect(fx.collections.get(token, id).cover?.sha256).toBe(sha256(wide));
+        expect(storedFiles()).toEqual([`${sha256(wide)}.png`]);
+
+        // Once the collection does not use it either, the file goes.
+        fx.collections.update(token, id, { name: 'Favoritos', cover: null });
+        expect(storedFiles()).toEqual([]);
+      });
+
+      it('keeps the item cover when the collection is deleted', async () => {
+        const sonic = await withCover('Sonic', wide, 'ancha.png');
+        const id = collection('Favoritos');
+        add(id, sonic);
+        useItemCover(id, sonic);
+
+        fx.collections.delete(token, id);
+
+        expect(fx.media.list(token, sonic).cover?.sha256).toBe(sha256(wide));
+        expect(storedFiles()).toEqual([`${sha256(wide)}.png`]);
+      });
+
+      it('refuses an item that is not in it, is in the trash or has no cover', async () => {
+        const sonic = await withCover('Sonic', wide, 'ancha.png');
+        const outside = await withCover('Fuera', tall, 'alta.png');
+        const plain = item('game', 'Sin portada');
+        const id = collection('Favoritos');
+        add(id, sonic, plain);
+
+        expectCode(() => useItemCover(id, outside), 'collection.item_not_member');
+        expectCode(() => useItemCover(id, 999), 'collection.item_not_member');
+        expectCode(() => useItemCover(id, plain), 'item.no_cover');
+        fx.items.moveToTrash(token, sonic);
+        expectCode(() => useItemCover(id, sonic), 'collection.item_not_member');
+
+        // Nothing changed, and no file was left behind.
+        expect(fx.collections.get(token, id).cover).toBeNull();
+        expect(storedFiles()).toEqual([`${sha256(wide)}.png`, `${sha256(tall)}.png`].sort());
+      });
+
+      it('is accepted over IPC only for a collection that already exists', () => {
+        const input = {
+          token: '4f8a2a1e-3c55-4b7e-9a10-0d6c7f1b2e3a',
+          name: 'Favoritos',
+          cover: { kind: 'item_cover', itemId: 3 },
+        };
+        expect(ipcInputSchemas.updateCollection.safeParse({ ...input, id: 1 }).success).toBe(true);
+        expect(ipcInputSchemas.createCollection.safeParse(input).success).toBe(false);
+        expect(
+          ipcInputSchemas.updateCollection.safeParse({
+            ...input,
+            id: 1,
+            cover: { kind: 'item_cover', itemId: 0 },
+          }).success,
+        ).toBe(false);
+      });
     });
 
     it('saves nothing when the save fails, and the import can be used again', async () => {

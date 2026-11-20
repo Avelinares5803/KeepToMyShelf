@@ -130,7 +130,7 @@ test('sorts by every field both ways, always with missing data last', async () =
   await button('A-Z').click();
   await expectOrder(['zelda', 'Sin datos', 'Ábaco', 'Sin nombre 1']);
 
-  await sortField().selectOption({ label: 'Fecha de adición' });
+  await sortField().selectOption({ label: 'Fecha de alta' });
   await expectOrder(['Sin nombre 1', 'zelda', 'Ábaco', 'Sin datos']);
   await button('Más reciente primero').click();
   await expectOrder(['Sin datos', 'Ábaco', 'zelda', 'Sin nombre 1']);
@@ -276,6 +276,6 @@ test('returns to the same place, and to the top with new results', async () => {
   await expect(heading('Videojuegos (86)')).toBeVisible();
   await expect(last).toBeInViewport();
 
-  await sortField().selectOption({ label: 'Fecha de adición' });
+  await sortField().selectOption({ label: 'Fecha de alta' });
   await expect.poll(scrollY).toBe(0);
 });

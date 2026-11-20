@@ -152,11 +152,14 @@ export function withoutMissingAdvancedValues(
 ): AdvancedGroup {
   const isMissing = (condition: AdvancedCondition) => {
     const source = condition.field === null ? null : filterFieldFor(kind, condition.field)?.source;
-    return (
-      source?.type === 'role' &&
-      condition.value !== null &&
-      !(values.roles[source.role] ?? []).some(({ id }) => id === condition.value)
-    );
+    if (condition.value === null) return false;
+    if (source?.type === 'role') {
+      return !(values.roles[source.role] ?? []).some(({ id }) => id === condition.value);
+    }
+    if (source?.type === 'collection') {
+      return !values.collections.some(({ id }) => id === condition.value);
+    }
+    return false;
   };
   const visit = (group: AdvancedGroup): AdvancedGroup => {
     let changed = false;
@@ -176,8 +179,9 @@ export function withoutMissingAdvancedValues(
 }
 
 /**
- * The fields to offer, in the form's order; catalog fields only if the library uses them.
- * Numbers are always offered, like the rating: "no year" means something in any library.
+ * The fields to offer, in the form's order; catalog fields and collections only if the
+ * library's items have them. Numbers are always offered, like the rating: "no year" means
+ * something in any library.
  */
 export function fieldsToOffer(kind: ItemKind, values: ItemFilterValues | null): string[] {
   const hasValues = (role: ItemRole) => (values?.roles[role]?.length ?? 0) > 0;
@@ -190,6 +194,7 @@ export function fieldsToOffer(kind: ItemKind, values: ItemFilterValues | null): 
     'format',
     ...numbers,
     ...rolesForKind(kind).filter(hasValues),
+    ...((values?.collections.length ?? 0) > 0 ? ['collection'] : []),
   ];
 }
 
@@ -200,6 +205,7 @@ export function parseValue(source: FilterSource, text: string): FilterCondition[
     case 'role':
     case 'rating':
     case 'number':
+    case 'collection':
       return Number(text);
     case 'flag':
       return text === 'true';

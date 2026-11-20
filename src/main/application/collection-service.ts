@@ -2,6 +2,7 @@ import { collectionNameKey, normalizeCollectionName } from '../../core/collectio
 import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import type { ItemSort } from '../../core/filters/item-sort';
 import type {
+  CollectionCoverPlan,
   CollectionDetails,
   CollectionMembership,
   CollectionName,
@@ -9,7 +10,6 @@ import type {
 } from '../../shared/collections';
 import type { ItemKind } from '../../shared/content';
 import type { ItemSummary } from '../../shared/items';
-import type { ImagePlanEntry } from '../../shared/media';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
 import { buildItemListQuery, type ItemSearch } from '../infrastructure/db/item-query';
 import { toItemSummary, type ItemSummaryRow } from './item-service';
@@ -26,8 +26,11 @@ export interface CollectionServiceDeps {
 
 export interface CollectionInput {
   readonly name: string;
-  /** The new cover (null: none); left out, it does not change. */
-  readonly cover?: ImagePlanEntry | null | undefined;
+  /**
+   * The new cover (null: none); left out, it does not change. An item's cover is only for a
+   * collection that already has that item.
+   */
+  readonly cover?: CollectionCoverPlan | null | undefined;
 }
 
 export interface CollectionItemsRequest {
@@ -266,7 +269,7 @@ export class CollectionService {
    */
   private withCover<T>(
     token: string,
-    cover: ImagePlanEntry | null | undefined,
+    cover: CollectionCoverPlan | null | undefined,
     save: (staged: StagedMedia | null) => T,
   ): T {
     const staged = cover === undefined ? null : this.deps.media.stageCollectionCover(token, cover);

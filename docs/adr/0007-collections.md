@@ -1,7 +1,7 @@
 # ADR 0007: Colecciones
 
-- **Estado:** aceptada e implementada: F9-A (motor), F9-B (pantallas) y F9-C (pertenencias)
-- **Fecha:** 2026-11-07
+- **Estado:** aceptada e implementada: F9-A (motor), F9-B (pantallas) y F9-C (pertenencias). Ampliada en la v1.1-C (filtro, orden por fecha de adición y portada de un elemento).
+- **Fecha:** 2026-11-07; ampliada el 2026-11-20
 
 ## Contexto
 
@@ -19,7 +19,7 @@ Una colección puede tener elementos de los tres tipos, y su pantalla los filtra
 - `collection_item`: qué elementos tiene cada colección, con la fecha en que se añadieron. La clave es (colección, elemento), así que un elemento está una sola vez en cada colección.
 - **Guarda referencias, nunca copias:** las dos claves foráneas son `ON DELETE CASCADE`. Borrar una colección borra sus pertenencias, nunca sus elementos; eliminar un elemento definitivamente lo quita de sus colecciones.
 - **Papelera:** la pertenencia no cambia al enviar un elemento a la papelera. Las consultas lo ocultan (`deleted_at IS NULL`) y vuelve al restaurarlo. Los recuentos no cuentan la papelera.
-- **Sin orden manual:** los elementos se ordenan con los mismos criterios que la biblioteca. `added_at` aún no se usa; se guarda porque luego no se podría recuperar.
+- **Sin orden manual:** los elementos se ordenan con los mismos criterios que la biblioteca, y desde la v1.1-C también por `added_at` (ver «Mejoras de la v1.1-C»).
 
 ### Nombres
 
@@ -31,7 +31,7 @@ Es un criterio distinto al de los catálogos (texto exacto) y al de los perfiles
 
 - Es opcional y pasa por la misma ventana de importación que la de los elementos. `collection.cover_media_id` es `ON DELETE RESTRICT`, con los mismos triggers que `item.cover_media_id`: solo admite imágenes de `files`, nunca un documento ni un original guardado.
 - `MediaService.stageCollectionCover` usa el mismo camino que la portada de un elemento: comprueba la imagen, copia los archivos antes de la transacción y escribe la fila dentro de ella. Si falla, el barrido borra lo copiado y la importación se puede reintentar.
-- La portada «existente» solo puede ser la que ya tiene esa colección. Usar la portada de un elemento como portada de una colección queda como mejora.
+- La portada «existente» solo puede ser la que ya tiene esa colección. Desde la v1.1-C también puede ser la de uno de sus elementos (ver «Mejoras de la v1.1-C»).
 - **El barrido tiene en cuenta las portadas de colección.** Sin eso, intentaría borrar un archivo protegido por `RESTRICT`, fallaría, y como hay un barrido al abrir el perfil, el perfil no se podría abrir. Una prueba lo cubre.
 
 ### Consultas
@@ -66,6 +66,31 @@ Es definitivo, sin papelera, con confirmación en la interfaz. Solo contiene un 
 - **Desde la colección:** la lista sale de `items.list` del tipo elegido, con su búsqueda, y se dibujan como mucho 100 filas, como en los filtros. No hace falta un canal nuevo.
 - **Desde la ficha, con colecciones nuevas:** se crean al guardar y después se añade el elemento, en dos llamadas. Un nombre repetido se comprueba antes con las mismas reglas que el proceso principal (`normalizeCollectionName` y `collectionNameKey`). Si un guardado falla a medias, las colecciones ya creadas se recuerdan para no crearlas dos veces al reintentar; en el peor caso queda una colección vacía, sin pérdida de datos.
 
+### Mejoras de la v1.1-C (2026-11-20)
+
+**Filtro «Colecciones» en las bibliotecas.**
+
+- Es un tipo de fuente nuevo en el registro de filtros, `collection`, para los tres tipos de elemento. Admite «es» y «no es», y su valor es el id de la colección.
+- Se resuelve con un `EXISTS` sobre `collection_item`, igual que las relaciones con los catálogos. Así, «en A y en B» significa que el elemento está en las dos, y «no está en A» incluye los elementos que no están en ninguna.
+- `items.filterValues` devuelve también `collections`: las que tienen algún elemento de ese tipo fuera de la papelera, ordenadas por nombre. No llevan alias.
+- La interfaz desmarca sola una colección que se borra o que se queda sin elementos de ese tipo, igual que un valor de un catálogo.
+
+**Orden por fecha de adición.**
+
+- `COLLECTION_SORT_FIELDS` añade `addedToCollection` a los criterios de la biblioteca (`ITEM_SORT_FIELDS`).
+- El esquema IPC de `items.list` no lo admite, y el de `collections.listItems` sí. El motor, además, lo rechaza sin `collectionId` como error de programación, igual que un filtro sin tipo.
+- El orden lee `collection_item.added_at`. Ir a la papelera y volver no cambia esa fecha, porque la pertenencia no se toca.
+- En la interfaz, el criterio se llama «Fecha de adición». El orden por la fecha de alta en la biblioteca, que antes se llamaba así, pasa a llamarse «Fecha de alta» en todas partes.
+
+**Portada tomada de un elemento.**
+
+- `collections.update` admite `cover: { kind: 'item_cover', itemId }`. `collections.create` no lo admite, porque una colección nueva no tiene elementos.
+- Dentro de la transacción se comprueba que el elemento pertenece a la colección (si no, `collection.item_not_member`), que no está en la papelera (el mismo error, porque la papelera lo oculta de sus colecciones) y que tiene portada (si no, `item.no_cover`).
+- La colección apunta a la **misma fila de `media_file`**, así que no se copia ningún archivo. Es lo mismo que «Usar como portada» en la galería de un elemento.
+- **Es una copia del momento, no un enlace:** si después el elemento cambia o quita su portada, la colección conserva la suya. El archivo sigue existiendo mientras lo use alguno de los dos: el `RESTRICT` y el barrido ya tenían en cuenta las portadas de colección.
+- Se descartó un enlace vivo (`collection.cover_item_id`), que habría seguido los cambios del elemento. Necesitaba una migración y decidir qué pasa cuando el elemento sale de la colección o va a la papelera.
+- En la ventana de la colección, «Usar la portada de un elemento…» abre una lista con buscador. Solo muestra los elementos de la colección que tienen portada. La elección se guarda con «Guardar», como cualquier otra portada.
+
 ## Alternativas descartadas
 
 - **Colecciones de un solo tipo:** más sencillas de filtrar, pero obligan a repetir colecciones para una misma idea.
@@ -77,5 +102,5 @@ Es definitivo, sin papelera, con confirmación en la interfaz. Solo contiene un 
 ## Consecuencias
 
 - Las copias de seguridad (F11) incluyen las colecciones sin hacer nada más: viven en `library.db`, y sus portadas en `media`.
-- Un filtro «Colección» en las bibliotecas necesitaría un tipo de campo nuevo en el registro de filtros.
+- El filtro «Colecciones» de las bibliotecas (v1.1-C) añadió un tipo de campo nuevo, `collection`, al registro de filtros.
 - Las pantallas llegan en la F9-B (lista, crear, editar, borrar y la colección con su tipo, búsqueda y orden) y la F9-C (añadir y quitar elementos desde la colección y desde la ficha).

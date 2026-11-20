@@ -11,20 +11,28 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 #### Añadido
 
 - **Filtros numéricos:** año de lanzamiento (o de estreno), horas jugadas y temporadas. En los filtros simples, con «Desde» y «Hasta»; en los avanzados, con «al menos», «como mucho» y «sin indicar».
+- **Filtro «Colecciones»** en las bibliotecas, en los filtros simples y en los avanzados («es» y «no es»).
+- **Ordenar una colección por la fecha de adición**, es decir, por cuándo se añadió cada elemento a ella.
+- **Usar como portada de una colección la de uno de sus elementos**, sin volver a importar la imagen.
 
 #### Cambiado
 
 - Los **números de los títulos y los nombres** se ordenan por su valor: «Final Fantasy 2» va antes que «Final Fantasy 10». Afecta a las bibliotecas, las colecciones, los catálogos, los filtros y los perfiles.
+- El orden «Fecha de adición» de las bibliotecas pasa a llamarse **«Fecha de alta»**. «Fecha de adición» es ahora el nuevo orden de las colecciones.
 
 ### English
 
 #### Added
 
 - **Number filters:** release (or premiere) year, hours played and seasons. In the simple filters, with "From" and "To"; in the advanced filters, with "at least", "at most" and "not set".
+- **"Collections" filter** in the libraries, in both the simple and the advanced filters ("is" and "is not").
+- **Sort a collection by date added**, that is, by when each item was added to it.
+- **Use the cover of one of its items as a collection's cover**, without importing the image again.
 
 #### Changed
 
 - **Numbers in titles and names** are sorted by value: "Final Fantasy 2" comes before "Final Fantasy 10". This applies to libraries, collections, catalogs, filters and profiles.
+- The "Date added" sort of the libraries is now called **"Date added to library"**. "Date added" is now the new sort of the collections.
 
 ## [1.0.0] - 2026-11-18
 

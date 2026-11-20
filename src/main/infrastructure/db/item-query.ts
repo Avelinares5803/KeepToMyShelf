@@ -45,7 +45,7 @@ interface LibrarySchema {
   item_alt_title: { item_id: number; title_norm: string };
   item_release: { item_id: number; date: string };
   media_file: { id: number; sha256: string; width: number | null; height: number | null };
-  collection_item: { collection_id: number; item_id: number };
+  collection_item: { collection_id: number; item_id: number; added_at: string };
 }
 
 type ItemExpressions = ExpressionBuilder<LibrarySchema, 'item'>;
@@ -128,7 +128,22 @@ function conditionExpression(
         ? sql<SqlBool>`${measured} >= ${limit}`
         : sql<SqlBool>`${measured} <= ${limit}`;
     }
+    case 'collection': {
+      // As with roles, "in A AND in B" means the item is in both.
+      const member = inCollection(eb, value as number);
+      return operator === 'is' ? member : eb.not(member);
+    }
   }
+}
+
+function inCollection(eb: ItemExpressions, collectionId: number): Expression<SqlBool> {
+  return eb.exists(
+    eb
+      .selectFrom('collection_item')
+      .select('collection_item.item_id')
+      .whereRef('collection_item.item_id', '=', 'item.id')
+      .where('collection_item.collection_id', '=', collectionId),
+  );
 }
 
 /**
@@ -203,6 +218,10 @@ export function buildItemListQuery(kind: ItemKind | null, options: ItemListOptio
   const { direction } = sort;
   // Filter fields depend on the kind: without one, there is no field to check them against.
   if (filter != null && kind === null) throw new Error('A filter needs an item kind');
+  // Only an item of a collection has a date when it was added to it.
+  if (sort.field === 'addedToCollection' && collectionId === undefined) {
+    throw new Error('Sorting by the date added to a collection needs a collection');
+  }
 
   const sorted = builder
     .selectFrom('item')
@@ -223,21 +242,13 @@ export function buildItemListQuery(kind: ItemKind | null, options: ItemListOptio
     .$if(kind !== null, (query) => query.where('item.kind', '=', kind!))
     .where('item.deleted_at', 'is', null)
     .$if(collectionId !== undefined, (query) =>
-      query.where((eb) =>
-        eb.exists(
-          eb
-            .selectFrom('collection_item')
-            .select('collection_item.item_id')
-            .whereRef('collection_item.item_id', '=', 'item.id')
-            .where('collection_item.collection_id', '=', collectionId!),
-        ),
-      ),
+      query.where((eb) => inCollection(eb, collectionId!)),
     )
     .$if(text.length > 0, (query) =>
       query.where((eb) => searchExpression(eb, text, search!.untitledLabel)),
     )
     .$if(filter != null, (query) => query.where((eb) => filterExpression(eb, kind!, filter!)))
-    .orderBy(sortExpression(sort), (order) =>
+    .orderBy(sortExpression(sort, collectionId), (order) =>
       direction === 'asc' ? order.asc().nullsLast() : order.desc().nullsLast(),
     );
 
@@ -254,11 +265,15 @@ export function buildItemListQuery(kind: ItemKind | null, options: ItemListOptio
     .compile();
 }
 
-function sortExpression(sort: ItemSort): Expression<unknown> {
+function sortExpression(sort: ItemSort, collectionId: number | undefined): Expression<unknown> {
   switch (sort.field) {
     case 'title':
       // Numbers by value (see NATURAL_KEY in connection.ts): "Halo 2" before "Halo 10".
       return sql`natural_key(item.title_norm)`;
+    case 'addedToCollection':
+      return sql`(SELECT collection_item.added_at FROM collection_item
+        WHERE collection_item.collection_id = ${collectionId!}
+          AND collection_item.item_id = item.id)`;
     case 'createdAt':
       return sql.ref('item.created_at');
     case 'rating':

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import { launchApp } from './launch-app';
 import { scrollAreaTo, scrollTop } from './scroll-area';
-import { seedItems, type SeedEntry, type SeedItem } from './seed-items';
+import { seedCollections, seedItems, type SeedEntry, type SeedItem } from './seed-items';
 
 let dataDir: string;
 let app: ElectronApplication | undefined;
@@ -156,6 +156,59 @@ test('filters by each kind of control', async () => {
   await expectTitles(['Ambos', 'Digital', 'Favorito', 'Físico']);
   await page.getByLabel('Al menos', { exact: true }).selectOption('');
   await expectTitles(['Ambos', 'Digital', 'Físico']);
+});
+
+test('filters by collection, and unmarks a collection that is deleted', async () => {
+  const goToModes = () =>
+    page
+      .getByRole('navigation', { name: 'Ruta de navegación' })
+      .getByRole('button', { name: 'Ana', exact: true })
+      .click();
+  seedItems(dataDir, [
+    { title: 'Mejor' },
+    { title: 'En las dos' },
+    { title: 'Suelto' },
+    { title: 'Película', kind: 'movie' },
+  ]);
+  seedCollections(dataDir, [
+    { name: 'Mejores', items: ['Mejor', 'En las dos', 'Película'] },
+    { name: 'Pendientes', items: ['En las dos'] },
+    { name: 'Cine', items: ['Película'] },
+    { name: 'Vacía' },
+  ]);
+  await button('Videojuegos').click();
+  await expect(heading('Videojuegos (3)')).toBeVisible();
+  await button('Filtros').click();
+
+  // Only the collections with games are offered.
+  await section('Colecciones').click();
+  await expect(box('Mejores')).toBeVisible();
+  await expect(box('Pendientes')).toBeVisible();
+  await expect(box('Cine')).toHaveCount(0);
+  await expect(box('Vacía')).toHaveCount(0);
+
+  await box('Mejores').check();
+  await expectTitles(['En las dos', 'Mejor']);
+  await box('Pendientes').check();
+  await expectTitles(['En las dos', 'Mejor']);
+  await box('Mejores').uncheck();
+  await expectTitles(['En las dos']);
+  await expect(button('Filtros (1)')).toBeVisible();
+
+  await goToModes();
+  await button('Colecciones').click();
+  await button('Pendientes 1 elemento').click();
+  await button('Eliminar colección').click();
+  await page
+    .getByRole('dialog', { name: 'Eliminar colección', exact: true })
+    .getByRole('button', { name: 'Eliminar colección', exact: true })
+    .click();
+  await expect(heading('Colecciones (3)')).toBeVisible();
+
+  await goToModes();
+  await button('Videojuegos').click();
+  await expect(heading('Videojuegos (3)')).toBeVisible();
+  await expect(button('Filtros')).toBeVisible();
 });
 
 test('filters by numbers from and to, with the range of the library as a hint', async () => {

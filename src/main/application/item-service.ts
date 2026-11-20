@@ -179,7 +179,20 @@ export class ItemService {
           ? { min: Math.floor(min / 60), max: Math.ceil(max / 60) }
           : { min, max };
     }
-    return { roles, ranges };
+
+    // Collections have no aliases: only their name is searched.
+    const collections = (
+      db
+        .prepare(
+          `SELECT c.id, c.name FROM collection c
+           WHERE EXISTS (SELECT 1 FROM collection_item ci JOIN item ON item.id = ci.item_id
+                         WHERE ci.collection_id = c.id AND item.kind = ?
+                           AND item.deleted_at IS NULL)
+           ORDER BY natural_key(c.name_key), c.name_key, c.name`,
+        )
+        .all(kind) as EntryName[]
+    ).map(({ id, name }) => ({ id, name, aliases: [] }));
+    return { roles, ranges, collections };
   }
 
   /** Items in the trash, most recently deleted first; all kinds when `kind` is null. */

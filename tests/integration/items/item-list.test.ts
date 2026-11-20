@@ -199,6 +199,63 @@ describe('ItemService.list', () => {
     });
   });
 
+  describe('filters on collections', () => {
+    let favorites: number;
+    let pending: number;
+
+    beforeEach(() => {
+      favorites = fx.collections.create(token, { name: 'Favoritos' }).id;
+      pending = fx.collections.create(token, { name: 'Pendientes' }).id;
+      const inBoth = game('En las dos').id;
+      const favorite = game('Solo favorito').id;
+      const pendingOnly = game('Solo pendiente').id;
+      game('En ninguna');
+      const movie = fx.items.create(token, 'movie', { ...EMPTY_ITEM_DRAFT, title: 'Película' }).id;
+      fx.collections.changeMemberships(token, {
+        add: [
+          { collectionId: favorites, itemId: inBoth },
+          { collectionId: pending, itemId: inBoth },
+          { collectionId: favorites, itemId: favorite },
+          { collectionId: pending, itemId: pendingOnly },
+          { collectionId: favorites, itemId: movie },
+        ],
+        remove: [],
+      });
+    });
+
+    it('finds the items of a collection, only of the kind listed', () => {
+      expect(filtered(is('collection', favorites))).toEqual(['En las dos', 'Solo favorito']);
+    });
+
+    it('combines collections with AND and OR', () => {
+      expect(filtered(and(is('collection', favorites), is('collection', pending)))).toEqual([
+        'En las dos',
+      ]);
+      expect(filtered(or(is('collection', favorites), is('collection', pending)))).toEqual([
+        'En las dos',
+        'Solo favorito',
+        'Solo pendiente',
+      ]);
+    });
+
+    it('excludes a collection, keeping the items in none', () => {
+      expect(filtered(isNot('collection', favorites))).toEqual(['En ninguna', 'Solo pendiente']);
+    });
+
+    it('finds nothing for a collection that no longer exists', () => {
+      fx.collections.delete(token, favorites);
+      expect(filtered(is('collection', favorites))).toEqual([]);
+    });
+
+    it('rejects a value that is not a collection id', () => {
+      expect(() => filtered(is('collection', 'Favoritos'))).toThrow(ValidationError);
+      expect(() => filtered(is('collection', 0))).toThrow(ValidationError);
+      expect(() => filtered({ ...is('collection', favorites), operator: 'gte' })).toThrow(
+        ValidationError,
+      );
+    });
+  });
+
   describe('filters on the item', () => {
     it('filters by status, keeping items without one when excluding', () => {
       game('Terminado', { status: 'completed' });
@@ -417,6 +474,11 @@ describe('ItemService.list', () => {
       expect(sorted('finishedOn', 'asc')).toEqual(['2005', '2001', ...last]);
       expect(sorted('finishedOn', 'desc')).toEqual(['2001', '2005', ...last]);
     });
+
+    it('cannot sort a library by the date added to a collection', () => {
+      game('Zelda');
+      expect(() => sorted('addedToCollection', 'desc')).toThrow(/needs a collection/);
+    });
   });
 
   describe('the query', () => {
@@ -466,6 +528,8 @@ describe('ItemService.list', () => {
       expect(parse({ sort: { field: 'item.title; DROP TABLE item', direction: 'asc' } })).toBe(
         false,
       );
+      // Only a collection knows when each item was added to it.
+      expect(parse({ sort: { field: 'addedToCollection', direction: 'asc' } })).toBe(false);
     });
   });
 

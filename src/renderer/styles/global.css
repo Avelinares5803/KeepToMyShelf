@@ -996,6 +996,22 @@ h1 {
   text-align: left;
 }
 
+/* A collection's cover is alone in its frame: the image and its actions go in the middle. */
+.collection-form__cover .cover-field,
+.collection-form__cover .image-list__item,
+.collection-form__cover .image-tile {
+  justify-items: center;
+}
+
+.collection-form__cover .image-tile__badges {
+  justify-content: center;
+}
+
+.collection-form__cover .image-list__actions {
+  flex-direction: column;
+  max-width: none;
+}
+
 /* Names listed one after the other, separated by commas (an item's collections). */
 .inline-list {
   display: inline;
@@ -1053,6 +1069,16 @@ h1 {
 
 .membership__option:hover {
   background: var(--color-bg);
+}
+
+/* The same row as a button: the whole row chooses the item. */
+.item-cover-picker__option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
 }
 
 /* Covers have their own shapes: each fits in the same small box. */

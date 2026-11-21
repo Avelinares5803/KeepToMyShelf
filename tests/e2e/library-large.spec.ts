@@ -141,7 +141,9 @@ async function scrollToMiddle(): Promise<string> {
 
 test('keeps the same item in view when the window changes the number of columns', async () => {
   await openGames(games(2_000));
-  // The smallest covers: 10 columns, more than fit in a narrow window.
+  // A window wide enough for the smallest covers, whatever the screen (the CI's is small)...
+  await page.setViewportSize({ width: 1400, height: 900 });
+  // ...and the smallest covers: 10 columns, more than fit in a narrow window.
   await coverSize().press('Home');
   await expect.poll(() => firstRowCards().count()).toBe(10);
 

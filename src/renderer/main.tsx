@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   BACKGROUND_SETTING_DEFAULTS,
+  LIBRARY_SETTING_DEFAULTS,
   MEDIA_SETTING_DEFAULTS,
   type AppSettings,
 } from '../shared/settings';
@@ -15,6 +16,7 @@ const FALLBACK_SETTINGS: AppSettings = {
   theme: 'system',
   ...MEDIA_SETTING_DEFAULTS,
   ...BACKGROUND_SETTING_DEFAULTS,
+  ...LIBRARY_SETTING_DEFAULTS,
 };
 
 async function loadStartupSettings(): Promise<AppSettings> {

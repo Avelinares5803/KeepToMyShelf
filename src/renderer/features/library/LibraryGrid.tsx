@@ -9,7 +9,7 @@ import { cardClassName, selectableProps } from '../selection/selection';
 import { SelectionMark } from '../selection/SelectionMark';
 import {
   cardWidthFor,
-  columnCountFor,
+  chosenColumnCount,
   estimateRowHeight,
   itemsInRow,
   rowCountFor,
@@ -18,7 +18,11 @@ import {
 import type { LibraryAnchor } from './library-view';
 
 // In rem. They match .item-grid__row and .item-card in the styles.
-const CARD_MIN_WIDTH = 10;
+/**
+ * Narrowest card, so that the titles of cards without a cover do not break in the middle of a
+ * word. In narrow windows, fewer columns than chosen may fit (8 of 10 in the narrowest one).
+ */
+const CARD_MIN_WIDTH = 6;
 const COLUMN_GAP = 1;
 const ROW_GAP = 1.5;
 const PLAIN_CARD_HEIGHT = 7;
@@ -29,6 +33,8 @@ const OVERSCAN_ROWS = 3;
 interface LibraryGridProps {
   items: readonly ItemSummary[];
   label: string;
+  /** The columns chosen by the user: fewer columns, bigger covers. */
+  columns: number;
   titleOf: (item: ItemSummary) => string;
   /** The item to return to when the grid appears; null starts from the top. */
   restoreTo: LibraryAnchor | null;
@@ -66,6 +72,7 @@ function anchorIndex(items: readonly ItemSummary[], anchor: LibraryAnchor): numb
 export function LibraryGrid({
   items,
   label,
+  columns: chosenColumns,
   titleOf,
   restoreTo,
   onLeave,
@@ -103,7 +110,9 @@ export function LibraryGrid({
 
   const rem = box?.rem ?? 16;
   const columns =
-    box === null ? 0 : columnCountFor(box.width, CARD_MIN_WIDTH * rem, COLUMN_GAP * rem);
+    box === null
+      ? 0
+      : chosenColumnCount(box.width, chosenColumns, CARD_MIN_WIDTH * rem, COLUMN_GAP * rem);
   const cardWidth = box === null ? 0 : cardWidthFor(box.width, columns, COLUMN_GAP * rem);
 
   const estimateSize = useCallback(
@@ -194,6 +203,7 @@ export function LibraryGrid({
               <ItemCard
                 item={item}
                 title={titleOf(item)}
+                coverWidth={cardWidth}
                 showKind={showKind}
                 selected={selection ? selection.selected.has(item.id) : null}
                 onOpen={() => (selection ? selection.onToggle(item.id) : onOpenItem(item))}
@@ -214,12 +224,15 @@ export function LibraryGrid({
 function ItemCard({
   item,
   title,
+  coverWidth,
   showKind,
   selected,
   onOpen,
 }: {
   item: ItemSummary;
   title: string;
+  /** The width the cover is shown at, in CSS pixels: the card's. */
+  coverWidth: number;
   showKind: boolean;
   /** Whether it is marked, in "Select" mode; null outside it. */
   selected: boolean | null;
@@ -244,6 +257,7 @@ function ItemCard({
             width={cover.width}
             height={cover.height}
             alt=""
+            sizes={`${Math.ceil(coverWidth)}px`}
             whenMissing="nothing"
             onMissing={() => setCoverMissing(true)}
           />

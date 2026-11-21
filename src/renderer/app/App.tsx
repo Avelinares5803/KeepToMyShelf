@@ -108,16 +108,19 @@ export function App({ initialSettings }: AppProps) {
   // Outside a profile, preferences are the global defaults; inside, the profile's own.
   // The new value shows at once (a control never jumps back while it is being saved) and is
   // undone if it cannot be saved.
+  const storeSetting = async (update: SettingUpdate) =>
+    unwrap(
+      session
+        ? await window.api.settings.setForProfile({ token: session.token, setting: update })
+        : await window.api.settings.setGlobal({ setting: update }),
+    );
+
   const updateSetting = (update: SettingUpdate) =>
     attempt(async () => {
       const next = { ...settings, [update.key]: update.value } as AppSettings;
       setSettings(next);
       try {
-        unwrap(
-          session
-            ? await window.api.settings.setForProfile({ token: session.token, setting: update })
-            : await window.api.settings.setGlobal({ setting: update }),
-        );
+        await storeSetting(update);
       } catch (caught) {
         setSettings(settings);
         throw caught;
@@ -217,6 +220,22 @@ export function App({ initialSettings }: AppProps) {
     onRememberChoice: (choice: ImageStorageChoice) =>
       void updateSetting({ key: 'imageImportChoice', value: choice }),
   };
+  // The size of the covers, shared by the libraries and the collections. Its slider can send
+  // several values in a row, so each one only changes this preference: a late answer must not
+  // bring back an older value. If saving fails, the stored preferences are shown again.
+  const libraryColumns = {
+    columns: settings.libraryColumns,
+    onColumnsChange: (columns: number) =>
+      void attempt(async () => {
+        setSettings((current) => ({ ...current, libraryColumns: columns }));
+        try {
+          await storeSetting({ key: 'libraryColumns', value: columns });
+        } catch (caught) {
+          await reloadSettings();
+          throw caught;
+        }
+      }),
+  };
   const openItem = (item: ItemSummary) =>
     dispatch({
       type: 'open',
@@ -281,6 +300,7 @@ export function App({ initialSettings }: AppProps) {
                 [screen.kind]: { ...libraryViewOf(views, screen.kind), ...change },
               }))
             }
+            {...libraryColumns}
             onAdd={() =>
               dispatch({ type: 'open', screen: { name: 'edit', kind: screen.kind, itemId: null } })
             }
@@ -367,6 +387,7 @@ export function App({ initialSettings }: AppProps) {
             onViewChange={(change) =>
               setCollectionViews((views) => withCollectionView(views, screen.collectionId, change))
             }
+            {...libraryColumns}
             imageImport={imageImport}
             onTitle={relabel}
             onOpenItem={openItem}

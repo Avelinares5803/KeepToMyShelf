@@ -5,6 +5,7 @@ import {
   formatFileSize,
   preparedThumbnailSource,
   thumbnailSource,
+  thumbnailSourceByWidth,
 } from './media-url';
 
 describe('media URLs', () => {
@@ -15,6 +16,19 @@ describe('media URLs', () => {
       srcSet: `ktms-media://thumb/${sha}/320 1x, ktms-media://thumb/${sha}/640 2x`,
     });
     expect(preparedThumbnailSource('id').src).toBe('ktms-media://prepared/id/320');
+  });
+
+  it('can describe the thumbnails by their width, keeping the proportions', () => {
+    const sha = 'c'.repeat(64);
+    const url = (side: number) => `ktms-media://thumb/${sha}/${side}`;
+    // A portrait cover: its longest side is the height.
+    expect(thumbnailSourceByWidth(sha, 1000, 1400)).toEqual({
+      src: url(320),
+      srcSet: `${url(320)} 229w, ${url(640)} 457w`,
+    });
+    // Thumbnails are never larger than the image.
+    expect(thumbnailSourceByWidth(sha, 500, 250).srcSet).toBe(`${url(320)} 320w, ${url(640)} 500w`);
+    expect(thumbnailSourceByWidth(sha, 200, 300).srcSet).toBe(`${url(320)} 200w`);
   });
 
   it('serves backgrounds from their own part of the scheme', () => {

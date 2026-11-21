@@ -120,6 +120,11 @@
       },
       "hint": "Las condiciones sin completar no se aplican."
     },
+    "coverSize": {
+      "label": "Tamaño de las portadas",
+      "columns_one": "{{count}} columna",
+      "columns_other": "{{count}} columnas"
+    },
     "sort": {
       "label": "Ordenar por",
       "reverse": "Invertir el orden",

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { thumbnailSource } from '../../lib/media-url';
+import { thumbnailSource, thumbnailSourceByWidth } from '../../lib/media-url';
 
 interface ThumbnailProps {
   sha256: string;
@@ -18,6 +18,11 @@ interface ThumbnailProps {
   whenMissing?: 'notice' | 'nothing';
   /** Told when the image turns out to be missing, so the parent can adapt its layout. */
   onMissing?: () => void;
+  /**
+   * The width the image is shown at (`sizes`), when it changes (e.g. library covers): the
+   * browser then picks the thumbnail by that width, not just by the screen density.
+   */
+  sizes?: string;
 }
 
 /**
@@ -33,6 +38,7 @@ export function Thumbnail({
   missing = false,
   whenMissing = 'notice',
   onMissing,
+  sizes,
 }: ThumbnailProps) {
   const { t } = useTranslation();
   // The thumbnail cannot be served when its file was deleted by hand.
@@ -49,12 +55,14 @@ export function Thumbnail({
       </span>
     );
   }
-  const source = thumbnailSource(sha256);
+  const source =
+    sizes === undefined ? thumbnailSource(sha256) : thumbnailSourceByWidth(sha256, width, height);
   return (
     <img
       className={className}
       src={source.src}
       srcSet={source.srcSet}
+      sizes={sizes}
       width={width}
       height={height}
       alt={alt}

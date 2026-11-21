@@ -18,6 +18,9 @@ export const BACKGROUND_BLUR_MAX = 40;
 export const BACKGROUND_DIM_MAX = 90;
 /** Longest side of optimized backgrounds that Settings offers, in pixels. */
 export const BACKGROUND_MAX_SIDES = [1920, 2560, 3840, 5120, 7680] as const;
+/** Columns of covers a library can show: fewer columns, bigger covers. */
+export const LIBRARY_COLUMNS_MIN = 3;
+export const LIBRARY_COLUMNS_MAX = 10;
 
 export const languageSchema = z.enum(LANGUAGES);
 export const themeSchema = z.enum(THEMES);
@@ -33,6 +36,11 @@ export const backgroundChoiceSchema = z.discriminatedUnion('kind', [
 export const backgroundBlurSchema = z.number().int().min(0).max(BACKGROUND_BLUR_MAX);
 export const backgroundDimSchema = z.number().int().min(0).max(BACKGROUND_DIM_MAX);
 export const backgroundMaxSideSchema = z.literal(BACKGROUND_MAX_SIDES);
+export const libraryColumnsSchema = z
+  .number()
+  .int()
+  .min(LIBRARY_COLUMNS_MIN)
+  .max(LIBRARY_COLUMNS_MAX);
 
 /** Every user preference, with the schema its stored value must satisfy. */
 export const settingSchemas = {
@@ -48,6 +56,8 @@ export const settingSchemas = {
   backgroundDimDark: backgroundDimSchema,
   backgroundImportChoice: imageImportChoiceSchema,
   backgroundMaxSide: backgroundMaxSideSchema,
+  // The size of the covers in the libraries and collections, chosen from their toolbar.
+  libraryColumns: libraryColumnsSchema,
 } as const;
 
 export type Language = z.infer<typeof languageSchema>;
@@ -92,6 +102,11 @@ export const BACKGROUND_SETTING_DEFAULTS = {
   | 'backgroundMaxSide'
 >;
 
+/** Defaults of the library preferences: 5 columns, as before the size could be chosen. */
+export const LIBRARY_SETTING_DEFAULTS = {
+  libraryColumns: 5,
+} as const satisfies Pick<AppSettings, 'libraryColumns'>;
+
 /** The dimming preference of each theme as shown (the system's, for "system"). */
 export const BACKGROUND_DIM_KEYS = {
   light: 'backgroundDimLight',
@@ -111,6 +126,7 @@ export const settingUpdateSchema = z.discriminatedUnion('key', [
   z.object({ key: z.literal('backgroundDimDark'), value: backgroundDimSchema }),
   z.object({ key: z.literal('backgroundImportChoice'), value: imageImportChoiceSchema }),
   z.object({ key: z.literal('backgroundMaxSide'), value: backgroundMaxSideSchema }),
+  z.object({ key: z.literal('libraryColumns'), value: libraryColumnsSchema }),
 ]);
 export type SettingUpdate = z.infer<typeof settingUpdateSchema>;
 

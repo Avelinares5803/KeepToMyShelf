@@ -1,6 +1,6 @@
 # ADR 0006: Búsqueda, filtros y ordenación
 
-- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples), F7-E (filtros avanzados), v1.1-A (orden natural de los números), v1.1-B (filtros numéricos) y v1.1-C (filtro por colección y orden por fecha de adición)
+- **Estado:** aceptada e implementada: F7-A (motor), F7-B (buscador y orden), F7-C (cuadrícula virtualizada), F7-D (filtros simples), F7-E (filtros avanzados), v1.1-A (orden natural de los números), v1.1-B (filtros numéricos), v1.1-C (filtro por colección y orden por fecha de adición) y v1.1-D (tamaño de las portadas)
 - **Fecha:** 2026-11-04 (ampliada hasta el 2026-11-06 con las entregas siguientes, el 2026-11-19 con el orden natural y los filtros numéricos, y el 2026-11-20 con la v1.1-C)
 
 ## Contexto
@@ -93,11 +93,21 @@ Cada modo guarda su propio estado, en lugar de compartir un solo árbol. Así no
 
 `LibraryGrid` (`src/renderer/features/library/`) usa TanStack Virtual (`useVirtualizer` sobre el área que se desplaza, `#app-scroll`; hasta la F10, `useWindowVirtualizer`) y solo dibuja las filas cercanas a lo visible, más tres por cada lado.
 
-- **Por filas:** virtualizar filas conserva la alineación por abajo dentro de cada una. El número de columnas se calcula con el ancho disponible y la misma regla que antes (mínimo 10 rem por tarjeta).
+- **Por filas:** virtualizar filas conserva la alineación por abajo dentro de cada una. Hasta la v1.1-D, el número de columnas se calculaba con el ancho disponible (mínimo 10 rem por tarjeta); desde entonces lo elige el usuario (ver «Tamaño de las portadas»).
 - **Alturas variables:** se estiman con el tamaño de las portadas (`grid-layout.ts`) y se sustituyen por la altura real al medir la fila.
-- **Posición al volver:** se guarda el primer elemento visible, no los píxeles, porque la altura de las filas no dibujadas es una estimación. Su fila queda arriba de la ventana, y se recupera también al cambiar el número de columnas. Con el ancho mínimo de la ventana (960 px) y el máximo del contenido (64 rem) hoy siempre caben 5 columnas, así que esto solo se nota si esos límites cambian.
+- **Posición al volver:** se guarda el primer elemento visible, no los píxeles, porque la altura de las filas no dibujadas es una estimación. Su fila queda arriba de la ventana, y se recupera también al cambiar el número de columnas (por el tamaño elegido o por el ancho de la ventana).
 - **Hueco de la barra de scroll:** en la biblioteca siempre está reservado (`scrollbar-gutter: stable`, en el área que se desplaza desde la F10). Si no, una página que casi cabe entra en un bucle sin fin: la barra estrecha las portadas, la página pasa a caber, la barra desaparece, las portadas crecen y la barra vuelve. Lo encontró la CI, con una pantalla más estrecha que la del equipo de desarrollo.
 - **Accesibilidad:** `role="list"` y `role="listitem"` con `aria-setsize` y `aria-posinset`, porque las filas impiden usar `<ul>` y `<li>` directamente.
+
+#### Tamaño de las portadas (v1.1-D)
+
+- **Se elige el número de columnas, de 3 a 10** (5 por defecto, como antes), con un deslizador en la barra de herramientas de las bibliotecas y de las colecciones: a la derecha, portadas más grandes (menos columnas). Se eligió frente a un ancho mínimo de tarjeta porque el ancho de la biblioteca varía poco y con un ancho mínimo algunos pasos no cambiarían nada.
+- **Una preferencia del perfil**, `libraryColumns`, común a las tres bibliotecas y a las colecciones. Va en `profile_setting` de `app.db`, así que no necesitó migración, y entra en las copias de seguridad con las demás preferencias del perfil. No está en Ajustes ni tiene «Aplicar a todos los perfiles».
+- **Cada cambio solo toca esa preferencia:** el deslizador puede enviar varios valores seguidos, y la respuesta tardía de uno no debe devolver la cuadrícula a un valor anterior.
+- **Ancho mínimo de tarjeta: 6 rem**, para que los títulos sin portada no se partan a mitad de palabra. En ventanas de menos de unos 1150 px caben menos columnas de las elegidas (8 en la ventana mínima).
+- **La biblioteca y las colecciones ocupan hasta 96 rem** (antes 64), con margen a los lados en un monitor ancho. Las demás pantallas siguen en 64 rem.
+- **Miniaturas por ancho:** las portadas de la cuadrícula piden las miniaturas con `srcset` por ancho (`320w`, `640w`, calculados con la proporción de la imagen) y `sizes` igual al ancho de la tarjeta, así que una tarjeta grande en una pantalla al 100 % usa la de 640 px y no se ve borrosa. El resto de miniaturas sigue con `1x`/`2x`.
+- **Limitación:** la barra de herramientas no se queda fija arriba, así que el deslizador se usa desde la parte de arriba de la biblioteca. Al volver de una ficha, la posición se recupera con el tamaño elegido.
 
 Medido con 10 000 elementos en el mismo equipo:
 

@@ -33,6 +33,9 @@ interface LibraryScreenProps {
   /** Kept outside: this screen is gone while an item is open, and the view must survive that. */
   view: LibraryView;
   onViewChange: (change: Partial<LibraryView>) => void;
+  /** The columns of covers, a preference of the profile shared by every library. */
+  columns: number;
+  onColumnsChange: (columns: number) => void;
   onOpenItem: (item: ItemSummary) => void;
   onAdd: () => void;
   onOpenTrash: () => void;
@@ -45,6 +48,8 @@ export function LibraryScreen({
   kind,
   view,
   onViewChange,
+  columns,
+  onColumnsChange,
   onOpenItem,
   onAdd,
   onOpenTrash,
@@ -145,8 +150,10 @@ export function LibraryScreen({
           open: view.filtersOpen,
           onToggle: () => onViewChange({ filtersOpen: !view.filtersOpen }),
         }}
+        columns={columns}
         onSearch={(search) => changeResults({ search })}
         onSort={(next) => changeResults({ sort: next })}
+        onColumnsChange={onColumnsChange}
       />
       {view.filtersOpen && (
         <FiltersPanel kind={kind} view={view} values={filterValues.data} onChange={changeResults} />
@@ -189,6 +196,7 @@ export function LibraryScreen({
         <LibraryGrid
           items={items.data}
           label={t(`modes.${kind}`)}
+          columns={columns}
           titleOf={displayTitle}
           restoreTo={restoreTo}
           onLeave={(anchor) => onViewChange({ anchor })}

@@ -164,6 +164,12 @@ h1 {
   max-width: 64rem;
 }
 
+/* The libraries and collections use more of a wide window, so the covers can be smaller or
+   bigger, but keep some margin around them. */
+.library {
+  max-width: 96rem;
+}
+
 /* Controls */
 .button {
   padding: 0.55rem 1.1rem;
@@ -610,6 +616,23 @@ h1 {
 
 .library__toolbar .button {
   white-space: nowrap;
+}
+
+/* The size of the covers: a short slider between a small and a big grid. */
+.library__cover-size {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-muted);
+}
+
+.library__cover-size input[type='range'] {
+  width: 7rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  accent-color: var(--color-accent);
 }
 
 .filters-panel {

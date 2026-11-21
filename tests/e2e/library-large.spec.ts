@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import { launchApp } from './launch-app';
 import { scrollAreaTo, scrollHeight, scrollTop } from './scroll-area';
-import { seedItems, type SeedItem } from './seed-items';
+import { seedCollections, seedItems, type SeedItem } from './seed-items';
 
 let dataDir: string;
 let app: ElectronApplication | undefined;
@@ -111,17 +111,18 @@ test('goes beyond the visible part with the keyboard', async () => {
   await expect(page.locator('.item-card:focus')).toHaveText('Juego 00078');
 });
 
-test('keeps the same item in view when the window changes the number of columns', async () => {
-  await openGames(games(2_000));
-  const firstRowCards = page.locator('.item-grid__row').first().locator('.item-card');
-  await expect(firstRowCards.first()).toBeVisible();
-  const columnsBefore = await firstRowCards.count();
+const firstRowCards = () => page.locator('.item-grid__row').first().locator('.item-card');
+const coverSize = () => page.getByRole('slider', { name: 'Tamaño de las portadas', exact: true });
 
+/**
+ * Scrolls to the middle of the library and returns the first card really on screen. Rows above
+ * the view are drawn too, so it is the first one below the top of the scrolling area. The rows
+ * of the new place are drawn just after scrolling, so it is waited for: on a slow machine (the
+ * CI) they may not be there yet.
+ */
+async function scrollToMiddle(): Promise<string> {
   await scrollTo((await pageHeight()) / 2);
   await expect.poll(scrollY).toBeGreaterThan(1000);
-  // Rows above the view are drawn too: this is the first card really on screen, below the top
-  // of the scrolling area. The rows of the new place are drawn just after scrolling, so it is
-  // waited for: on a slow machine (the CI) they may not be there yet.
   const firstSeen = () =>
     cards().evaluateAll((elements) => {
       type Box = { getBoundingClientRect(): { top: number } };
@@ -135,11 +136,59 @@ test('keeps the same item in view when the window changes the number of columns'
   await expect.poll(firstSeen).not.toBeNull();
   const seen = (await firstSeen())!;
   await expect(button(seen)).toBeInViewport();
+  return seen;
+}
 
-  // Emulated: the real window has a minimum width at which the columns still do not change.
+test('keeps the same item in view when the window changes the number of columns', async () => {
+  await openGames(games(2_000));
+  // The smallest covers: 10 columns, more than fit in a narrow window.
+  await coverSize().press('Home');
+  await expect.poll(() => firstRowCards().count()).toBe(10);
+
+  const seen = await scrollToMiddle();
+
+  // A narrow window, where cards of 10 columns would be too narrow.
   await page.setViewportSize({ width: 640, height: 720 });
-  await expect.poll(() => firstRowCards.count()).toBeLessThan(columnsBefore);
+  await expect.poll(() => firstRowCards().count()).toBeLessThan(10);
   await expect(button(seen)).toBeInViewport();
+});
+
+test('changes the size of the covers and remembers it', async () => {
+  await openGames(games(2_000));
+  await expect.poll(() => firstRowCards().count()).toBe(5);
+  await expect(coverSize()).toHaveAttribute('aria-valuetext', '5 columnas');
+
+  // The biggest covers: 3 columns.
+  await coverSize().press('End');
+  await expect.poll(() => firstRowCards().count()).toBe(3);
+  await expect(coverSize()).toHaveAttribute('aria-valuetext', '3 columnas');
+
+  // Coming back from an item returns to it, with the size chosen.
+  const seen = await scrollToMiddle();
+  await button(seen).click();
+  await expect(heading(seen)).toBeVisible();
+  await button('Volver').click();
+  await expect(button(seen)).toBeInViewport();
+  await expect.poll(() => firstRowCards().count()).toBe(3);
+
+  // One step smaller: 4 columns.
+  await coverSize().press('ArrowLeft');
+  await expect.poll(() => firstRowCards().count()).toBe(4);
+
+  // A preference of the profile: it is still there after restarting the app...
+  await app!.close();
+  ({ app, page } = await launchApp(dataDir));
+  await button('Abrir el perfil de Ana').click();
+  await button('Videojuegos').click();
+  await expect.poll(() => firstRowCards().count()).toBe(4);
+
+  // ...and the collections use it too.
+  seedCollections(dataDir, [{ name: 'Favoritos', items: games(6).map(({ title }) => title) }]);
+  await button('Volver').click();
+  await button('Colecciones').click();
+  await button('Favoritos 6 elementos').click();
+  await expect.poll(() => firstRowCards().count()).toBe(4);
+  await expect(coverSize()).toHaveAttribute('aria-valuetext', '4 columnas');
 });
 
 test('keeps the width of the cards with and without a scrollbar', async () => {

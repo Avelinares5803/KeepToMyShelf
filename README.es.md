@@ -7,7 +7,7 @@ Aplicación de escritorio para organizar tu colección de **videojuegos, pelícu
 ## Funciones
 
 - **Perfiles:** cada persona tiene su propia biblioteca, sus catálogos, sus colecciones y sus preferencias.
-- **Tres bibliotecas** (videojuegos, películas y series), que se muestran como una estantería de portadas.
+- **Tres bibliotecas** (videojuegos, películas y series), que se muestran como una estantería de portadas del tamaño que elijas.
 - **Fichas completas:** títulos alternativos, portada, galería de imágenes, documentos PDF (manuales, guías…), descripción, fechas de lanzamiento por región, plataformas, géneros, sagas, empresas, personas y su papel (dirección, reparto…), valoración con medias estrellas, estado, fechas de inicio y fin, horas jugadas, temporadas y capítulos, formato (físico o digital), favorito, etiquetas y notas.
 - **Catálogos editables** de plataformas, géneros, empresas, personas, etiquetas… Empiezan con listas en tu idioma y nunca dejan referencias rotas.
 - **Búsqueda y filtros:** búsqueda por título (sin distinguir mayúsculas ni tildes), filtros simples, filtros avanzados con Y/O, y ordenación.

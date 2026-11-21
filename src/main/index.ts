@@ -5,6 +5,7 @@ import { app, BrowserWindow, dialog, Menu, protocol, session, shell } from 'elec
 import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
 import {
   BACKGROUND_SETTING_DEFAULTS,
+  LIBRARY_SETTING_DEFAULTS,
   MEDIA_SETTING_DEFAULTS,
   type AppSettings,
 } from '../shared/settings';
@@ -37,6 +38,7 @@ function startApp(): void {
     theme: 'system',
     ...MEDIA_SETTING_DEFAULTS,
     ...BACKGROUND_SETTING_DEFAULTS,
+    ...LIBRARY_SETTING_DEFAULTS,
   };
   const now = () => new Date();
   const settings = new SettingsService(appDb, defaults);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cardWidthFor,
+  chosenColumnCount,
   columnCountFor,
   estimateRowHeight,
   itemsInRow,
@@ -19,6 +20,22 @@ describe('columnCountFor', () => {
   it('always has one column, even if a card does not fit', () => {
     expect(columnCountFor(100, 160, 16)).toBe(1);
     expect(columnCountFor(0, 160, 16)).toBe(1);
+  });
+});
+
+describe('chosenColumnCount', () => {
+  it('uses the columns chosen while their cards are wide enough', () => {
+    expect(chosenColumnCount(1536, 3, 96, 16)).toBe(3);
+    expect(chosenColumnCount(1536, 10, 96, 16)).toBe(10);
+    // 10 cards of 96 and 9 gaps of 16 need 1104.
+    expect(chosenColumnCount(1104, 10, 96, 16)).toBe(10);
+  });
+
+  it('uses fewer when the chosen cards would be too narrow', () => {
+    expect(chosenColumnCount(1103, 10, 96, 16)).toBe(9);
+    // The narrowest window.
+    expect(chosenColumnCount(905, 10, 96, 16)).toBe(8);
+    expect(chosenColumnCount(905, 5, 96, 16)).toBe(5);
   });
 });
 

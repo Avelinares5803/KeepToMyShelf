@@ -13,6 +13,19 @@ export function columnCountFor(width: number, minCardWidth: number, columnGap: n
   return Math.max(1, Math.floor((width + columnGap) / (minCardWidth + columnGap)));
 }
 
+/**
+ * The columns chosen by the user, unless their cards would be narrower than `minCardWidth`
+ * (a very narrow or zoomed window): then as many as fit.
+ */
+export function chosenColumnCount(
+  width: number,
+  chosen: number,
+  minCardWidth: number,
+  columnGap: number,
+): number {
+  return Math.min(chosen, columnCountFor(width, minCardWidth, columnGap));
+}
+
 export function cardWidthFor(width: number, columns: number, columnGap: number): number {
   return (width - columnGap * (columns - 1)) / columns;
 }

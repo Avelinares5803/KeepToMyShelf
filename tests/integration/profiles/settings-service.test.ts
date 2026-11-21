@@ -112,6 +112,14 @@ describe('SettingsService', () => {
     expect(fx.settings.getForProfile(beaId).background).toEqual({ kind: 'none' });
   });
 
+  it('stores the number of library columns, by default 5, per profile', () => {
+    expect(fx.settings.getGlobal().libraryColumns).toBe(5);
+    fx.settings.setForProfile(anaId, { key: 'libraryColumns', value: 3 });
+
+    expect(fx.settings.getForProfile(anaId).libraryColumns).toBe(3);
+    expect(fx.settings.getForProfile(beaId).libraryColumns).toBe(5);
+  });
+
   it('keeps a dimming for each theme, each with its own value per profile', () => {
     fx.settings.setForProfile(anaId, { key: 'backgroundDimLight', value: 0 });
     fx.settings.setGlobal({ key: 'backgroundDimDark', value: 90 });
@@ -141,6 +149,9 @@ describe('SettingsService', () => {
     { key: 'backgroundDimDark', value: 91 },
     { key: 'backgroundDimDark', value: 62.5 },
     { key: 'backgroundImportChoice', value: 'always' },
+    { key: 'libraryColumns', value: 2 },
+    { key: 'libraryColumns', value: 11 },
+    { key: 'libraryColumns', value: 4.5 },
   ])('rejects the invalid value %j', (update) => {
     expect(() => fx.settings.setGlobal(update as unknown as SettingUpdate)).toThrow(
       ValidationError,

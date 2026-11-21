@@ -133,6 +133,23 @@ export const ImageIcon = () => (
   </Icon>
 );
 
+/** Nine small squares: many small covers. */
+export const SmallCoversIcon = () => (
+  <Icon size={16}>
+    <path d="M4 4h3v3H4zM10.5 4h3v3h-3zM17 4h3v3h-3zM4 10.5h3v3H4zM10.5 10.5h3v3h-3zM17 10.5h3v3h-3zM4 17h3v3H4zM10.5 17h3v3h-3zM17 17h3v3h-3z" />
+  </Icon>
+);
+
+/** Four big squares: fewer, bigger covers. */
+export const LargeCoversIcon = () => (
+  <Icon size={20}>
+    <rect x="3" y="3" width="7.5" height="7.5" rx="1" />
+    <rect x="13.5" y="3" width="7.5" height="7.5" rx="1" />
+    <rect x="3" y="13.5" width="7.5" height="7.5" rx="1" />
+    <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1" />
+  </Icon>
+);
+
 export const GamepadIcon = () => (
   <Icon size={40}>
     <rect x="2" y="7" width="20" height="11" rx="5" />

@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-20, con la v1.1-C (mejoras de colecciones, apartado 3.11).
+**Última actualización:** 2026-11-21, con la v1.1-D (tamaño de las portadas, apartado 3.11).
 
 ---
 
@@ -47,7 +47,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
-| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🚧 En curso: v1.1-A a C (3.11)      |
+| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🚧 En curso: v1.1-A a D (3.11)      |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -476,7 +476,13 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **Filtro:** en los simples, una sección «Colecciones» con casillas (OR entre ellas y AND con lo demás) y su buscador a partir de 10. En los avanzados, el campo «Colecciones» con «es» y «no es». Solo se ofrecen las colecciones con algún elemento de esa biblioteca fuera de la papelera, y una colección marcada que se borra se desmarca sola.
   - **Orden:** «Fecha de adición» solo existe dentro de una colección y empieza por la más reciente. **El orden por la fecha de alta en la biblioteca, que antes se llamaba «Fecha de adición», pasa a llamarse «Fecha de alta»** («Date added to library» en inglés) en todas partes. La ficha sigue diciendo «Añadido el».
   - **Portada de un elemento:** un botón «Usar la portada de un elemento…» en la ventana de editar la colección, que no aparece al crearla (aún no tiene elementos). Se complementa con la portada propia, no la sustituye: se puede seguir importando una imagen. **Es una copia del momento, no un enlace:** si después cambia la portada del elemento, la de la colección no cambia.
-- **v1.1-D: tamaño de las portadas** en la biblioteca, con un control para agrandarlas o reducirlas. La cuadrícula virtualizada y la posición recordada tienen que recalcularse con el tamaño elegido.
+- **v1.1-D: tamaño de las portadas** en la biblioteca, con un control para agrandarlas o reducirlas. ✅ Hecha (`feat/cover-size`). Ver el [ADR 0006](adr/0006-search-and-filters.md#tamaño-de-las-portadas-v11-d). Acordado el 2026-11-21:
+  - **Un deslizador «Tamaño de las portadas»** en la barra de herramientas de las bibliotecas y de las colecciones, que elige el **número de columnas, de 3 a 10** (5 por defecto, como antes). La lista de colecciones no lo tiene.
+  - **Una preferencia del perfil** (`libraryColumns`), común a las tres bibliotecas y a las colecciones, sin migración. Se conserva al cerrar la app y entra en las copias de seguridad.
+  - **La biblioteca y las colecciones pasan de 64 a 96 rem** de ancho máximo, con margen a los lados en monitores anchos.
+  - **Las tarjetas miden al menos 6 rem**, así que en ventanas estrechas caben menos columnas de las elegidas (8 en la ventana mínima).
+  - **Las portadas grandes siguen nítidas:** la cuadrícula elige la miniatura (320 o 640 px) por el ancho de la tarjeta.
+  - La posición se recupera con el tamaño elegido. La barra de herramientas no se queda fija arriba.
 - **v1.1-E: arrastrar y soltar** imágenes y PDF en las zonas del formulario del elemento (portada, galería y documentos). Acordado el 2026-11-19:
   - **La interfaz sigue sin manejar rutas.** La función del preload recibe solo objetos `File` del arrastre, obtiene su ruta con `webUtils.getPathForFile` y la envía ella misma al proceso principal. Un `File` creado por código no tiene ruta, así que la interfaz no puede pedir que se lea un archivo que el usuario no ha soltado.
   - **El proceso principal rechaza las rutas de red** (`\\servidor\…`), que en Windows pueden enviar al servidor una huella de la contraseña de la sesión (NTLM), y todo lo que no sea un archivo normal. Después, la importación pasa por las mismas comprobaciones de contenido y tamaño que con la ventana «Abrir».
@@ -548,3 +554,4 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1. Lo que entra en la 
 - Colecciones: orden manual y filtros por atributo al elegir un tipo.
 - Arrastrar y soltar también los fondos de Ajustes y la portada de una colección, con el mecanismo de la v1.1-E.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.
+- Barra de herramientas de la biblioteca fija arriba al desplazarse, para buscar, ordenar o cambiar el tamaño de las portadas sin volver arriba (anotada en la v1.1-D).

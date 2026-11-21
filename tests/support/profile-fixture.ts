@@ -18,6 +18,7 @@ import type { SqliteDatabase } from '../../src/main/infrastructure/db/connection
 import { createDataPaths, type DataPaths } from '../../src/main/infrastructure/paths';
 import {
   BACKGROUND_SETTING_DEFAULTS,
+  LIBRARY_SETTING_DEFAULTS,
   MEDIA_SETTING_DEFAULTS,
   type AppSettings,
 } from '../../src/shared/settings';
@@ -31,6 +32,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
   ...MEDIA_SETTING_DEFAULTS,
   ...BACKGROUND_SETTING_DEFAULTS,
+  ...LIBRARY_SETTING_DEFAULTS,
 };
 
 export interface ProfileFixture {

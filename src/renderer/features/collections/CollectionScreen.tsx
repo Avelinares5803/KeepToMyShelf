@@ -28,6 +28,9 @@ interface CollectionScreenProps {
   /** Kept outside: this screen is gone while an item is open, and the view must survive that. */
   view: CollectionView;
   onViewChange: (change: Partial<CollectionView>) => void;
+  /** The columns of covers, the same preference as in the libraries. */
+  columns: number;
+  onColumnsChange: (columns: number) => void;
   imageImport: ImageImportOptions;
   onOpenItem: (item: ItemSummary) => void;
   onDeleted: () => void;
@@ -41,6 +44,8 @@ export function CollectionScreen({
   collectionId,
   view,
   onViewChange,
+  columns,
+  onColumnsChange,
   imageImport,
   onOpenItem,
   onDeleted,
@@ -155,8 +160,10 @@ export function CollectionScreen({
           search={view.search}
           sortFields={COLLECTION_SORT_FIELDS}
           sort={sort}
+          columns={columns}
           onSearch={(search) => changeResults({ search })}
           onSort={(next) => changeResults({ sort: next })}
+          onColumnsChange={onColumnsChange}
         >
           <div className="inline-field">
             <label htmlFor={kindId}>{t('collections.show')}</label>
@@ -226,6 +233,7 @@ export function CollectionScreen({
         <LibraryGrid
           items={items.data}
           label={name}
+          columns={columns}
           titleOf={displayTitle}
           restoreTo={restoreTo}
           showKind={kind === null}

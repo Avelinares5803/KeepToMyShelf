@@ -120,6 +120,11 @@
       },
       "hint": "Conditions that are not complete do not apply."
     },
+    "coverSize": {
+      "label": "Cover size",
+      "columns_one": "{{count}} column",
+      "columns_other": "{{count}} columns"
+    },
     "sort": {
       "label": "Sort by",
       "reverse": "Reverse the order",

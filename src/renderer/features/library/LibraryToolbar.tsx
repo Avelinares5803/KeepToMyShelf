@@ -2,6 +2,8 @@ import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemSort, ItemSortField } from '../../../core/filters/item-sort';
 import type { ItemKind } from '../../../shared/content';
+import { LIBRARY_COLUMNS_MAX, LIBRARY_COLUMNS_MIN } from '../../../shared/settings';
+import { LargeCoversIcon, SmallCoversIcon } from '../../components/icons';
 import { reversedSort, sortByField } from './library-view';
 
 interface LibraryToolbarProps<F extends ItemSortField> {
@@ -20,8 +22,11 @@ interface LibraryToolbarProps<F extends ItemSortField> {
   };
   /** More controls, between the search box and the sort controls. */
   children?: ReactNode;
+  /** The columns of covers chosen: fewer columns, bigger covers. */
+  columns: number;
   onSearch: (search: string) => void;
   onSort: (sort: ItemSort<F>) => void;
+  onColumnsChange: (columns: number) => void;
 }
 
 /** What each direction means depends on what is being sorted. */
@@ -44,8 +49,10 @@ export function LibraryToolbar<F extends ItemSortField>({
   sort,
   filters,
   children,
+  columns,
   onSearch,
   onSort,
+  onColumnsChange,
 }: LibraryToolbarProps<F>) {
   const { t } = useTranslation();
   const id = useId();
@@ -98,6 +105,38 @@ export function LibraryToolbar<F extends ItemSortField>({
           {t(`library.sort.direction.${directionGroup(sort.field)}.${sort.direction}`)}
         </button>
       </div>
+      <CoverSizeSlider columns={columns} onChange={onColumnsChange} />
+    </div>
+  );
+}
+
+/**
+ * The size of the covers. The slider grows the covers to the right, which means fewer columns:
+ * its value is how many columns fewer than the most there are.
+ */
+function CoverSizeSlider({
+  columns,
+  onChange,
+}: {
+  columns: number;
+  onChange: (columns: number) => void;
+}) {
+  const { t } = useTranslation();
+  const label = t('library.coverSize.label');
+  return (
+    <div className="library__cover-size" title={label}>
+      <SmallCoversIcon />
+      <input
+        type="range"
+        aria-label={label}
+        aria-valuetext={t('library.coverSize.columns', { count: columns })}
+        min={0}
+        max={LIBRARY_COLUMNS_MAX - LIBRARY_COLUMNS_MIN}
+        step={1}
+        value={LIBRARY_COLUMNS_MAX - columns}
+        onChange={(event) => onChange(LIBRARY_COLUMNS_MAX - Number(event.target.value))}
+      />
+      <LargeCoversIcon />
     </div>
   );
 }

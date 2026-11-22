@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ImageIcon } from '../../components/icons';
 import { FormImageTile, Problems } from './ImagesField';
 import { withOriginalToggled, type FormImage } from './media-form';
+import { useFileDrop } from './use-file-drop';
 import { useImageImport, type ImageImportOptions } from './use-image-import';
 
 interface CoverFieldProps extends ImageImportOptions {
@@ -11,17 +12,20 @@ interface CoverFieldProps extends ImageImportOptions {
   onChange: (cover: FormImage | null) => void;
   /** More ways to choose a cover (e.g. a collection's from one of its items), with the rest. */
   extraActions?: ReactNode;
+  /** An image can also be dropped on the field from the file explorer. */
+  acceptDrops?: boolean;
 }
 
 /**
- * The item's cover in the edit form, apart from the gallery. Choosing one only prepares it;
- * it is saved when the item is saved.
+ * The item's cover in the edit form, apart from the gallery. Choosing one (or dropping it, with
+ * `acceptDrops`) only prepares it; it is saved when the item is saved.
  */
 export function CoverField({
   token,
   cover,
   onChange,
   extraActions,
+  acceptDrops = false,
   ...importOptions
 }: CoverFieldProps) {
   const { t } = useTranslation();
@@ -33,9 +37,13 @@ export function CoverField({
       if (image !== undefined) onChange(image);
     },
   });
+  const drop = useFileDrop({
+    enabled: acceptDrops && !importer.busy,
+    onDrop: (files) => void importer.drop(files),
+  });
 
   return (
-    <div className="cover-field">
+    <div className={`cover-field${drop.over ? ' drop-zone--over' : ''}`} {...drop.zoneProps}>
       {cover === null ? (
         <>
           <button
@@ -46,6 +54,12 @@ export function CoverField({
           >
             <ImageIcon />
             <span>{t('media.cover.add')}</span>
+            {/* A hint for the mouse only: it is left out of the button's name. */}
+            {acceptDrops && (
+              <span className="drop-hint" aria-hidden="true">
+                {t('media.cover.dropHint')}
+              </span>
+            )}
           </button>
           {extraActions !== undefined && <div className="image-list__actions">{extraActions}</div>}
         </>

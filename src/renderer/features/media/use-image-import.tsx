@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageStorageChoice } from '../../../core/media/import-rules';
-import type { PreparedImport } from '../../../shared/media';
+import type { IpcResult } from '../../../shared/ipc';
+import type { PickedImports, PreparedImport } from '../../../shared/media';
 import type { ImageImportChoice } from '../../../shared/settings';
 import { errorMessage, IpcError, unwrap } from '../../lib/ipc';
 import { ImageImportDialog, type ImportDecision } from './ImageImportDialog';
@@ -25,8 +26,10 @@ interface UseImageImportProps extends ImageImportOptions {
 }
 
 /**
- * Choosing images in the file dialog and, unless a choice is remembered, asking how to keep
- * each one in the import window. Images are only prepared: they are saved with the item.
+ * Choosing images in the file dialog (or dropping them on the field) and, unless a choice is
+ * remembered, asking how to keep each one in the import window. Images are only prepared:
+ * they are saved with the item. Only the cover (`multiple` false) refuses several dropped
+ * images at once.
  */
 export function useImageImport({
   token,
@@ -37,6 +40,8 @@ export function useImageImport({
   onAdded,
 }: UseImageImportProps): {
   pick: () => Promise<void>;
+  /** Prepares images dropped on the field, as if chosen in the file dialog. */
+  drop: (files: readonly File[]) => Promise<void>;
   /** True while the chosen files are being prepared or wait for the import window. */
   busy: boolean;
   preparing: boolean;
@@ -50,17 +55,30 @@ export function useImageImport({
   // Images chosen together that still wait for the import window.
   const [queue, setQueue] = useState<readonly PreparedImport[]>([]);
 
-  async function pick() {
+  function pick(): Promise<void> {
+    return importFrom(() =>
+      window.api.media.pickImages({ token, filterName: t('media.images.fileType'), multiple }),
+    );
+  }
+
+  function drop(files: readonly File[]): Promise<void> {
+    if (files.length === 0) {
+      setProblems([t('media.drop.notFiles')]);
+      return Promise.resolve();
+    }
+    if (!multiple && files.length > 1) {
+      setProblems([t('media.cover.dropOne')]);
+      return Promise.resolve();
+    }
+    return importFrom(() => window.api.media.prepareDropped({ token, expected: 'image', files }));
+  }
+
+  /** Prepares the images chosen or dropped; `request` resolves to null if nothing was chosen. */
+  async function importFrom(request: () => Promise<IpcResult<PickedImports | null>>) {
     setPreparing(true);
     setProblems([]);
     try {
-      const picked = unwrap(
-        await window.api.media.pickImages({
-          token,
-          filterName: t('media.images.fileType'),
-          multiple,
-        }),
-      );
+      const picked = unwrap(await request());
       if (picked === null) return;
       setProblems(
         picked.rejected.map(({ fileName, code }) =>
@@ -104,6 +122,7 @@ export function useImageImport({
   const current = queue[0];
   return {
     pick,
+    drop,
     busy: preparing || current !== undefined,
     preparing,
     problems,

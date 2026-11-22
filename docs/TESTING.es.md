@@ -61,6 +61,7 @@ Cuando falla una E2E, Playwright guarda una traza en `test-results/`; ábrela co
 ## Limitaciones conocidas
 
 - `page.keyboard` de Playwright no pasa por el proceso principal, así que las teclas que gestiona el proceso principal (F11) se envían con `webContents.sendInputEvent`, como una tecla real.
+- Playwright no puede arrastrar archivos desde fuera de la ventana. [`drag-and-drop.spec.ts`](../tests/e2e/drag-and-drop.spec.ts) los carga en un `<input type="file">` temporal con `setInputFiles` (esos `File` están respaldados por los archivos del disco, así que Electron conoce su ruta) y los suelta con los eventos de arrastre. El arrastre desde el Explorador o desde un navegador se prueba a mano.
 - El modo portable solo se prueba con la app empaquetada (la prueba de humo), porque en desarrollo el `.exe` es el de `node_modules`.
 - Las E2E solo se ejecutan en Windows; en Linux harían falta una pantalla virtual (xvfb). Aún no se mide la cobertura. Las dos cosas están anotadas como mejoras en la [hoja de ruta](ROADMAP.md).
 

@@ -57,6 +57,16 @@ export interface ItemMedia {
   readonly documents: readonly MediaAttachment[];
 }
 
+/**
+ * A file dropped on the window, as the preload sends it to the main process. `path` comes
+ * from Electron (`webUtils.getPathForFile`), never from the UI; it is empty when the file has
+ * nothing on disk behind it. `name` is only shown, when the file is refused for that.
+ */
+export interface DroppedFile {
+  readonly name: string;
+  readonly path: string;
+}
+
 /** The files chosen in the file dialog: those ready to import and those refused, with why. */
 export interface PickedImports {
   readonly prepared: readonly PreparedImport[];

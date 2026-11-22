@@ -15,6 +15,7 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 - **Ordenar una colección por la fecha de adición**, es decir, por cuándo se añadió cada elemento a ella.
 - **Usar como portada de una colección la de uno de sus elementos**, sin volver a importar la imagen.
 - **Tamaño de las portadas:** un deslizador en las bibliotecas y las colecciones elige entre 3 y 10 columnas. Se guarda en el perfil.
+- **Arrastrar y soltar** imágenes y PDF desde el Explorador en la portada, la galería y los documentos del formulario del elemento. Los archivos de ubicaciones de red y las imágenes arrastradas desde un navegador se rechazan con un aviso.
 
 #### Cambiado
 
@@ -31,6 +32,7 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 - **Sort a collection by date added**, that is, by when each item was added to it.
 - **Use the cover of one of its items as a collection's cover**, without importing the image again.
 - **Cover size:** a slider in the libraries and collections chooses between 3 and 10 columns. It is saved in the profile.
+- **Drag and drop** images and PDFs from the File Explorer onto the cover, gallery and documents of the item form. Files from network locations and images dragged from a web browser are refused with a notice.
 
 #### Changed
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { copyFile } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { basename, join, win32 } from 'node:path';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import {
   cleanDocumentLabel,
@@ -24,6 +24,7 @@ import {
 import type { CollectionCoverPlan } from '../../shared/collections';
 import type {
   DocumentPlanEntry,
+  DroppedFile,
   ImagePlanEntry,
   ItemMedia,
   ItemMediaPlan,
@@ -35,6 +36,7 @@ import type { SqliteDatabase } from '../infrastructure/db/connection';
 import { createThumbnail } from '../infrastructure/media/image-processor';
 import { MediaStore, type MediaStoreName } from '../infrastructure/media/media-store';
 import {
+  assertDroppedFile,
   filesForChoice,
   LOCKED_FILE_CODES,
   readIfExists,
@@ -183,20 +185,59 @@ export class MediaService implements MediaForItems, MediaForCollections {
    * imported, or are not of the `expected` kind, are reported with the reason, without
    * stopping the others.
    */
-  async prepareMany(
+  prepareMany(
     token: string,
     sourcePaths: readonly string[],
     expected: MediaKind,
   ): Promise<PickedImports> {
+    return this.prepareEach(
+      token,
+      sourcePaths.map((path) => ({ fileName: basename(path), path })),
+      expected,
+    );
+  }
+
+  /**
+   * Like `prepareMany`, for files dropped on the window. Each one must first be an ordinary
+   * file on this computer (`assertDroppedFile`): an empty path (nothing on disk, reported by
+   * the `name` it had in the page), a network path, a folder… is refused without being read.
+   */
+  async prepareDropped(
+    token: string,
+    files: readonly DroppedFile[],
+    expected: MediaKind,
+  ): Promise<PickedImports> {
+    // A stale session is reported once, not as a refusal of every file.
+    this.deps.sessions.require(token);
+    // win32.basename splits on both "\" and "/" on every platform: a refused network path
+    // (\\server\share\file.png) is named after its file also where "\" is not a separator.
+    return this.prepareEach(
+      token,
+      files.map(({ name, path }) => ({
+        fileName: path === '' ? name : win32.basename(path),
+        path,
+      })),
+      expected,
+      assertDroppedFile,
+    );
+  }
+
+  private async prepareEach(
+    token: string,
+    sources: readonly { fileName: string; path: string }[],
+    expected: MediaKind,
+    check?: (path: string) => Promise<void>,
+  ): Promise<PickedImports> {
     const prepared: PreparedImport[] = [];
     const rejected: { fileName: string; code: string }[] = [];
-    for (const path of sourcePaths) {
+    for (const { fileName, path } of sources) {
       try {
+        if (check !== undefined) await check(path);
         prepared.push(await this.prepareImport(token, path, expected));
       } catch (error) {
         // A closed session ends the whole import; any other expected error refuses one file.
         if (!(error instanceof AppError) || error.code === 'session.stale') throw error;
-        rejected.push({ fileName: basename(path), code: error.code });
+        rejected.push({ fileName, code: error.code });
       }
     }
     return { prepared, rejected };

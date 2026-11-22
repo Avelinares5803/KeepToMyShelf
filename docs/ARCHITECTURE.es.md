@@ -96,6 +96,7 @@ Detalles: [ADR 0002](adr/0002-database-migrations.md).
 - **Las importaciones se preparan primero** (en una carpeta temporal, con su miniatura) y solo pasan a formar parte del elemento al guardar el formulario, en la misma transacción que el resto del elemento. Cancelar las descarta.
 - **La base de datos manda:** primero se borra la fila, y después un barrido elimina los archivos que ninguna fila usa. Un archivo borrado a mano solo muestra un aviso discreto.
 - **Las imágenes** se comprueban por su contenido (JPEG, PNG, WebP, AVIF, GIF; SVG se rechaza), se optimizan a WebP con sharp y tienen miniaturas de 320 y 640 px. **Los documentos PDF** se guardan tal cual y se abren con el visor del sistema, siempre desde una copia temporal.
+- **Arrastrar y soltar** (portada, galería y documentos del elemento): la interfaz solo entrega al preload los objetos `File` soltados; el preload obtiene sus rutas con `webUtils.getPathForFile` y el proceso principal rechaza las rutas de red y lo que no sea un archivo normal antes de prepararlos como los del diálogo ([ADR 0011](adr/0011-security.md#arrastrar-y-soltar-v11-e)).
 - **La interfaz nunca lee archivos.** Muestra las imágenes con el protocolo propio `ktms-media://` ([`media-protocol.ts`](../src/main/media-protocol.ts)), que solo sirve, por su hash, imágenes del perfil abierto y de la galería de fondos. Nunca sirve documentos ni usa rutas `file://`.
 
 Detalles: [ADR 0005](adr/0005-media.md) y, para los fondos, [ADR 0008](adr/0008-backgrounds.md).

@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-21, con la v1.1-D (tamaño de las portadas, apartado 3.11).
+**Última actualización:** 2026-11-22, con la v1.1-E (arrastrar y soltar, apartado 3.11).
 
 ---
 
@@ -47,7 +47,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F10 Personalización     | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
 | F11 Copias de seguridad | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
 | F12 Distribución v1.0   | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
-| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🚧 En curso: v1.1-A a D (3.11)      |
+| v1.1 Uso diario         | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | 🚧 En curso: v1.1-A a E (3.11)      |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -483,12 +483,12 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **Las tarjetas miden al menos 6 rem**, así que en ventanas estrechas caben menos columnas de las elegidas (8 en la ventana mínima).
   - **Las portadas grandes siguen nítidas:** la cuadrícula elige la miniatura (320 o 640 px) por el ancho de la tarjeta.
   - La posición se recupera con el tamaño elegido. La barra de herramientas no se queda fija arriba.
-- **v1.1-E: arrastrar y soltar** imágenes y PDF en las zonas del formulario del elemento (portada, galería y documentos). Acordado el 2026-11-19:
-  - **La interfaz sigue sin manejar rutas.** La función del preload recibe solo objetos `File` del arrastre, obtiene su ruta con `webUtils.getPathForFile` y la envía ella misma al proceso principal. Un `File` creado por código no tiene ruta, así que la interfaz no puede pedir que se lea un archivo que el usuario no ha soltado.
-  - **El proceso principal rechaza las rutas de red** (`\\servidor\…`), que en Windows pueden enviar al servidor una huella de la contraseña de la sesión (NTLM), y todo lo que no sea un archivo normal. Después, la importación pasa por las mismas comprobaciones de contenido y tamaño que con la ventana «Abrir».
-  - Cada zona acepta solo lo suyo. Lo demás se rechaza con su nombre y el motivo, como en los diálogos. Soltar fuera de una zona no hace nada. Las imágenes arrastradas desde un navegador, sin archivo en el disco, se rechazan con un aviso.
-  - Se documenta en el [ADR 0011](adr/0011-security.md).
-  - **Limitación de las pruebas:** Playwright no puede simular un arrastre real con una ruta real. Las E2E cubren la interfaz, las pruebas unitarias cubren el preload y el proceso principal, y el arrastre desde el Explorador se prueba a mano.
+- **v1.1-E: arrastrar y soltar** imágenes y PDF en las zonas del formulario del elemento (portada, galería y documentos). ✅ Hecha (`feat/drag-and-drop`). Ver el [ADR 0011](adr/0011-security.md#arrastrar-y-soltar-v11-e). Acordado el 2026-11-19 y completado el 2026-11-22:
+  - **La interfaz sigue sin manejar rutas.** La función del preload recibe solo objetos `File` del arrastre, obtiene su ruta con `webUtils.getPathForFile` y la envía ella misma al proceso principal (`media:prepare-dropped`). Un `File` creado por código no tiene ruta, así que la interfaz no puede pedir que se lea un archivo que el usuario no ha soltado.
+  - **El proceso principal rechaza las rutas de red** (`\\servidor\…`, y con ellas las que empiezan por dos barras), que en Windows pueden enviar al servidor una huella de la contraseña de la sesión (NTLM), y con `lstat` todo lo que no sea un archivo normal (carpetas, enlaces). Después, la importación pasa por las mismas comprobaciones de contenido y tamaño que con la ventana «Abrir». Las unidades de red con letra se aceptan.
+  - Cada zona acepta solo lo suyo. Lo demás se rechaza con su nombre y el motivo, como en los diálogos. **Varios archivos soltados en la portada se rechazan todos**, con el aviso «Suelta una sola imagen como portada». Soltar fuera de una zona no hace nada (cursor de «no permitido»). Las imágenes arrastradas desde un navegador, sin archivo en el disco, se rechazan con un aviso.
+  - Cada zona muestra «o arrástrala(s) aquí» junto a su botón y se resalta al pasar un archivo por encima. La portada de las colecciones usa el mismo campo, pero sin arrastre.
+  - **Pruebas:** las E2E sí sueltan archivos reales del disco: los cargan en un `<input type="file">` temporal con `setInputFiles` y los sueltan con los eventos de arrastre ([TESTING.es.md](TESTING.es.md#limitaciones-conocidas)). Las pruebas unitarias cubren el preload y las rutas rechazadas. El arrastre desde el Explorador y desde un navegador se prueba a mano.
   - Fuera de esta entrega: arrastrar fondos en Ajustes y la portada de una colección.
 - **v1.1-F: versión 1.1.0**, como la F12-C2: `npm version 1.1.0 --no-git-tag-version`, el `CHANGELOG.md` y, tras el merge, la etiqueta `v1.1.0` y el release según [RELEASING.es.md](RELEASING.es.md).
 

@@ -305,6 +305,7 @@ function ItemForm({
             importChoice={imageImport.choice}
             optimizedMaxSide={imageImport.optimizedMaxSide}
             onRememberChoice={imageImport.onRemember}
+            acceptDrops
           />
         </FormSection>
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { copyFile } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { basename, join, win32 } from 'node:path';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import {
   cleanDocumentLabel,
@@ -209,9 +209,14 @@ export class MediaService implements MediaForItems, MediaForCollections {
   ): Promise<PickedImports> {
     // A stale session is reported once, not as a refusal of every file.
     this.deps.sessions.require(token);
+    // win32.basename splits on both "\" and "/" on every platform: a refused network path
+    // (\\server\share\file.png) is named after its file also where "\" is not a separator.
     return this.prepareEach(
       token,
-      files.map(({ name, path }) => ({ fileName: path === '' ? name : basename(path), path })),
+      files.map(({ name, path }) => ({
+        fileName: path === '' ? name : win32.basename(path),
+        path,
+      })),
       expected,
       assertDroppedFile,
     );

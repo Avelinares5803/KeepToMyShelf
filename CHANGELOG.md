@@ -6,6 +6,8 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-22
+
 ### Español
 
 #### Añadido
@@ -84,5 +86,6 @@ First published version.
 - The window **opens as it was closed** (size, position, maximized or full screen). **Full screen** with F11 or a button.
 - **Installer** for Windows 10 and 11, per user and with no administrator rights, and a **portable version** in a `.zip` that keeps its data next to the `.exe`.
 
-[Unreleased]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Avelinares5803/KeepToMyShelf/releases/tag/v1.0.0

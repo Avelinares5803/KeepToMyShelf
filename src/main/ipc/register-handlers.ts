@@ -168,6 +168,10 @@ export function registerIpcHandlers({
         return paths === null ? null : media.prepareMany(token, paths, 'document');
       },
     ),
+    prepareDroppedFiles: createAsyncHandler(
+      ipcInputSchemas.prepareDroppedFiles,
+      ({ token, files, expected }) => media.prepareDropped(token, files, expected),
+    ),
     openDocument: createAsyncHandler(ipcInputSchemas.openDocument, ({ token, itemId, mediaId }) =>
       media.openDocument(token, itemId, mediaId),
     ),

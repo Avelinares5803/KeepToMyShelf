@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { IpcResult } from '../../../shared/ipc';
+import type { PickedImports } from '../../../shared/media';
 import { errorMessage, IpcError, unwrap } from '../../lib/ipc';
 import { formatFileSize } from '../../lib/media-url';
 import { Problems } from './ImagesField';
 import { moveImage, preparedDocument, renameDocument, type FormDocument } from './media-form';
+import { useFileDrop } from './use-file-drop';
 
 interface DocumentsFieldProps {
   token: string;
@@ -13,20 +16,36 @@ interface DocumentsFieldProps {
 
 /**
  * The item's PDF documents in the edit form, each with a name the user can change. They are
- * kept as they are, without an import window, and saved in this order with the item.
+ * chosen or dropped on the field, kept as they are, without an import window, and saved in
+ * this order with the item.
  */
 export function DocumentsField({ token, documents, onChange }: DocumentsFieldProps) {
   const { t, i18n } = useTranslation();
   const [preparing, setPreparing] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
 
-  async function pick() {
+  function pick(): Promise<void> {
+    return importFrom(() =>
+      window.api.media.pickDocuments({ token, filterName: t('media.documents.fileType') }),
+    );
+  }
+
+  function dropped(files: readonly File[]): Promise<void> {
+    if (files.length === 0) {
+      setProblems([t('media.drop.notFiles')]);
+      return Promise.resolve();
+    }
+    return importFrom(() =>
+      window.api.media.prepareDropped({ token, expected: 'document', files }),
+    );
+  }
+
+  /** Prepares the PDFs chosen or dropped; `request` resolves to null if nothing was chosen. */
+  async function importFrom(request: () => Promise<IpcResult<PickedImports | null>>) {
     setPreparing(true);
     setProblems([]);
     try {
-      const picked = unwrap(
-        await window.api.media.pickDocuments({ token, filterName: t('media.documents.fileType') }),
-      );
+      const picked = unwrap(await request());
       if (picked === null) return;
       setProblems(
         picked.rejected.map(({ fileName, code }) =>
@@ -44,8 +63,10 @@ export function DocumentsField({ token, documents, onChange }: DocumentsFieldPro
     }
   }
 
+  const drop = useFileDrop({ enabled: !preparing, onDrop: (files) => void dropped(files) });
+
   return (
-    <div className="documents-field">
+    <div className={`documents-field${drop.over ? ' drop-zone--over' : ''}`} {...drop.zoneProps}>
       {documents.length > 0 && (
         <ol className="document-list">
           {documents.map((document, index) => {
@@ -113,7 +134,8 @@ export function DocumentsField({ token, documents, onChange }: DocumentsFieldPro
           onClick={() => void pick()}
         >
           {t('media.documents.add')}
-        </button>
+        </button>{' '}
+        <span className="drop-hint">{t('media.documents.dropHint')}</span>
         {preparing && (
           <span className="muted" role="status">
             {' '}

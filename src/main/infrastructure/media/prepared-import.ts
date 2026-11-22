@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import { rmSync, writeFileSync } from 'node:fs';
-import { open, readFile, stat } from 'node:fs/promises';
+import { lstat, open, readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { NotFoundError, ValidationError } from '../../../core/errors';
+import { droppedPathProblem } from '../../../core/media/dropped-path';
 import {
   assertChoiceAllowed,
   assertWithinSizeLimit,
@@ -176,6 +177,25 @@ export function filesForChoice(
   if (choice === 'original') return { used: source, original: null };
   // Only animated images have no optimized copy, and they only allow 'original'.
   return { used: optimized!, original: choice === 'optimized_with_original' ? source : null };
+}
+
+/**
+ * Checks a file dropped on the window before it is read: only an ordinary file on this
+ * computer is accepted. Network paths are refused without touching them (see
+ * `droppedPathProblem`), and `lstat` refuses folders, devices and symbolic links, which it
+ * does not follow. The import then goes through the same checks as a file chosen in the
+ * dialog.
+ */
+export async function assertDroppedFile(path: string): Promise<void> {
+  const problem = droppedPathProblem(path);
+  if (problem !== null) throw new ValidationError(problem, `Refused dropped path ${path}`);
+  let isFile: boolean;
+  try {
+    isFile = (await lstat(path)).isFile();
+  } catch (error) {
+    throw new NotFoundError('media.source_unreadable', `Cannot read ${path}`, { cause: error });
+  }
+  if (!isFile) throw new ValidationError('media.not_a_regular_file', `${path} is not a file`);
 }
 
 async function readFormat(path: string): Promise<MediaFormat> {

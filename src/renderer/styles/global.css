@@ -1845,6 +1845,19 @@ h1 {
   opacity: 0.6;
 }
 
+/* "Or drag it here", next to the button of a field that accepts dropped files. */
+.drop-hint {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+/* A field that accepts dropped files, while files are dragged over it. */
+.drop-zone--over {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: 0.5rem;
+  border-radius: calc(var(--radius) / 2);
+}
+
 .image-list {
   display: flex;
   flex-wrap: wrap;

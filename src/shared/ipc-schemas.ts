@@ -234,6 +234,17 @@ export const ipcInputSchemas = {
     multiple: z.boolean(),
   }),
   pickDocuments: z.object({ token: sessionTokenSchema, filterName: z.string().min(1).max(100) }),
+  // Sent by the preload, never by the UI: each path comes from webUtils.getPathForFile (see
+  // DroppedFile). 32 767 characters is the longest path Windows allows.
+  prepareDroppedFiles: z.object({
+    token: sessionTokenSchema,
+    expected: z.enum(['image', 'document']),
+    files: z
+      .array(z.object({ name: z.string().max(1_000), path: z.string().max(32_767) }))
+      .min(1)
+      .max(1_000)
+      .readonly(),
+  }),
   openDocument: z.object({
     token: sessionTokenSchema,
     itemId: itemIdSchema,

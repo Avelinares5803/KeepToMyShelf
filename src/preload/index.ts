@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import type { BackupProgress } from '../shared/backups';
 import { IpcChannels, IpcEvents, type KeepToMyShelfApi } from '../shared/ipc';
 
@@ -65,6 +65,15 @@ const api: KeepToMyShelfApi = {
   media: {
     pickImages: invoke(IpcChannels.pickImages),
     pickDocuments: invoke(IpcChannels.pickDocuments),
+    // The UI never sees a path: it hands over the File objects of a drop, and only here are
+    // they turned into paths on disk. A File made by the page itself has none (''), and
+    // getPathForFile throws for anything that is not a File.
+    prepareDropped: ({ token, expected, files }) =>
+      ipcRenderer.invoke(IpcChannels.prepareDroppedFiles, {
+        token,
+        expected,
+        files: files.map((file) => ({ name: file.name, path: webUtils.getPathForFile(file) })),
+      }) as Promise<never>,
     openDocument: invoke(IpcChannels.openDocument),
     discardImports: invoke(IpcChannels.discardImports),
     list: invoke(IpcChannels.listItemMedia),

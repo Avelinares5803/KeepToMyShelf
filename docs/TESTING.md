@@ -61,6 +61,7 @@ When an E2E test fails, Playwright keeps a trace in `test-results/`; open it wit
 ## Known limits
 
 - Playwright's `page.keyboard` does not go through the main process, so keys the main process handles (F11) are sent with `webContents.sendInputEvent`, like a real key.
+- Playwright cannot drag files from outside the window. [`drag-and-drop.spec.ts`](../tests/e2e/drag-and-drop.spec.ts) loads them into a temporary file input with `setInputFiles` (those `File` objects are backed by the files on disk, so Electron knows their paths) and drops them with the drag events. Dragging from the File Explorer or from a web browser is tested by hand.
 - The portable mode is only tested with the packaged app (the smoke test), because in development the `.exe` is the one in `node_modules`.
 - The E2E tests only run on Windows; Linux would need a virtual display (xvfb). There is no coverage measurement yet. Both are noted as future improvements in the [roadmap](ROADMAP.md).
 

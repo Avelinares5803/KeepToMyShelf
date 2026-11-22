@@ -49,6 +49,7 @@ export const IpcChannels = {
   deleteUnusedCatalogEntries: 'catalogs:delete-unused',
   pickImages: 'media:pick-images',
   pickDocuments: 'media:pick-documents',
+  prepareDroppedFiles: 'media:prepare-dropped',
   openDocument: 'media:open-document',
   discardImports: 'media:discard-imports',
   listItemMedia: 'media:list',
@@ -187,6 +188,17 @@ export interface KeepToMyShelfApi {
     pickImages(input: IpcInput<'pickImages'>): Promise<IpcResult<PickedImports | null>>;
     /** Like `pickImages`, for PDF documents. */
     pickDocuments(input: IpcInput<'pickDocuments'>): Promise<IpcResult<PickedImports | null>>;
+    /**
+     * Prepares files dropped on the window, of the `expected` kind, like those chosen in a
+     * file dialog. The UI only passes the `File` objects of the drop: the preload finds where
+     * each one is on disk, so the UI still never handles paths. A `File` made by the page has
+     * no path, and is refused.
+     */
+    prepareDropped(input: {
+      readonly token: string;
+      readonly expected: IpcInput<'prepareDroppedFiles'>['expected'];
+      readonly files: readonly File[];
+    }): Promise<IpcResult<PickedImports>>;
     /**
      * Opens one of the item's documents in the system's PDF viewer. A copy named after the
      * document is opened, so the stored file is never changed by the viewer.

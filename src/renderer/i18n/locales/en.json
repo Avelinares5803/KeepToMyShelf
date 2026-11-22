@@ -546,12 +546,17 @@
     }
   },
   "media": {
+    "drop": {
+      "notFiles": "Only files saved on this computer can be dropped. If the image comes from a web browser, save it first and drop it from its folder."
+    },
     "cover": {
       "add": "Add cover",
       "change": "Change cover",
       "remove": "Remove cover",
       "current": "Cover",
       "preparing": "Preparing the image…",
+      "dropHint": "or drag it here",
+      "dropOne": "Drop a single image as the cover.",
       "useOriginalLabel": "Use the original of the cover",
       "keepOptimizedLabel": "Keep the optimized copy of the cover"
     },
@@ -559,6 +564,7 @@
       "title": "Images",
       "add": "Add images",
       "preparing": "Preparing the images…",
+      "dropHint": "or drag them here",
       "fileType": "Images",
       "image": "Image {{number}}",
       "cover": "Cover",
@@ -580,6 +586,7 @@
       "title": "Documents",
       "add": "Add documents",
       "preparing": "Preparing the documents…",
+      "dropHint": "or drag them here",
       "fileType": "PDF documents",
       "name": "Name of document {{number}}",
       "new": "New",
@@ -690,6 +697,9 @@
       "invalid_order": "The new order is not valid. Please try again.",
       "not_an_image": "That file is not an image.",
       "not_a_document": "That file is not a PDF document.",
+      "not_on_disk": "That file is not saved on this computer. If it comes from a web browser, save it first and drop it from its folder.",
+      "network_path": "Files from a network location cannot be dropped. Copy it to this computer first, or choose it with the button.",
+      "not_a_regular_file": "Only files can be dropped, not folders or links.",
       "label_required": "The document name cannot be empty.",
       "label_too_long": "The document name cannot be longer than 200 characters.",
       "label_invalid_characters": "The document name contains invalid characters.",

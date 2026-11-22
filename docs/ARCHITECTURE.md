@@ -96,6 +96,7 @@ Details: [ADR 0002](adr/0002-database-migrations.md).
 - **Imports are prepared first** (in a temporary folder, with their thumbnail) and become part of the item only when the form is saved, in the same transaction as the rest of the item. Cancelling discards them.
 - **The database rules:** a row is deleted first, and a sweep later removes the files no row uses. A file deleted by hand only shows a discreet notice.
 - **Images** are checked by their content (JPEG, PNG, WebP, AVIF, GIF; SVG is rejected), optimized with sharp to WebP, and get thumbnails of 320 and 640 px. **PDF documents** are stored as they are and opened with the system viewer, always from a temporary copy.
+- **Drag and drop** (an item's cover, gallery and documents): the UI only hands the dropped `File` objects to the preload; the preload gets their paths with `webUtils.getPathForFile`, and the main process refuses network paths and anything that is not an ordinary file before preparing them like those from the dialog ([ADR 0011](adr/0011-security.md#arrastrar-y-soltar-v11-e)).
 - **The UI never reads files.** It shows images through the custom protocol `ktms-media://` ([`media-protocol.ts`](../src/main/media-protocol.ts)), which only serves images of the open profile and of the background gallery, by hash. It never serves documents and never uses `file://` paths.
 
 Details: [ADR 0005](adr/0005-media.md) and, for backgrounds, [ADR 0008](adr/0008-backgrounds.md).

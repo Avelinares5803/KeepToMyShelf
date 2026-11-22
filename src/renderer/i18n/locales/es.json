@@ -546,12 +546,17 @@
     }
   },
   "media": {
+    "drop": {
+      "notFiles": "Solo se pueden soltar archivos guardados en el equipo. Si la imagen viene de un navegador, guárdala antes y suéltala desde la carpeta."
+    },
     "cover": {
       "add": "Añadir portada",
       "change": "Cambiar portada",
       "remove": "Quitar portada",
       "current": "Portada",
       "preparing": "Preparando la imagen…",
+      "dropHint": "o arrástrala aquí",
+      "dropOne": "Suelta una sola imagen como portada.",
       "useOriginalLabel": "Usar el original de la portada",
       "keepOptimizedLabel": "Seguir con la copia optimizada de la portada"
     },
@@ -559,6 +564,7 @@
       "title": "Imágenes",
       "add": "Añadir imágenes",
       "preparing": "Preparando las imágenes…",
+      "dropHint": "o arrástralas aquí",
       "fileType": "Imágenes",
       "image": "Imagen {{number}}",
       "cover": "Portada",
@@ -580,6 +586,7 @@
       "title": "Documentos",
       "add": "Añadir documentos",
       "preparing": "Preparando los documentos…",
+      "dropHint": "o arrástralos aquí",
       "fileType": "Documentos PDF",
       "name": "Nombre del documento {{number}}",
       "new": "Nuevo",
@@ -690,6 +697,9 @@
       "invalid_order": "El nuevo orden no es válido. Vuelve a intentarlo.",
       "not_an_image": "Ese archivo no es una imagen.",
       "not_a_document": "Ese archivo no es un documento PDF.",
+      "not_on_disk": "Ese archivo no está guardado en el equipo. Si viene de un navegador, guárdalo antes y suéltalo desde la carpeta.",
+      "network_path": "No se pueden soltar archivos de una ubicación de red. Cópialo antes al equipo o elígelo con el botón.",
+      "not_a_regular_file": "Solo se pueden soltar archivos, no carpetas ni enlaces.",
       "label_required": "El nombre del documento no puede estar vacío.",
       "label_too_long": "El nombre del documento no puede tener más de 200 caracteres.",
       "label_invalid_characters": "El nombre del documento contiene caracteres no válidos.",

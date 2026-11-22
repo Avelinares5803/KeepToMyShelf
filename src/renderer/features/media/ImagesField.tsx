@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { preparedThumbnailSource, thumbnailSource } from '../../lib/media-url';
 import { moveImage, sameImage, toggleOriginal, type FormImage } from './media-form';
+import { useFileDrop } from './use-file-drop';
 import { useImageImport, type ImageImportOptions } from './use-image-import';
 
 interface ImagesFieldProps extends ImageImportOptions {
@@ -23,8 +24,9 @@ export function FormImageTile({ image, alt }: { image: FormImage; alt: string })
 }
 
 /**
- * The item's gallery in the edit form. Images are only prepared here; they are saved, in
- * this order, when the item is saved. The gallery never changes the cover.
+ * The item's gallery in the edit form. Images (chosen or dropped on the field) are only
+ * prepared here; they are saved, in this order, when the item is saved. The gallery never
+ * changes the cover.
  */
 export function ImagesField({
   token,
@@ -41,9 +43,13 @@ export function ImagesField({
     ...importOptions,
     onAdded: (added) => onChange([...images, ...added]),
   });
+  const drop = useFileDrop({
+    enabled: !importer.busy,
+    onDrop: (files) => void importer.drop(files),
+  });
 
   return (
-    <div className="images-field">
+    <div className={`images-field${drop.over ? ' drop-zone--over' : ''}`} {...drop.zoneProps}>
       {images.length > 0 && (
         <ul className="image-list">
           {images.map((image, index) => {
@@ -136,7 +142,8 @@ export function ImagesField({
           onClick={() => void importer.pick()}
         >
           {t('media.images.add')}
-        </button>
+        </button>{' '}
+        <span className="drop-hint">{t('media.images.dropHint')}</span>
         {importer.preparing && (
           <span className="muted" role="status">
             {' '}

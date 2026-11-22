@@ -7,6 +7,7 @@ import {
   type AppSettings,
 } from '../shared/settings';
 import { App } from './app/App';
+import { preventDropsOutsideZones } from './features/media/use-file-drop';
 import { applyTheme } from './app/theme';
 import { initI18n } from './i18n';
 import './styles/global.css';
@@ -32,6 +33,7 @@ async function bootstrap(): Promise<void> {
   if (!container) {
     throw new Error('Root element #root not found');
   }
+  preventDropsOutsideZones(window);
   const settings = await loadStartupSettings();
   await initI18n(settings.language);
   await applyTheme(settings.theme);

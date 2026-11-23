@@ -1,3 +1,4 @@
+import { FieldErrorCollector, type FieldError } from '../../../core/field-errors';
 import { cleanDocumentLabel, labelFromFileName } from '../../../core/media/document-label';
 import type { ImageStorageChoice } from '../../../core/media/import-rules';
 import type {
@@ -166,11 +167,15 @@ export const preparedDocumentIds = (documents: readonly FormDocument[]): string[
   documents.flatMap((document) => (document.source === 'prepared' ? [document.prepared.id] : []));
 
 /**
- * Checks the documents' names before saving, like the main process does; throws the error of
- * the first one that is not valid.
+ * Checks the documents' names before saving, like the main process does. Returns the error
+ * of each name that is not valid, for the field `documents.<index>`.
  */
-export function assertDocumentLabels(documents: readonly FormDocument[]): void {
-  for (const document of documents) cleanDocumentLabel(document.label);
+export function documentLabelErrors(documents: readonly FormDocument[]): readonly FieldError[] {
+  const errors = new FieldErrorCollector();
+  documents.forEach((document, index) =>
+    errors.check(`documents.${index}`, () => cleanDocumentLabel(document.label)),
+  );
+  return errors.errors;
 }
 
 /** Animated images can only be kept as they are. */

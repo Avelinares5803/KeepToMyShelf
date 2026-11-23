@@ -2,12 +2,14 @@ import type { ItemKind } from '../../shared/content';
 import { createPartialDate } from '../dates/partial-date';
 import { validateUsagePeriod, type UsageDate } from '../dates/usage-period';
 import { ValidationError } from '../errors';
+import { FieldErrorCollector, type FieldError } from '../field-errors';
 import { characterCount, cleanMultiLine, cleanSingleLine } from '../text/clean-text';
 import { normalizeForSearch } from '../text/normalize';
 import { MAX_HOURS_PLAYED } from './duration';
 import {
+  assertReleaseCount,
   validateRelations,
-  validateReleases,
+  validateRelease,
   type ItemRelationsDraft,
   type ReleaseDraft,
 } from './item-relations';
@@ -109,19 +111,25 @@ function cleanLongText(raw: string, code: string): string | null {
   return text.length === 0 ? null : text;
 }
 
-/** Removes blank and repeated alternate titles (ignoring case and accents), keeping order. */
-function cleanAlternateTitles(raw: readonly string[]): string[] {
+/**
+ * Removes blank and repeated alternate titles (ignoring case and accents), keeping order.
+ * Errors are recorded per title (`alternateTitles.<index>`) and for the whole list.
+ */
+function cleanAlternateTitles(raw: readonly string[], errors: FieldErrorCollector): string[] {
   const seen = new Set<string>();
   const titles: string[] = [];
-  for (const candidate of raw) {
-    const title = cleanTitle(candidate, ALTERNATE_TITLE_ERRORS);
+  raw.forEach((candidate, index) => {
+    const title = errors.check(`alternateTitles.${index}`, () =>
+      cleanTitle(candidate, ALTERNATE_TITLE_ERRORS),
+    );
+    if (title === undefined) return;
     const key = normalizeForSearch(title);
-    if (title.length === 0 || seen.has(key)) continue;
+    if (title.length === 0 || seen.has(key)) return;
     seen.add(key);
     titles.push(title);
-  }
+  });
   if (titles.length > ITEM_LIMITS.alternateTitles) {
-    throw new ValidationError('item.too_many_alternate_titles', 'Too many alternate titles');
+    errors.add('alternateTitles', 'item.too_many_alternate_titles', 'Too many alternate titles');
   }
   return titles;
 }
@@ -139,35 +147,93 @@ function assertCount(value: number | null, code: string, max: number): void {
   }
 }
 
-/** Validates and cleans a draft for an item of the given kind. */
-export function validateItemDraft(kind: ItemKind, draft: ItemDraft): ValidItemDraft {
-  const title = cleanTitle(draft.title, TITLE_ERRORS);
+/** The result of checking a draft: the clean draft, or every error found, by field. */
+export type ItemDraftCheck =
+  | { readonly ok: true; readonly value: ValidItemDraft }
+  | { readonly ok: false; readonly errors: readonly FieldError[] };
+
+/**
+ * Checks every field of a draft for an item of the given kind and gathers all the errors.
+ * Fields: `title`, `alternateTitles.<index>`, `alternateTitles`, `description`, `notes`,
+ * `rating`, `startedOn`, `finishedOn` (also when it is before the start), `minutesPlayed`,
+ * `seasonsCount`, `episodesCount`, `relations`, `releases` and `releases.<index>`.
+ * The errors come in the order `validateItemDraft` has always reported them.
+ */
+export function checkItemDraft(kind: ItemKind, draft: ItemDraft): ItemDraftCheck {
+  const errors = new FieldErrorCollector();
+  const title = errors.check('title', () => cleanTitle(draft.title, TITLE_ERRORS));
 
   if (draft.rating !== null && !isValidRating(draft.rating)) {
-    throw new ValidationError('item.invalid_rating', `Invalid rating: ${draft.rating}`);
+    errors.add('rating', 'item.invalid_rating', `Invalid rating: ${draft.rating}`);
   }
-  assertValidUsageDate(draft.startedOn);
-  assertValidUsageDate(draft.finishedOn);
-  validateUsagePeriod(draft.startedOn, draft.finishedOn);
+  errors.check('startedOn', () => assertValidUsageDate(draft.startedOn));
+  errors.check('finishedOn', () => assertValidUsageDate(draft.finishedOn));
+  if (!errors.has('startedOn') && !errors.has('finishedOn')) {
+    errors.check('finishedOn', () => validateUsagePeriod(draft.startedOn, draft.finishedOn));
+  }
 
   if (kind !== 'game' && draft.minutesPlayed !== null) {
-    throw new ValidationError('item.hours_only_for_games', 'Only video games have hours played');
+    errors.add('minutesPlayed', 'item.hours_only_for_games', 'Only video games have hours played');
   }
-  assertCount(draft.minutesPlayed, 'item.invalid_hours', MAX_HOURS_PLAYED * 60 + 59);
+  errors.check('minutesPlayed', () =>
+    assertCount(draft.minutesPlayed, 'item.invalid_hours', MAX_HOURS_PLAYED * 60 + 59),
+  );
 
-  if (kind !== 'series' && (draft.seasonsCount !== null || draft.episodesCount !== null)) {
-    throw new ValidationError('item.counts_only_for_series', 'Only series have seasons/episodes');
+  if (kind !== 'series') {
+    const field = draft.seasonsCount !== null ? 'seasonsCount' : 'episodesCount';
+    if (draft.seasonsCount !== null || draft.episodesCount !== null) {
+      errors.add(field, 'item.counts_only_for_series', 'Only series have seasons/episodes');
+    }
   }
-  assertCount(draft.seasonsCount, 'item.invalid_count', ITEM_LIMITS.count);
-  assertCount(draft.episodesCount, 'item.invalid_count', ITEM_LIMITS.count);
+  errors.check('seasonsCount', () =>
+    assertCount(draft.seasonsCount, 'item.invalid_count', ITEM_LIMITS.count),
+  );
+  errors.check('episodesCount', () =>
+    assertCount(draft.episodesCount, 'item.invalid_count', ITEM_LIMITS.count),
+  );
 
+  const alternateTitles = cleanAlternateTitles(draft.alternateTitles, errors);
+  const description = errors.check('description', () =>
+    cleanLongText(draft.description, 'item.description_too_long'),
+  );
+  const notes = errors.check('notes', () => cleanLongText(draft.notes, 'item.notes_too_long'));
+  const relations = errors.check('relations', () => validateRelations(kind, draft.relations));
+  errors.check('releases', () => assertReleaseCount(draft.releases));
+  const releases = draft.releases.map((release, index) =>
+    errors.check(`releases.${index}`, () => validateRelease(release)),
+  );
+
+  const validReleases = releases.filter((release) => release !== undefined);
+  // A check returns undefined only when it recorded an error, so these go together.
+  if (
+    errors.errors.length > 0 ||
+    title === undefined ||
+    description === undefined ||
+    notes === undefined ||
+    relations === undefined ||
+    validReleases.length !== releases.length
+  ) {
+    return { ok: false, errors: errors.errors };
+  }
   return {
-    ...draft,
-    title: title.length === 0 ? null : title,
-    alternateTitles: cleanAlternateTitles(draft.alternateTitles),
-    description: cleanLongText(draft.description, 'item.description_too_long'),
-    notes: cleanLongText(draft.notes, 'item.notes_too_long'),
-    relations: validateRelations(kind, draft.relations),
-    releases: validateReleases(draft.releases),
+    ok: true,
+    value: {
+      ...draft,
+      title: title.length === 0 ? null : title,
+      alternateTitles,
+      description,
+      notes,
+      relations,
+      releases: validReleases,
+    },
   };
+}
+
+/** Validates and cleans a draft for an item of the given kind, throwing its first error. */
+export function validateItemDraft(kind: ItemKind, draft: ItemDraft): ValidItemDraft {
+  const result = checkItemDraft(kind, draft);
+  if (result.ok) return result.value;
+  const [first] = result.errors;
+  if (first === undefined) throw new Error('An item draft check failed without an error');
+  throw new ValidationError(first.code, first.message);
 }

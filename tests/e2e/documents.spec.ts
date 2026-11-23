@@ -132,10 +132,16 @@ test('blocks saving a document without a name', async () => {
   await chooseFiles([pdfFile('Manual.pdf')]);
   await button('Añadir documentos').click();
   await nameField(1).fill('   ');
+  // The field is marked only when saving.
+  await expect(nameField(1)).not.toHaveAttribute('aria-invalid');
   await button('Guardar').click();
 
-  await expect(page.getByRole('alert')).toHaveText('El nombre del documento no puede estar vacío.');
+  await expect(page.getByRole('alert')).toHaveText('Revisa el campo marcado.');
   await expect(nameField(1)).toHaveAttribute('aria-invalid', 'true');
+  await expect(nameField(1)).toHaveAccessibleDescription(
+    'El nombre del documento no puede estar vacío.',
+  );
+  await expect(nameField(1)).toBeFocused();
   expect(stored('files')).toEqual([]);
 
   await nameField(1).fill('Manual');

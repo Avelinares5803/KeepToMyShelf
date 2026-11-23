@@ -127,18 +127,66 @@ test('creates, shows and edits items, hiding empty fields and guarding unsaved c
   await expect(heading('Videojuegos (2)')).toBeVisible();
   await expect(button('Chrono Trigger (SNES) Favorito')).toBeVisible();
 
-  // Invalid data shows a translated error and keeps the form open.
+  // Invalid data shows a translated error next to the field and keeps the form open.
   await button('Chrono Trigger (SNES) Favorito').click();
   await button('Editar').click();
   await page.getByRole('group', { name: 'Fin' }).getByLabel('Indeterminada').uncheck();
   await page.getByRole('group', { name: 'Fin' }).getByLabel('Año').fill('1990');
   await button('Guardar').click();
-  await expect(page.getByRole('alert')).toHaveText(
-    'La fecha de finalización no puede ser anterior a la de comienzo.',
-  );
+  await expect(page.getByRole('alert')).toHaveText('Revisa el campo marcado.');
+  await expect(
+    page.getByRole('group', { name: 'Fin' }).getByLabel('Año'),
+  ).toHaveAccessibleDescription('La fecha de finalización no puede ser anterior a la de comienzo.');
   await button('Cancelar').click();
   await unsaved.getByRole('button', { name: 'Descartar cambios' }).click();
   await expect(heading('Chrono Trigger (SNES)')).toBeVisible();
+});
+
+test('marks every wrong field at once, and each mark goes away once it is corrected', async () => {
+  await button('Videojuegos').click();
+  await button('Añadir').click();
+  const start = page.getByRole('group', { name: 'Inicio', exact: true });
+  const release = page.getByRole('group', { name: 'Fecha 1', exact: true });
+  const hours = page.getByLabel('Horas', { exact: true });
+  const minutes = page.getByLabel('Minutos', { exact: true });
+  await start.getByLabel('Día').fill('31');
+  await start.getByLabel('Mes').selectOption({ label: 'abril' });
+  await start.getByLabel('Año').fill('2021');
+  await hours.fill('muchas');
+  await button('Añadir fecha').click();
+  await release.getByLabel('Mes').selectOption({ label: 'marzo' });
+
+  await button('Guardar').click();
+  await expect(page.getByRole('alert')).toHaveText('Revisa los 3 campos marcados.');
+  await expect(start.getByLabel('Día')).toHaveAccessibleDescription(
+    'Ese día no existe en ese mes.',
+  );
+  await expect(hours).toHaveAccessibleDescription(
+    'Las horas deben ser un número entero entre 0 y 99.999.',
+  );
+  await expect(release.getByLabel('Año')).toHaveAccessibleDescription('El año no es válido.');
+  // The focus goes to the first marked field.
+  await expect(start.getByLabel('Día')).toBeFocused();
+
+  // A corrected field loses its mark at once; a new error waits for the next save.
+  await start.getByLabel('Día').fill('30');
+  await expect(start.getByLabel('Día')).not.toHaveAttribute('aria-invalid');
+  await expect(page.getByRole('alert')).toHaveText('Revisa los 2 campos marcados.');
+  await minutes.fill('75');
+  await expect(minutes).not.toHaveAttribute('aria-invalid');
+  await hours.fill('12');
+  await release.getByLabel('Año').fill('1995');
+  await expect(page.getByRole('alert')).toBeHidden();
+
+  await button('Guardar').click();
+  await expect(minutes).toHaveAccessibleDescription(
+    'Los minutos deben ser un número entero entre 0 y 59.',
+  );
+  await expect(minutes).toBeFocused();
+  await minutes.fill('45');
+  await button('Guardar').click();
+  await expect(heading('Sin nombre 1')).toBeVisible();
+  await expect(page.locator('.item-detail')).toContainText('12:45');
 });
 
 test('moves items to the trash, restores them and deletes them permanently', async () => {

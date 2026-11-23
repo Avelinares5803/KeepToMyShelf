@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FieldErrorMessage, invalidProps } from '../../components/FieldErrorMessage';
 import type { IpcResult } from '../../../shared/ipc';
 import type { PickedImports } from '../../../shared/media';
 import { errorMessage, IpcError, unwrap } from '../../lib/ipc';
@@ -12,6 +13,8 @@ interface DocumentsFieldProps {
   token: string;
   documents: readonly FormDocument[];
   onChange: (documents: readonly FormDocument[]) => void;
+  /** The error of each document's name, by index, if any. */
+  errorFor?: (index: number) => string | undefined;
 }
 
 /**
@@ -19,8 +22,14 @@ interface DocumentsFieldProps {
  * chosen or dropped on the field, kept as they are, without an import window, and saved in
  * this order with the item.
  */
-export function DocumentsField({ token, documents, onChange }: DocumentsFieldProps) {
+export function DocumentsField({
+  token,
+  documents,
+  onChange,
+  errorFor = () => undefined,
+}: DocumentsFieldProps) {
   const { t, i18n } = useTranslation();
+  const id = useId();
   const [preparing, setPreparing] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
 
@@ -73,17 +82,19 @@ export function DocumentsField({ token, documents, onChange }: DocumentsFieldPro
             const number = index + 1;
             const byteSize =
               document.source === 'existing' ? document.media.byteSize : document.prepared.byteSize;
+            const errorId = `${id}-${document.key}-error`;
+            const error = errorFor(index);
             return (
               <li key={document.key} className="document-list__item">
                 <input
                   type="text"
                   className="document-list__name"
                   aria-label={t('media.documents.name', { number })}
-                  aria-invalid={document.label.trim() === ''}
                   value={document.label}
                   onChange={(event) =>
                     onChange(renameDocument(documents, index, event.target.value))
                   }
+                  {...invalidProps(errorId, error)}
                 />
                 <span className="muted">{formatFileSize(byteSize, i18n.language)}</span>
                 {document.source === 'prepared' && (
@@ -120,6 +131,7 @@ export function DocumentsField({ token, documents, onChange }: DocumentsFieldPro
                     {t('media.documents.remove')}
                   </button>
                 </span>
+                <FieldErrorMessage id={errorId} message={error} />
               </li>
             );
           })}

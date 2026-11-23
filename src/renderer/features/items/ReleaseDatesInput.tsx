@@ -2,8 +2,10 @@ import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CatalogEntrySummary } from '../../../shared/catalogs';
 import type { ItemKind } from '../../../shared/content';
+import { invalidProps } from '../../components/FieldErrorMessage';
 import { EntryPicker } from './EntryPicker';
 import { EMPTY_RELEASE_FIELDS, type ReleaseFields } from './item-form';
+import { DateErrorMessages, type DateErrors } from './UsageDateInput';
 
 interface ReleaseDatesInputProps {
   legend: string;
@@ -11,6 +13,8 @@ interface ReleaseDatesInputProps {
   kind: ItemKind;
   value: readonly ReleaseFields[];
   onChange: (value: ReleaseFields[]) => void;
+  /** The errors of the date in each row, by row index. */
+  errorsFor?: (index: number) => DateErrors;
 }
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
@@ -22,6 +26,7 @@ export function ReleaseDatesInput({
   kind,
   value,
   onChange,
+  errorsFor = () => ({}),
 }: ReleaseDatesInputProps) {
   const { t } = useTranslation();
   const update = (index: number, changes: Partial<ReleaseFields>) =>
@@ -37,6 +42,7 @@ export function ReleaseDatesInput({
           row={row}
           regions={regions}
           kind={kind}
+          errors={errorsFor(index)}
           onChange={(changes) => update(index, changes)}
           onRemove={() => onChange(value.filter((_, i) => i !== index))}
         />
@@ -57,11 +63,12 @@ interface ReleaseRowProps {
   row: ReleaseFields;
   regions: readonly CatalogEntrySummary[];
   kind: ItemKind;
+  errors: DateErrors;
   onChange: (changes: Partial<ReleaseFields>) => void;
   onRemove: () => void;
 }
 
-function ReleaseRow({ number, row, regions, kind, onChange, onRemove }: ReleaseRowProps) {
+function ReleaseRow({ number, row, regions, kind, errors, onChange, onRemove }: ReleaseRowProps) {
   const { t, i18n } = useTranslation();
   const id = useId();
   const monthName = new Intl.DateTimeFormat(i18n.language, { month: 'long' });
@@ -90,6 +97,7 @@ function ReleaseRow({ number, row, regions, kind, onChange, onRemove }: ReleaseR
             size={2}
             value={row.day}
             onChange={(event) => onChange({ day: event.target.value })}
+            {...invalidProps(`${id}-day-error`, errors.day)}
           />
         </div>
         <div className="field">
@@ -98,6 +106,7 @@ function ReleaseRow({ number, row, regions, kind, onChange, onRemove }: ReleaseR
             id={`${id}-month`}
             value={row.month}
             onChange={(event) => onChange({ month: event.target.value })}
+            {...invalidProps(`${id}-month-error`, errors.month)}
           >
             <option value="">{t('items.dates.noMonth')}</option>
             {MONTHS.map((month) => (
@@ -117,6 +126,7 @@ function ReleaseRow({ number, row, regions, kind, onChange, onRemove }: ReleaseR
             size={4}
             value={row.year}
             onChange={(event) => onChange({ year: event.target.value })}
+            {...invalidProps(`${id}-year-error`, errors.year)}
           />
         </div>
         <button
@@ -128,6 +138,7 @@ function ReleaseRow({ number, row, regions, kind, onChange, onRemove }: ReleaseR
           {t('items.fields.remove')}
         </button>
       </div>
+      <DateErrorMessages id={id} errors={errors} />
     </fieldset>
   );
 }

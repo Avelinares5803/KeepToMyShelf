@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { MediaAttachment, PreparedImport } from '../../../shared/media';
 import {
-  assertDocumentLabels,
   automaticChoice,
   choicesFor,
   coverChanged,
+  documentLabelErrors,
   documentsChanged,
   fromAttachment,
   fromAttachments,
@@ -193,11 +193,13 @@ describe('documents of the edit form', () => {
     expect(documentsChanged(saved, saved.slice(1))).toBe(true);
   });
 
-  it('blocks saving when a name is empty', () => {
-    expect(() => assertDocumentLabels(saved)).not.toThrow();
-    expect(() => assertDocumentLabels(renameDocument(saved, 1, '   '))).toThrow(
-      expect.objectContaining({ code: 'media.label_required' }),
-    );
+  it('blocks saving when a name is empty, telling which documents are wrong', () => {
+    expect(documentLabelErrors(saved)).toEqual([]);
+    const renamed = renameDocument(renameDocument(saved, 0, ''), 1, 'Ma\u0000pa');
+    expect(documentLabelErrors(renamed)).toEqual([
+      expect.objectContaining({ field: 'documents.0', code: 'media.label_required' }),
+      expect.objectContaining({ field: 'documents.1', code: 'media.label_invalid_characters' }),
+    ]);
   });
 });
 

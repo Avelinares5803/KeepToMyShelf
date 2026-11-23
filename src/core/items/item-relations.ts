@@ -60,13 +60,23 @@ export function validateRelations(kind: ItemKind, raw: ItemRelationsDraft): Item
   return relations;
 }
 
-/** Validates release dates; dates may come from outside, so each one is checked again. */
-export function validateReleases(raw: readonly ReleaseDraft[]): ReleaseDraft[] {
+/** Rejects more release dates than the limit. */
+export function assertReleaseCount(raw: readonly ReleaseDraft[]): void {
   if (raw.length > RELATION_LIMITS.releases) {
     throw new ValidationError('item.too_many_releases', 'Too many release dates');
   }
-  return raw.map(({ region, date }) => ({
+}
+
+/** Validates one release date; it may come from outside, so the date is checked again. */
+export function validateRelease({ region, date }: ReleaseDraft): ReleaseDraft {
+  return {
     region: region === null ? null : cleanRef(region),
     date: createPartialDate(date.year, date.month, date.day),
-  }));
+  };
+}
+
+/** Validates release dates, stopping at the first error. */
+export function validateReleases(raw: readonly ReleaseDraft[]): ReleaseDraft[] {
+  assertReleaseCount(raw);
+  return raw.map(validateRelease);
 }

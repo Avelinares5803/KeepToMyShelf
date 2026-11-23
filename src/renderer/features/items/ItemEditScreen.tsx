@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { catalogForRole, type Catalog, type ItemRole } from '../../../core/catalogs/catalogs';
+import { ValidationError } from '../../../core/errors';
+import type { FieldError } from '../../../core/field-errors';
 import { ITEM_STATUSES, type ItemStatus } from '../../../core/items/item-draft';
 import type { OwnershipFormat } from '../../../core/items/ownership';
 import type { CatalogEntrySummary } from '../../../shared/catalogs';
@@ -10,14 +12,15 @@ import type { ImageStorageChoice } from '../../../core/media/import-rules';
 import type { ItemDetails } from '../../../shared/items';
 import type { ItemMedia } from '../../../shared/media';
 import type { ImageImportChoice } from '../../../shared/settings';
+import { FieldErrorMessage, invalidProps } from '../../components/FieldErrorMessage';
 import { errorMessage, unwrap } from '../../lib/ipc';
 import { useLoad } from '../../lib/use-load';
 import { CoverField } from '../media/CoverField';
 import { DocumentsField } from '../media/DocumentsField';
 import { ImagesField } from '../media/ImagesField';
 import {
-  assertDocumentLabels,
   coverChanged,
+  documentLabelErrors,
   documentsChanged,
   fromAttachment,
   fromAttachments,
@@ -32,7 +35,7 @@ import {
   type FormImage,
 } from '../media/media-form';
 import { EntryPicker } from './EntryPicker';
-import { hasChanges, toFormState, toItemDraft, type ItemFormState } from './item-form';
+import { checkItemForm, hasChanges, toFormState, type ItemFormState } from './item-form';
 import {
   datesLabel,
   releasesLabel,
@@ -43,7 +46,7 @@ import {
 } from './labels';
 import { ReleaseDatesInput } from './ReleaseDatesInput';
 import { StarRatingInput } from './StarRating';
-import { UsageDateInput } from './UsageDateInput';
+import { UsageDateInput, type DateErrors } from './UsageDateInput';
 import { useItemTitle } from './use-item-title';
 
 /** Lets the app ask about unsaved changes before leaving the editor. */
@@ -141,6 +144,16 @@ type ItemFormProps = Omit<ItemEditScreenProps, 'itemId'> & {
 const FORMATS: OwnershipFormat[] = ['physical', 'digital', 'both'];
 const NO_MEDIA: ItemMedia = { cover: null, images: [], documents: [] };
 
+/** Checks the form and the documents' names; the field errors are by form field. */
+function checkFields(kind: ItemKind, form: ItemFormState, documents: readonly FormDocument[]) {
+  const checked = checkItemForm(kind, form);
+  const fieldErrors: readonly FieldError[] = [
+    ...checked.fieldErrors,
+    ...documentLabelErrors(documents),
+  ];
+  return { ...checked, draft: fieldErrors.length === 0 ? checked.draft : null, fieldErrors };
+}
+
 function ItemForm({
   token,
   kind,
@@ -169,10 +182,46 @@ function ItemForm({
     fromDocumentAttachments(media.documents),
   );
   const [documents, setDocuments] = useState<readonly FormDocument[]>(savedDocuments);
+  /** An error that no single field shows (from the main process, for example). */
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
   const set = (changes: Partial<ItemFormState>) =>
     setForm((current) => ({ ...current, ...changes }));
+
+  /*
+   * The fields marked when the user last tried to save. A field stays marked while it still has
+   * an error, and stops being marked as soon as it is valid; errors in other fields appear only
+   * on the next save.
+   */
+  const [markedFields, setMarkedFields] = useState<ReadonlySet<string>>(() => new Set());
+  const shownErrors =
+    markedFields.size === 0
+      ? []
+      : checkFields(kind, form, documents).fieldErrors.filter(({ field }) =>
+          markedFields.has(field),
+        );
+  if (shownErrors.length !== markedFields.size) {
+    // Fields corrected since the last save are dropped while rendering, which React allows
+    // for state that follows other state; an effect would draw the old marks once more.
+    setMarkedFields(new Set(shownErrors.map(({ field }) => field)));
+  }
+  const errorFor = (field: string): string | undefined => {
+    const found = shownErrors.find((shown) => shown.field === field);
+    return found && errorMessage(t, new ValidationError(found.code, found.message));
+  };
+  const dateErrors = (field: string): DateErrors => ({
+    day: errorFor(`${field}.day`),
+    month: errorFor(`${field}.month`),
+    year: errorFor(`${field}.year`),
+  });
+
+  // After a save with errors, the first marked field (in the order shown) gets the focus.
+  useEffect(() => {
+    if (focusRequest === 0) return;
+    formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [focusRequest]);
 
   /**
    * Changes the cover or the gallery. An import neither of them uses any more is discarded
@@ -198,11 +247,14 @@ function ItemForm({
   }
 
   async function save(): Promise<ItemDetails | null> {
-    setError(null);
+    // Every error is shown at once; an empty document name also blocks the save.
+    const { draft, fieldErrors, otherErrors } = checkFields(kind, form, documents);
+    setMarkedFields(new Set(fieldErrors.map(({ field }) => field)));
+    const [other] = otherErrors;
+    setError(other === undefined ? null : new ValidationError(other.code, other.message));
+    if (fieldErrors.length > 0) setFocusRequest((count) => count + 1);
+    if (draft === null) return null;
     try {
-      const draft = toItemDraft(kind, form);
-      // An empty document name blocks the save, like the main process would.
-      assertDocumentLabels(documents);
       // Media are sent only when they changed; they are saved with the item.
       const plan = {
         cover: coverChanged(savedCover, cover) ? toCoverPlan(cover) : undefined,
@@ -296,7 +348,7 @@ function ItemForm({
   return (
     <section className="item-edit">
       <h1>{item ? t('items.editItem', { title: displayTitle(item) }) : t(`items.new.${kind}`)}</h1>
-      <form className="form item-form" onSubmit={(event) => void submit(event)}>
+      <form ref={formRef} className="form item-form" onSubmit={(event) => void submit(event)}>
         <FormSection title={t('items.sections.cover')}>
           <CoverField
             token={token}
@@ -319,31 +371,43 @@ function ItemForm({
               placeholder={t('items.fields.titlePlaceholder')}
               autoFocus
               onChange={(event) => set({ title: event.target.value })}
+              {...invalidProps(`${id}-title-error`, errorFor('title'))}
             />
+            <FieldErrorMessage id={`${id}-title-error`} message={errorFor('title')} />
           </div>
 
           <fieldset className="fieldset">
             <legend>{t('items.fields.alternateTitles')}</legend>
-            {form.alternateTitles.map((title, index) => (
-              <div key={index} className="inline-field">
-                <input
-                  type="text"
-                  aria-label={t('items.fields.alternateTitle', { number: index + 1 })}
-                  value={title}
-                  onChange={(event) => setAlternateTitle(index, event.target.value)}
-                />
-                <button
-                  type="button"
-                  className="link-button link-button--danger"
-                  aria-label={t('items.fields.removeAlternateTitle', { number: index + 1 })}
-                  onClick={() =>
-                    set({ alternateTitles: form.alternateTitles.filter((_, i) => i !== index) })
-                  }
-                >
-                  {t('items.fields.remove')}
-                </button>
-              </div>
-            ))}
+            {form.alternateTitles.map((title, index) => {
+              const errorId = `${id}-alternate-title-${index}-error`;
+              const titleError = errorFor(`alternateTitles.${index}`);
+              return (
+                <div key={index} className="alternate-title">
+                  <div className="inline-field">
+                    <input
+                      type="text"
+                      aria-label={t('items.fields.alternateTitle', { number: index + 1 })}
+                      value={title}
+                      onChange={(event) => setAlternateTitle(index, event.target.value)}
+                      {...invalidProps(errorId, titleError)}
+                    />
+                    <button
+                      type="button"
+                      className="link-button link-button--danger"
+                      aria-label={t('items.fields.removeAlternateTitle', { number: index + 1 })}
+                      onClick={() =>
+                        set({
+                          alternateTitles: form.alternateTitles.filter((_, i) => i !== index),
+                        })
+                      }
+                    >
+                      {t('items.fields.remove')}
+                    </button>
+                  </div>
+                  <FieldErrorMessage id={errorId} message={titleError} />
+                </div>
+              );
+            })}
             <button
               type="button"
               className="button button--ghost"
@@ -360,7 +424,9 @@ function ItemForm({
               rows={5}
               value={form.description}
               onChange={(event) => set({ description: event.target.value })}
+              {...invalidProps(`${id}-description-error`, errorFor('description'))}
             />
+            <FieldErrorMessage id={`${id}-description-error`} message={errorFor('description')} />
           </div>
 
           {picker('franchise')}
@@ -404,11 +470,13 @@ function ItemForm({
               legend={t('items.dates.start')}
               value={form.startedOn}
               onChange={(startedOn) => set({ startedOn })}
+              errors={dateErrors('startedOn')}
             />
             <UsageDateInput
               legend={t('items.dates.end')}
               value={form.finishedOn}
               onChange={(finishedOn) => set({ finishedOn })}
+              errors={dateErrors('finishedOn')}
             />
           </fieldset>
 
@@ -420,11 +488,13 @@ function ItemForm({
                   label={t('items.fields.hours')}
                   value={form.hours}
                   onChange={(hours) => set({ hours })}
+                  error={errorFor('hours')}
                 />
                 <NumberField
                   label={t('items.fields.minutes')}
                   value={form.minutes}
                   onChange={(minutes) => set({ minutes })}
+                  error={errorFor('minutes')}
                 />
               </div>
             </fieldset>
@@ -465,7 +535,9 @@ function ItemForm({
               rows={4}
               value={form.notes}
               onChange={(event) => set({ notes: event.target.value })}
+              {...invalidProps(`${id}-notes-error`, errorFor('notes'))}
             />
+            <FieldErrorMessage id={`${id}-notes-error`} message={errorFor('notes')} />
           </div>
         </FormSection>
 
@@ -476,11 +548,13 @@ function ItemForm({
                 label={t('items.fields.seasons')}
                 value={form.seasons}
                 onChange={(seasons) => set({ seasons })}
+                error={errorFor('seasons')}
               />
               <NumberField
                 label={t('items.fields.episodes')}
                 value={form.episodes}
                 onChange={(episodes) => set({ episodes })}
+                error={errorFor('episodes')}
               />
             </div>
           )}
@@ -493,6 +567,7 @@ function ItemForm({
             kind={kind}
             value={form.releases}
             onChange={(releases) => set({ releases })}
+            errorsFor={(index) => dateErrors(`releases.${index}`)}
           />
         </FormSection>
 
@@ -516,13 +591,23 @@ function ItemForm({
           </fieldset>
           <fieldset className="fieldset">
             <legend>{t('media.documents.title')}</legend>
-            <DocumentsField token={token} documents={documents} onChange={changeDocuments} />
+            <DocumentsField
+              token={token}
+              documents={documents}
+              onChange={changeDocuments}
+              errorFor={(index) => errorFor(`documents.${index}`)}
+            />
           </fieldset>
         </FormSection>
 
-        {error !== null && (
+        {(shownErrors.length > 0 || error !== null) && (
           <p className="banner banner--error" role="alert">
-            {errorMessage(t, error)}
+            {[
+              shownErrors.length > 0 && t('items.checkFields', { count: shownErrors.length }),
+              error !== null && errorMessage(t, error),
+            ]
+              .filter(Boolean)
+              .join(' ')}
           </p>
         )}
         <div className="form__actions">
@@ -551,10 +636,12 @@ function NumberField({
   label,
   value,
   onChange,
+  error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  error: string | undefined;
 }) {
   const id = useId();
   return (
@@ -567,7 +654,9 @@ function NumberField({
         size={6}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        {...invalidProps(`${id}-error`, error)}
       />
+      <FieldErrorMessage id={`${id}-error`} message={error} />
     </div>
   );
 }

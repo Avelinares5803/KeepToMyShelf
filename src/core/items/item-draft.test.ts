@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { knownUsageDate, UNKNOWN_USAGE_DATE } from '../dates/usage-period';
 import { ValidationError } from '../errors';
-import { EMPTY_ITEM_DRAFT, ITEM_LIMITS, validateItemDraft, type ItemDraft } from './item-draft';
+import {
+  checkItemDraft,
+  EMPTY_ITEM_DRAFT,
+  ITEM_LIMITS,
+  validateItemDraft,
+  type ItemDraft,
+} from './item-draft';
 
 const draft = (overrides: Partial<ItemDraft>): ItemDraft => ({ ...EMPTY_ITEM_DRAFT, ...overrides });
 
@@ -123,6 +129,20 @@ describe('validateItemDraft', () => {
     ).not.toThrow();
   });
 
+  it('reports the first error in the usual order when there are several', () => {
+    // Alternate titles were always checked after dates; the title comes first.
+    const broken = draft({
+      alternateTitles: ['a'.repeat(ITEM_LIMITS.titleLength + 1)],
+      startedOn: knownUsageDate({ year: 2021 }),
+      finishedOn: knownUsageDate({ year: 2020 }),
+    });
+    expectCode(() => validateItemDraft('game', broken), 'date.end_before_start');
+    expectCode(
+      () => validateItemDraft('game', { ...broken, title: 'Zel\u0000da' }),
+      'item.title_invalid_characters',
+    );
+  });
+
   describe('kind-specific attributes', () => {
     it('allows hours played only for video games', () => {
       expect(validateItemDraft('game', draft({ minutesPlayed: 90 })).minutesPlayed).toBe(90);
@@ -155,5 +175,60 @@ describe('validateItemDraft', () => {
         'item.invalid_count',
       );
     });
+  });
+});
+
+describe('checkItemDraft', () => {
+  const errorsOf = (kind: 'game' | 'series', overrides: Partial<ItemDraft>) => {
+    const result = checkItemDraft(kind, draft(overrides));
+    return result.ok ? [] : result.errors.map(({ field, code }) => ({ field, code }));
+  };
+
+  it('returns the clean draft when there are no errors', () => {
+    expect(checkItemDraft('game', draft({ title: ' Zelda ' }))).toEqual({
+      ok: true,
+      value: validateItemDraft('game', draft({ title: ' Zelda ' })),
+    });
+  });
+
+  it('gathers every error, each with its field', () => {
+    expect(
+      errorsOf('series', {
+        title: 'a'.repeat(ITEM_LIMITS.titleLength + 1),
+        alternateTitles: ['Bien', 'Ma\u0000l', 'a'.repeat(ITEM_LIMITS.titleLength + 1)],
+        notes: 'a'.repeat(ITEM_LIMITS.longTextLength + 1),
+        startedOn: knownUsageDate({ year: 2021, month: 4, day: 31 }),
+        seasonsCount: -1,
+        episodesCount: 1.5,
+        releases: [
+          { region: null, date: { year: 2000 } },
+          { region: null, date: { year: 2000, month: 2, day: 30 } },
+        ],
+      }),
+    ).toEqual([
+      { field: 'title', code: 'item.title_too_long' },
+      { field: 'startedOn', code: 'date.invalid_day' },
+      { field: 'seasonsCount', code: 'item.invalid_count' },
+      { field: 'episodesCount', code: 'item.invalid_count' },
+      { field: 'alternateTitles.1', code: 'item.alternate_title_invalid_characters' },
+      { field: 'alternateTitles.2', code: 'item.alternate_title_too_long' },
+      { field: 'notes', code: 'item.notes_too_long' },
+      { field: 'releases.1', code: 'date.invalid_day' },
+    ]);
+  });
+
+  it('puts an end before the start on the end date, and only if both dates exist', () => {
+    expect(
+      errorsOf('game', {
+        startedOn: knownUsageDate({ year: 2021 }),
+        finishedOn: knownUsageDate({ year: 2020 }),
+      }),
+    ).toEqual([{ field: 'finishedOn', code: 'date.end_before_start' }]);
+    expect(
+      errorsOf('game', {
+        startedOn: knownUsageDate({ year: 2021, month: 13 }),
+        finishedOn: knownUsageDate({ year: 2020 }),
+      }),
+    ).toEqual([{ field: 'startedOn', code: 'date.invalid_month' }]);
   });
 });

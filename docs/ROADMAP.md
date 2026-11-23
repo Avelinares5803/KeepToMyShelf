@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-23, con la planificación de la v1.2 (apartado 3.12).
+**Última actualización:** 2026-11-23, con la v1.2-A (errores por campo, apartado 3.12).
 
 ---
 
@@ -48,7 +48,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F11 Copias de seguridad      | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
-| v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | 📋 Planificada                      |
+| v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | 🚧 En curso (v1.2-A hecha)          |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -505,10 +505,13 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 
 **Entregas, en este orden:**
 
-- **v1.2-A: errores por campo en el formulario del elemento.** Hoy la validación se detiene en el primer error y lo muestra en un aviso general. Acordado el 2026-11-23:
-  - **Todos los errores a la vez:** la validación reúne todos los errores en lugar de detenerse en el primero, y cada campo con error se marca (`aria-invalid` y el mensaje debajo, enlazado con `aria-describedby`). Al guardar, el foco va al primer campo con error.
+- **v1.2-A: errores por campo en el formulario del elemento.** ✅ Hecha (`feat/field-errors`). Antes, la validación se detenía en el primer error y lo mostraba en un aviso general. Acordado el 2026-11-23:
+  - **Todos los errores a la vez:** la validación reúne todos los errores en lugar de detenerse en el primero, y cada campo con error se marca (`aria-invalid` y el mensaje debajo, enlazado con `aria-describedby`). Al guardar, el foco va al primer campo con error, en el orden de la pantalla.
   - **Solo el formulario del elemento**, que es el que tiene muchos campos. Los diálogos de catálogos, colecciones y perfiles tienen uno o dos campos y ya muestran el error junto al campo.
-  - Quedan para el chat de la entrega: cuándo desaparece el error de un campo (al corregirlo o al volver a guardar) y cómo se reparten las reglas entre `core/` y el formulario sin duplicarlas. El proceso principal sigue validando todo como red de seguridad.
+  - **Cuándo aparece y desaparece un error:** los errores aparecen solo al pulsar «Guardar». El de un campo desaparece en cuanto ese campo es válido, mientras se corrige; los errores nuevos de otros campos esperan al siguiente «Guardar». Así no parpadean errores mientras se escribe (por ejemplo, «1» al escribir el año 1990). El nombre vacío de un documento ya no se marca al momento, sino al guardar, como los demás.
+  - **Se marca la parte concreta de una fecha** (día, mes o año). Si el fin es anterior al inicio, se marca el año del fin.
+  - **Resumen junto a «Guardar»:** «Revisa los N campos marcados.», que se actualiza al corregir. Los errores que no son de un campo (más de 50 títulos alternativos, un error del proceso principal…) siguen en ese aviso.
+  - **Reglas sin duplicar:** en `core/`, `checkItemDraft` reúne los errores del borrador por campo (`title`, `startedOn`, `releases.<n>`…) con un recolector (`FieldErrorCollector`, en `core/field-errors.ts`), y `validateItemDraft` lanza el primero, en el mismo orden de siempre, así que el proceso principal no cambia. El formulario (`checkItemForm`) reúne los errores al leer el texto (año que falta, horas no numéricas…) y traduce los campos del borrador a sus controles; los nombres de los documentos se comprueban con `documentLabelErrors`.
 - **v1.2-B: fusionar valores duplicados** de un catálogo. Acordado el 2026-11-23:
   - **«Fusionar con…»** en cada valor de la pantalla «Catálogos»: se elige otro valor **del mismo catálogo**, que se conserva. Sus elementos, sus fechas de lanzamiento (si es una región) y sus alias pasan al valor conservado, y **el nombre del valor fusionado se convierte en un alias**, para que se siga encontrando por él.
   - **Confirmación** con los dos nombres y el número de elementos afectados, con el foco en «Cancelar».

@@ -5,10 +5,12 @@ import { EMPTY_ITEM_DRAFT } from '../../../core/items/item-draft';
 import type { ItemDetails } from '../../../shared/items';
 import {
   EMPTY_DATE_FIELDS,
+  checkItemForm,
   EMPTY_RELEASE_FIELDS,
   hasChanges,
   toFormState,
   toItemDraft,
+  type ItemFormCheck,
   type ItemFormState,
 } from './item-form';
 
@@ -234,6 +236,86 @@ describe('item form', () => {
         () => toItemDraft('game', form({ releases: [{ ...EMPTY_RELEASE_FIELDS, month: '3' }] })),
         'date.invalid_year',
       );
+    });
+  });
+
+  describe('checking every field at once', () => {
+    const fieldsOf = (check: ItemFormCheck) =>
+      check.fieldErrors.map(({ field, code }) => ({ field, code }));
+
+    it('returns the draft and no errors when the form is valid', () => {
+      expect(checkItemForm('game', toFormState(details))).toEqual({
+        draft: toItemDraft('game', toFormState(details)),
+        fieldErrors: [],
+        otherErrors: [],
+      });
+    });
+
+    it('marks each wrong field of the form, down to the part of a date', () => {
+      const check = checkItemForm(
+        'series',
+        form({
+          title: 'a'.repeat(301),
+          alternateTitles: ['Bien', 'Ma\u0000l'],
+          startedOn: { day: '31', month: '4', year: '2021', unknown: false },
+          finishedOn: { day: '5', month: '', year: '2022', unknown: false },
+          seasons: 'tres',
+          releases: [
+            EMPTY_RELEASE_FIELDS,
+            { ...EMPTY_RELEASE_FIELDS, year: '2001' },
+            { ...EMPTY_RELEASE_FIELDS, month: '3' },
+            { ...EMPTY_RELEASE_FIELDS, region: { kind: 'existing', id: 1, name: 'Japón' } },
+          ],
+        }),
+      );
+      expect(check.draft).toBeNull();
+      expect(check.otherErrors).toEqual([]);
+      expect(fieldsOf(check)).toEqual([
+        { field: 'releases.2.year', code: 'date.invalid_year' },
+        { field: 'releases.3.year', code: 'item.release_date_required' },
+        { field: 'startedOn.day', code: 'date.invalid_day' },
+        { field: 'finishedOn.month', code: 'date.day_without_month' },
+        { field: 'title', code: 'item.title_too_long' },
+        { field: 'seasons', code: 'item.invalid_count' },
+        { field: 'alternateTitles.1', code: 'item.alternate_title_invalid_characters' },
+      ]);
+    });
+
+    it('marks the year of the end date when it is before the start', () => {
+      const check = checkItemForm(
+        'game',
+        form({
+          startedOn: { ...EMPTY_DATE_FIELDS, year: '2021' },
+          finishedOn: { ...EMPTY_DATE_FIELDS, year: '2020' },
+        }),
+      );
+      expect(fieldsOf(check)).toEqual([
+        { field: 'finishedOn.year', code: 'date.end_before_start' },
+      ]);
+    });
+
+    it('marks hours and minutes separately', () => {
+      expect(fieldsOf(checkItemForm('game', form({ hours: '1.5' })))).toEqual([
+        { field: 'hours', code: 'item.invalid_hours' },
+      ]);
+      expect(fieldsOf(checkItemForm('game', form({ minutes: '75' })))).toEqual([
+        { field: 'minutes', code: 'item.invalid_minutes' },
+      ]);
+    });
+
+    it('keeps apart the errors no single field shows', () => {
+      const check = checkItemForm(
+        'game',
+        form({ alternateTitles: Array.from({ length: 51 }, (_, i) => `T${i}`) }),
+      );
+      expect(check.draft).toBeNull();
+      expect(check.fieldErrors).toEqual([]);
+      expect(check.otherErrors).toEqual([
+        expect.objectContaining({
+          field: 'alternateTitles',
+          code: 'item.too_many_alternate_titles',
+        }),
+      ]);
     });
   });
 

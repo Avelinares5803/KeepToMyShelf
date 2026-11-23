@@ -272,7 +272,10 @@ h1 {
   font: inherit;
 }
 
-.field input[aria-invalid='true'] {
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'],
+.field textarea[aria-invalid='true'],
+.inline-field input[aria-invalid='true'] {
   border-color: var(--color-danger);
 }
 
@@ -280,6 +283,11 @@ h1 {
   margin: 0;
   color: var(--color-danger);
   font-size: 0.9rem;
+}
+
+/* A message under one field of a row (seasons, hours...) must not push the others down. */
+.inline-field:has(> .field > .field__error) {
+  align-items: flex-start;
 }
 
 .form__actions {
@@ -1935,6 +1943,11 @@ h1 {
 
 .document-list__name[aria-invalid='true'] {
   border-color: var(--color-danger);
+}
+
+/* The message goes on its own line, below the document's name. */
+.document-list__item .field__error {
+  flex-basis: 100%;
 }
 
 .document-list__item .badge {

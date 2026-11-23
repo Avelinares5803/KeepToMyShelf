@@ -6,8 +6,9 @@ import {
   type UsageDate,
 } from '../../../core/dates/usage-period';
 import { ValidationError } from '../../../core/errors';
+import { FieldErrorCollector, type FieldError } from '../../../core/field-errors';
 import { toHoursAndMinutes, toTotalMinutes } from '../../../core/items/duration';
-import { validateItemDraft, type ItemDraft, type ItemStatus } from '../../../core/items/item-draft';
+import { checkItemDraft, type ItemDraft, type ItemStatus } from '../../../core/items/item-draft';
 import type {
   EntryRef,
   ItemRelationsDraft,
@@ -127,23 +128,46 @@ function parseNumber(value: string): number | null {
   return trimmed === '' ? null : /^\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
 }
 
-/** A partial date from its typed parts, or null when all of them are blank. */
-function parsePartialDate(fields: Omit<DateFields, 'unknown'>): PartialDate | null {
+/** The part of a date (day, month or year) an error code points at. */
+function datePart(code: string): keyof Omit<DateFields, 'unknown'> {
+  if (code === 'date.invalid_day') return 'day';
+  if (code === 'date.invalid_month' || code === 'date.day_without_month') return 'month';
+  return 'year';
+}
+
+/**
+ * A partial date from its typed parts, null when all of them are blank, or undefined when
+ * they are not valid; the error is recorded for the part at fault (`<field>.day`...).
+ */
+function parsePartialDate(
+  fields: Omit<DateFields, 'unknown'>,
+  field: string,
+  errors: FieldErrorCollector,
+): PartialDate | null | undefined {
   const year = parseNumber(fields.year);
   const month = parseNumber(fields.month);
   const day = parseNumber(fields.day);
   if (year === null && month === null && day === null) return null;
   if (year === null) {
-    throw new ValidationError('date.invalid_year', 'A date needs a year');
+    errors.add(`${field}.year`, 'date.invalid_year', 'A date needs a year');
+    return undefined;
   }
   // createPartialDate rejects impossible values (day 31 in April, a day without a month...).
-  return createPartialDate(year, month ?? undefined, day ?? undefined);
+  return errors.check(
+    (code) => `${field}.${datePart(code)}`,
+    () => createPartialDate(year, month ?? undefined, day ?? undefined),
+  );
 }
 
-function parseDateFields(fields: DateFields): UsageDate | null {
+/** A usage date, or null when it is blank or not valid (its error is recorded). */
+function parseDateFields(
+  fields: DateFields,
+  field: string,
+  errors: FieldErrorCollector,
+): UsageDate | null {
   if (fields.unknown) return UNKNOWN_USAGE_DATE;
-  const date = parsePartialDate(fields);
-  return date === null ? null : knownUsageDate(date);
+  const date = parsePartialDate(fields, field, errors);
+  return date == null ? null : knownUsageDate(date);
 }
 
 function toRelationsDraft(relations: RelationFields): ItemRelationsDraft {
@@ -152,33 +176,103 @@ function toRelationsDraft(relations: RelationFields): ItemRelationsDraft {
   );
 }
 
-/** Rows left completely empty are ignored; any other row needs at least a year. */
-function toReleasesDraft(rows: readonly ReleaseFields[]): ReleaseDraft[] {
+/**
+ * Rows left completely empty are ignored; any other row needs at least a year. Returns the
+ * releases and, for each one, the index of the row it comes from.
+ */
+function toReleasesDraft(
+  rows: readonly ReleaseFields[],
+  errors: FieldErrorCollector,
+): { releases: ReleaseDraft[]; rowIndexes: number[] } {
   const releases: ReleaseDraft[] = [];
-  for (const row of rows) {
-    const date = parsePartialDate(row);
-    if (date === null && row.region === null) continue;
+  const rowIndexes: number[] = [];
+  rows.forEach((row, index) => {
+    const date = parsePartialDate(row, `releases.${index}`, errors);
+    if (date === undefined) return;
+    if (date === null && row.region === null) return;
     if (date === null) {
-      throw new ValidationError('item.release_date_required', 'A release date needs a year');
+      errors.add(
+        `releases.${index}.year`,
+        'item.release_date_required',
+        'A release date needs a year',
+      );
+      return;
     }
     releases.push({ region: row.region === null ? null : toRef(row.region), date });
-  }
-  return releases;
+    rowIndexes.push(index);
+  });
+  return { releases, rowIndexes };
 }
 
-function parseDuration(hours: string, minutes: string): number | null {
+/** Total minutes, or null when blank or not valid (the error goes to `hours` or `minutes`). */
+function parseDuration(hours: string, minutes: string, errors: FieldErrorCollector): number | null {
   const h = parseNumber(hours);
   const m = parseNumber(minutes);
   if (h === null && m === null) return null;
-  return toTotalMinutes({ hours: h ?? 0, minutes: m ?? 0 });
+  return (
+    errors.check(
+      (code) => (code === 'item.invalid_minutes' ? 'minutes' : 'hours'),
+      () => toTotalMinutes({ hours: h ?? 0, minutes: m ?? 0 }),
+    ) ?? null
+  );
 }
 
 /**
- * Converts the form into a draft for an item of `kind`, checking it with the same rules
- * the main process applies, so most errors appear before anything is sent.
+ * The form field that shows an error of the draft (see `checkItemDraft`), or null when no
+ * single field of the form shows it (too many alternate titles, a catalog value...).
+ */
+function formFieldFor(error: FieldError, rowIndexes: readonly number[]): string | null {
+  const [field = '', index] = error.field.split('.');
+  switch (field) {
+    case 'title':
+    case 'description':
+    case 'notes':
+      return field;
+    case 'alternateTitles':
+      return index === undefined ? null : error.field;
+    case 'startedOn':
+    case 'finishedOn':
+      return `${field}.${datePart(error.code)}`;
+    case 'minutesPlayed':
+      return 'hours';
+    case 'seasonsCount':
+      return 'seasons';
+    case 'episodesCount':
+      return 'episodes';
+    case 'releases': {
+      const row = index === undefined ? undefined : rowIndexes[Number(index)];
+      return row !== undefined && error.code.startsWith('date.')
+        ? `releases.${row}.${datePart(error.code)}`
+        : null;
+    }
+    default:
+      return null;
+  }
+}
+
+/** The result of checking the form: the draft, or the errors found. */
+export interface ItemFormCheck {
+  /** Null when there is any error. */
+  readonly draft: ItemDraft | null;
+  /**
+   * Errors shown next to a field. Fields: `title`, `alternateTitles.<index>`, `description`,
+   * `notes`, `startedOn.<part>`, `finishedOn.<part>` (part: day, month or year), `hours`,
+   * `minutes`, `seasons`, `episodes` and `releases.<row>.<part>`.
+   */
+  readonly fieldErrors: readonly FieldError[];
+  /** Errors that no single field shows. */
+  readonly otherErrors: readonly FieldError[];
+}
+
+/**
+ * Converts the form into a draft for an item of `kind`, checking every field with the same
+ * rules the main process applies, so the errors appear before anything is sent.
  * Fields that do not apply to the kind are left out.
  */
-export function toItemDraft(kind: ItemKind, form: ItemFormState): ItemDraft {
+export function checkItemForm(kind: ItemKind, form: ItemFormState): ItemFormCheck {
+  const errors = new FieldErrorCollector();
+  const { releases, rowIndexes } = toReleasesDraft(form.releases, errors);
+  // Fields that could not be read are left blank, so the draft's own checks skip them.
   const draft: ItemDraft = {
     title: form.title,
     alternateTitles: form.alternateTitles,
@@ -189,16 +283,35 @@ export function toItemDraft(kind: ItemKind, form: ItemFormState): ItemDraft {
     status: form.status === '' ? null : form.status,
     isReplay: form.isReplay,
     ...toOwnershipFlags(form.format === '' ? null : form.format),
-    startedOn: parseDateFields(form.startedOn),
-    finishedOn: parseDateFields(form.finishedOn),
-    minutesPlayed: kind === 'game' ? parseDuration(form.hours, form.minutes) : null,
+    startedOn: parseDateFields(form.startedOn, 'startedOn', errors),
+    finishedOn: parseDateFields(form.finishedOn, 'finishedOn', errors),
+    minutesPlayed: kind === 'game' ? parseDuration(form.hours, form.minutes, errors) : null,
     seasonsCount: kind === 'series' ? parseNumber(form.seasons) : null,
     episodesCount: kind === 'series' ? parseNumber(form.episodes) : null,
     relations: toRelationsDraft(form.relations),
-    releases: toReleasesDraft(form.releases),
+    releases,
   };
-  validateItemDraft(kind, draft);
-  return draft;
+
+  const otherErrors: FieldError[] = [];
+  const checked = checkItemDraft(kind, draft);
+  if (!checked.ok) {
+    for (const error of checked.errors) {
+      const field = formFieldFor(error, rowIndexes);
+      if (field === null) otherErrors.push(error);
+      else errors.add(field, error.code, error.message);
+    }
+  }
+  const valid = errors.errors.length === 0 && otherErrors.length === 0;
+  return { draft: valid ? draft : null, fieldErrors: errors.errors, otherErrors };
+}
+
+/** Like `checkItemForm`, but throws the first error. */
+export function toItemDraft(kind: ItemKind, form: ItemFormState): ItemDraft {
+  const { draft, fieldErrors, otherErrors } = checkItemForm(kind, form);
+  if (draft !== null) return draft;
+  const [first] = [...fieldErrors, ...otherErrors];
+  if (first === undefined) throw new Error('The item form check failed without an error');
+  throw new ValidationError(first.code, first.message);
 }
 
 /** Whether the form differs from its last saved state. */

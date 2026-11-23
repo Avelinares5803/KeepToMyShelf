@@ -71,7 +71,11 @@ try {
   # 2. Portable zip, as a user would unzip it.
   Write-Host "== Unzipping $zip"
   $portableDir = Join-Path $work 'portable'
-  Expand-Archive -LiteralPath $zip -DestinationPath $portableDir
+  # Not Expand-Archive: when pwsh 7 starts Windows PowerShell (as in GitHub Actions), PSModulePath
+  # makes it load pwsh's Archive module, which calls an ExtractToDirectory overload that the .NET
+  # Framework lacks. This two-argument call exists in both .NET Framework and .NET.
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  [IO.Compression.ZipFile]::ExtractToDirectory($zip, $portableDir)
   $portableExe = Join-Path $portableDir 'KeepToMyShelf\KeepToMyShelf.exe'
   if (-not (Test-Path -LiteralPath (Join-Path $portableDir 'KeepToMyShelf\KeepToMyShelf Data'))) {
     throw 'The portable zip has no "KeepToMyShelf Data" folder next to the .exe.'

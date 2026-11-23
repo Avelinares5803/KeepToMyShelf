@@ -77,7 +77,8 @@ git push origin v1.1.0
 
 ## If something goes wrong
 
-- **The workflow fails:** fix the problem in a pull request and create a new tag (`v1.1.0-rc.2`, or `v1.1.1` if it had already been published). **Never move a tag that was already pushed**: someone may have downloaded what it pointed to.
+- **The workflow fails:** fix the problem in a pull request and create a new tag: the next release candidate (`v1.1.0-rc.2`) if a candidate failed, or the next patch version (`v1.1.1`) if a final version failed, even if it was never published. That is what happened with 1.1.0. **Never move a tag that was already pushed**: someone may have downloaded what it pointed to.
+- **The smoke test and `Expand-Archive`:** the script unzips the portable zip with .NET (`[IO.Compression.ZipFile]::ExtractToDirectory`), not with `Expand-Archive`. In GitHub Actions, PowerShell 7 starts Windows PowerShell 5.1, which inherits `PSModulePath` and loads PowerShell 7's `Archive` module, which does not work with the .NET Framework. That is why the 1.1.0 workflow failed.
 - **The tag does not match the version:** delete it and create it again. It is safe because the workflow has created nothing:
 
   ```powershell

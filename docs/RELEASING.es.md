@@ -77,7 +77,8 @@ git push origin v1.1.0
 
 ## Si algo sale mal
 
-- **El workflow falla:** corrige el problema en una PR y crea una etiqueta nueva (`v1.1.0-rc.2`, o `v1.1.1` si ya se había publicado). **Nunca muevas una etiqueta ya subida**: alguien podría haber descargado lo que apuntaba.
+- **El workflow falla:** corrige el problema en una PR y crea una etiqueta nueva: la candidata siguiente (`v1.1.0-rc.2`) si falló una candidata, o la versión de parche siguiente (`v1.1.1`) si falló una definitiva, aunque no llegara a publicarse. Así ocurrió con la 1.1.0. **Nunca muevas una etiqueta ya subida**: alguien podría haber descargado lo que apuntaba.
+- **La prueba de humo y `Expand-Archive`:** el script descomprime el zip portable con .NET (`[IO.Compression.ZipFile]::ExtractToDirectory`), no con `Expand-Archive`. En GitHub Actions, PowerShell 7 lanza Windows PowerShell 5.1, que hereda `PSModulePath` y carga el módulo `Archive` de PowerShell 7, incompatible con el .NET Framework. Por eso falló el workflow de la 1.1.0.
 - **La etiqueta no coincide con la versión:** bórrala y créala de nuevo. Es seguro porque el workflow no ha creado nada:
 
   ```powershell

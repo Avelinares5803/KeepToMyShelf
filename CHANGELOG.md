@@ -6,7 +6,27 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-23
+
+### Español
+
+Publica los cambios de la 1.1.0, que no llegó a publicarse. La aplicación no cambia.
+
+#### Corregido
+
+- La prueba automática de la versión portable, que impidió publicar la 1.1.0.
+
+### English
+
+Publishes the changes of 1.1.0, which was never published. The app does not change.
+
+#### Fixed
+
+- The automated test of the portable version, which kept 1.1.0 from being published.
+
 ## [1.1.0] - 2026-11-22
+
+No publicada: el workflow de la release falló en la prueba de la versión portable. Sus cambios se publican con la 1.1.1. / Not published: the release workflow failed in the test of the portable version. Its changes are published with 1.1.1.
 
 ### Español
 
@@ -86,6 +106,7 @@ First published version.
 - The window **opens as it was closed** (size, position, maximized or full screen). **Full screen** with F11 or a button.
 - **Installer** for Windows 10 and 11, per user and with no administrator rights, and a **portable version** in a `.zip` that keeps its data next to the `.exe`.
 
-[Unreleased]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Avelinares5803/KeepToMyShelf/releases/tag/v1.0.0

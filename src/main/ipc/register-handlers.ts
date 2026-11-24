@@ -155,6 +155,15 @@ export function registerIpcHandlers({
       ipcInputSchemas.deleteUnusedCatalogEntries,
       ({ token, catalog }) => catalogs.deleteUnused(token, catalog),
     ),
+    previewCatalogCopy: createHandler(
+      ipcInputSchemas.previewCatalogCopy,
+      ({ token, sourceProfileId }) => catalogs.previewCopy(token, sourceProfileId),
+    ),
+    copyCatalogs: createHandler(
+      ipcInputSchemas.copyCatalogs,
+      ({ token, sourceProfileId, catalogs: chosen }) =>
+        catalogs.copyFrom(token, sourceProfileId, chosen),
+    ),
     pickImages: createAsyncHandler(
       ipcInputSchemas.pickImages,
       async ({ token, filterName, multiple }) => {

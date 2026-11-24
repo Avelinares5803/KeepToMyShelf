@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-24, con la v1.2-B (fusionar valores duplicados, apartado 3.12).
+**Última actualización:** 2026-11-24, con la v1.2-C (copiar catálogos de otro perfil, apartado 3.12).
 
 ---
 
@@ -48,7 +48,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F11 Copias de seguridad      | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)    |
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                    |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                    |
-| v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | 🚧 En curso (v1.2-A y v1.2-B hechas) |
+| v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | 🚧 En curso (v1.2-A a v1.2-C hechas) |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -526,11 +526,17 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **Sugerencias:** un bloque plegado, «Posibles duplicados (N)», sobre la lista, solo si hay alguno. Mira el catálogo entero, sin el tipo ni la búsqueda. Entre los nombres que coinciden se propone conservar el más usado; si el nombre es alias de otro valor, el que tiene el alias.
     - El valor fusionado se desmarca de los filtros recordados, como al eliminarlo. La fecha de modificación de los elementos no cambia.
 - **Cambio de nombre** (`fix/composer-label`, 2026-11-24): «Música» pasa a llamarse **«Compositores»** («Composers» en inglés) en los tres tipos, porque el campo guarda personas y «Música» era ambiguo. Solo cambia el texto visible. La misma rama añade al `CHANGELOG.md` las entradas de la v1.2-A y la v1.2-B, que faltaban.
-- **v1.2-C: copiar catálogos de otro perfil.** Acordado el 2026-11-23:
+- **v1.2-C: copiar catálogos de otro perfil.** ✅ Hecha (`feat/copy-catalogs`). Ver el [ADR 0004](adr/0004-catalogs.md#copiar-de-otro-perfil-v12-c). Acordado el 2026-11-23:
   - Se elige el **perfil de origen** y **qué catálogos** copiar (cualquiera de los nueve). Se copian los valores con sus alias y su ámbito, **sin relaciones con elementos**.
   - **Los valores que ya existen con el mismo nombre exacto se omiten.** Al terminar, un resumen: «N copiados, M ya existían».
-  - **La interfaz no toca la base de datos de otro perfil:** pide la copia por IPC, y el proceso principal abre el `library.db` de origen en solo lectura, como hace la copia de seguridad antes de borrar un perfil.
-  - Quedan para el chat de la entrega: dónde está la acción (pantalla «Catálogos» o Ajustes), qué pasa con un perfil de origen con un esquema más antiguo (no abierto desde una actualización), y si un alias que choca con un valor existente se omite o se propone fusionar.
+  - **La interfaz no toca la base de datos de otro perfil:** pide la copia por IPC, y el proceso principal abre el `library.db` de origen en solo lectura. (La copia de seguridad antes de borrar un perfil, que se citaba aquí como ejemplo, lo abre en lectura y escritura.)
+  - Completado el 2026-11-24, sin migración:
+    - **«Copiar de otro perfil…»** está en la cabecera de «Catálogos», solo si hay otro perfil.
+    - **Un origen con un esquema anterior se rechaza**: hay que abrir ese perfil una vez.
+    - **Un nombre que coincide con un alias, o que solo cambia en mayúsculas o tildes, se copia**, y aparece en «Posibles duplicados».
+    - **Un valor con el mismo nombre exacto no cambia**, aunque el del origen tenga otros alias o ámbito.
+    - **Ningún catálogo empieza marcado.** Cada uno indica cuántos valores son nuevos y cuántos ya existen; los que no tienen nada nuevo están desactivados.
+    - **Todo o nada**, sin otra confirmación, porque solo añade valores.
 - **v1.2-D: versión 1.2.0** (`chore/release-1.2.0`), como la v1.1-F, según [RELEASING.es.md](RELEASING.es.md).
 
 ---

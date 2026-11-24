@@ -1,6 +1,6 @@
 # ADR 0004: Catálogos y relaciones
 
-- **Estado:** aceptada e implementada (F5-A a F5-E; fusión de valores en la v1.2-B)
+- **Estado:** aceptada e implementada (F5-A a F5-E; fusión de valores en la v1.2-B y copia entre perfiles en la v1.2-C)
 - **Fecha:** 2026-10-26 (países de origen añadidos el 2026-10-30)
 
 ## Contexto
@@ -83,8 +83,19 @@ Los **países de origen** tienen su propio catálogo, separado de las regiones: 
 
 Las sugerencias (`findDuplicates`, en `core/catalogs/merge.ts`) se calculan en la interfaz con la lista ya cargada y solo abren la confirmación: nunca se fusiona nada solo. Las listas iniciales no producen ninguna.
 
+### Copiar de otro perfil (v1.2-C)
+
+`catalogs:preview-copy` cuenta los valores de cada catálogo de otro perfil que son nuevos y los que ya existen, y `catalogs:copy` copia los catálogos elegidos al perfil abierto, sin migración:
+
+- **El origen solo se lee.** El proceso principal abre su `library.db` con `readonly` (`readLibraryCatalogs`) y la cierra enseguida. La interfaz envía el UUID del perfil, nunca rutas. SQLite puede dejar `library.db-wal` y `library.db-shm` junto a la base, que desaparecen la próxima vez que el perfil se abre y se cierra.
+- **El esquema debe ser el actual.** Si es anterior, se pide abrir ese perfil una vez (`catalog.copy_source_outdated`); si es posterior, actualizar la app. Migrar el origen escribiría en otro perfil.
+- **Se copian** el nombre, los alias y el ámbito, sin relaciones con elementos. Un valor cuyo nombre exacto ya existe se omite y el existente no cambia.
+- **Los nombres parecidos se copian** (mayúsculas, tildes o un alias de otro valor): las sugerencias de duplicados los muestran después.
+- **Todo o nada:** una sola transacción, que recalcula qué es nuevo sin fiarse de la vista previa.
+
+Entre perfiles de distinto idioma, las listas iniciales se duplican traducidas («Rol» y «RPG»), y las sugerencias no siempre lo detectan. Por eso ningún catálogo empieza marcado.
+
 ## Consecuencias
 
-- Una única implementación para los ocho catálogos.
+- Una única implementación para los nueve catálogos.
 - La coherencia entre papel y catálogo (por ejemplo, que `developer` apunte a una empresa) se comprueba en el código, no con claves foráneas.
-- Copiar catálogos entre perfiles sería una mejora futura opcional.

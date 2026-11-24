@@ -231,6 +231,12 @@ export const ipcInputSchemas = {
     targetId: catalogEntryIdSchema,
   }),
   deleteUnusedCatalogEntries: z.object({ token: sessionTokenSchema, catalog: catalogSchema }),
+  previewCatalogCopy: z.object({ token: sessionTokenSchema, sourceProfileId: profileIdSchema }),
+  copyCatalogs: z.object({
+    token: sessionTokenSchema,
+    sourceProfileId: profileIdSchema,
+    catalogs: z.array(catalogSchema).min(1).max(CATALOGS.length).readonly(),
+  }),
   // The dialog's file-type filter is named in the UI language, which only the UI knows.
   // `multiple` is false for the cover, which is a single image.
   pickImages: z.object({

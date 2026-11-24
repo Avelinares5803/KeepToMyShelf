@@ -8,7 +8,7 @@
 import type { z } from 'zod';
 import type { ImportedBackground } from './backgrounds';
 import type { BackupProgress, BackupSaved, RestorePreview } from './backups';
-import type { CatalogEntrySummary } from './catalogs';
+import type { CatalogCopyPreview, CatalogCopyResult, CatalogEntrySummary } from './catalogs';
 import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
 import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemFilterValues, ItemSummary } from './items';
@@ -48,6 +48,8 @@ export const IpcChannels = {
   deleteCatalogEntry: 'catalogs:delete',
   mergeCatalogEntries: 'catalogs:merge',
   deleteUnusedCatalogEntries: 'catalogs:delete-unused',
+  previewCatalogCopy: 'catalogs:preview-copy',
+  copyCatalogs: 'catalogs:copy',
   pickImages: 'media:pick-images',
   pickDocuments: 'media:pick-documents',
   prepareDroppedFiles: 'media:prepare-dropped',
@@ -182,6 +184,10 @@ export interface KeepToMyShelfApi {
     merge(input: IpcInput<'mergeCatalogEntries'>): Promise<IpcResult<CatalogEntrySummary>>;
     /** Resolves to the number of values deleted. */
     deleteUnused(input: IpcInput<'deleteUnusedCatalogEntries'>): Promise<IpcResult<number>>;
+    /** What copying each catalog of another profile would add. */
+    previewCopy(input: IpcInput<'previewCatalogCopy'>): Promise<IpcResult<CatalogCopyPreview[]>>;
+    /** Adds the values of some catalogs of another profile that do not exist yet. */
+    copy(input: IpcInput<'copyCatalogs'>): Promise<IpcResult<CatalogCopyResult>>;
   };
   media: {
     /**

@@ -9,7 +9,7 @@ A desktop app to organize your collection of **video games, movies and TV series
 - **Profiles:** each person gets their own library, catalogs, collections and preferences.
 - **Three libraries** (video games, movies and TV series) shown as a shelf of covers, at the size you choose.
 - **Detailed records:** alternate titles, cover, image gallery, PDF documents (manuals, guides…), description, release dates by region, platforms, genres, series, companies, people and their roles (director, cast…), rating with half stars, status, start and end dates, hours played, seasons and episodes, format (physical or digital), favorite, tags and notes.
-- **Editable catalogs** of platforms, genres, companies, people, tags… They start with lists in your language and never leave broken references.
+- **Editable catalogs** of platforms, genres, companies, people, tags… They start with lists in your language and never leave broken references. Duplicate values can be merged, and catalogs copied from another profile.
 - **Search and filters:** search by title (ignoring case and accents), simple filters, advanced AND/OR filters, and sorting.
 - **Collections** that mix games, movies and series.
 - **Images handled for you:** optimized copies (WebP), optionally keeping the original, thumbnails and no duplicates.

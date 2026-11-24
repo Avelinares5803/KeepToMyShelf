@@ -62,6 +62,8 @@ const api: KeepToMyShelfApi = {
     delete: invoke(IpcChannels.deleteCatalogEntry),
     merge: invoke(IpcChannels.mergeCatalogEntries),
     deleteUnused: invoke(IpcChannels.deleteUnusedCatalogEntries),
+    previewCopy: invoke(IpcChannels.previewCatalogCopy),
+    copy: invoke(IpcChannels.copyCatalogs),
   },
   media: {
     pickImages: invoke(IpcChannels.pickImages),

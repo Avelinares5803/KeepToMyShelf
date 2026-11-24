@@ -72,7 +72,7 @@ La lista de canales es `IpcChannels`, en [`shared/ipc.ts`](../src/shared/ipc.ts)
 ## Perfiles y sesiones
 
 - **`app.db`** guarda los perfiles, las preferencias (un valor global y el propio de cada perfil) y la galería común de fondos.
-- **Cada perfil tiene su propia `library.db`**, además de su carpeta `media`. Los perfiles no comparten nada más.
+- **Cada perfil tiene su propia `library.db`**, además de su carpeta `media`. Los perfiles no comparten nada más. La única lectura entre perfiles es copiar catálogos: el proceso principal abre la otra `library.db` en solo lectura.
 - **Solo hay un perfil abierto a la vez.** Al abrirlo se obtiene un **token de sesión**, y cada llamada sobre datos de la biblioteca debe enviarlo. Un token de una sesión anterior se rechaza (`session.stale`), así que una llamada tardía nunca puede escribir en otro perfil durante un cambio.
 - La primera vez que se abre un perfil recibe los **catálogos iniciales** (plataformas, géneros, países…) en su idioma. Una marca en `library_meta` indica que cada lista ya se cargó.
 

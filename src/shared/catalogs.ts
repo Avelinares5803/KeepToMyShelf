@@ -15,3 +15,17 @@ export interface CatalogEntrySummary {
     readonly series: number;
   };
 }
+
+/** What copying one catalog from another profile would do. */
+export interface CatalogCopyPreview {
+  readonly catalog: Catalog;
+  /** Values that would be added. */
+  readonly added: number;
+  /** Values that already exist with exactly the same name. */
+  readonly existing: number;
+}
+
+export interface CatalogCopyResult {
+  readonly copied: number;
+  readonly existing: number;
+}

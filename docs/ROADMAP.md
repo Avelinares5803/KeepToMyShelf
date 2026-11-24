@@ -221,7 +221,7 @@ El detalle técnico del motor está en el [ADR 0006](adr/0006-search-and-filters
 - **SQL:** parametrizado, con `EXISTS` para las relaciones de muchos a muchos. Así, «Género = RPG AND Género = Acción» significa que el elemento tiene ambos.
 - **Kysely** se adopta en esta fase, solo para generar el SQL dinámico; lo ejecuta better-sqlite3.
 - **Filtros disponibles:**
-  - Todos los tipos: Estado, Rejugado/Revisionada, Formato, Valoración (≥, ≤ y «sin valorar»), Favorito, Sagas, Géneros, Países de origen, Etiquetas y Música.
+  - Todos los tipos: Estado, Rejugado/Revisionada, Formato, Valoración (≥, ≤ y «sin valorar»), Favorito, Sagas, Géneros, Países de origen, Etiquetas y Compositores.
   - Videojuegos: Mis plataformas, Plataformas de lanzamiento, Distribuidoras y Desarrolladoras.
   - Películas y series: Productoras, Dirección y Reparto.
   - Desde la v1.1-B (apartado 3.11): año de lanzamiento (o de estreno), horas jugadas (videojuegos) y temporadas (series), con un tipo de campo nuevo, `number`.
@@ -525,6 +525,7 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **«Intercambiar»**, en la confirmación, elige conservar el otro valor. La confirmación avisa de que no se puede deshacer.
     - **Sugerencias:** un bloque plegado, «Posibles duplicados (N)», sobre la lista, solo si hay alguno. Mira el catálogo entero, sin el tipo ni la búsqueda. Entre los nombres que coinciden se propone conservar el más usado; si el nombre es alias de otro valor, el que tiene el alias.
     - El valor fusionado se desmarca de los filtros recordados, como al eliminarlo. La fecha de modificación de los elementos no cambia.
+- **Cambio de nombre** (`fix/composer-label`, 2026-11-24): «Música» pasa a llamarse **«Compositores»** («Composers» en inglés) en los tres tipos, porque el campo guarda personas y «Música» era ambiguo. Solo cambia el texto visible. La misma rama añade al `CHANGELOG.md` las entradas de la v1.2-A y la v1.2-B, que faltaban.
 - **v1.2-C: copiar catálogos de otro perfil.** Acordado el 2026-11-23:
   - Se elige el **perfil de origen** y **qué catálogos** copiar (cualquiera de los nueve). Se copian los valores con sus alias y su ámbito, **sin relaciones con elementos**.
   - **Los valores que ya existen con el mismo nombre exacto se omiten.** Al terminar, un resumen: «N copiados, M ya existían».

@@ -6,6 +6,28 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 
 ## [Unreleased]
 
+### Español
+
+#### Añadido
+
+- **Fusionar valores duplicados** de un catálogo, con «Fusionar con…»: los elementos, las fechas de lanzamiento y los otros nombres de un valor pasan al que se conserva. Los catálogos sugieren los posibles duplicados, y nunca se fusiona nada sin confirmarlo.
+
+#### Cambiado
+
+- El **formulario del elemento muestra todos los errores a la vez**, cada uno junto a su campo, y va al primero al guardar.
+- El campo «Música» pasa a llamarse **«Compositores»**.
+
+### English
+
+#### Added
+
+- **Merge duplicate values** of a catalog, with "Merge with…": the items, release dates and other names of a value pass to the one that is kept. The catalogs suggest possible duplicates, and nothing is ever merged without confirmation.
+
+#### Changed
+
+- The **item form shows every error at once**, each next to its field, and goes to the first one when saving.
+- The "Music" field is now called **"Composers"**.
+
 ## [1.1.1] - 2026-11-23
 
 ### Español

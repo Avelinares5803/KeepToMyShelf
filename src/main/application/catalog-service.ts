@@ -1,14 +1,25 @@
 import {
+  CATALOGS,
   normalizeAliases,
   normalizeCatalogName,
   type Catalog,
   type GenreScope,
 } from '../../core/catalogs/catalogs';
+import { splitCopy, type CopySplit } from '../../core/catalogs/copy';
 import { mergeAliases, mergeScope } from '../../core/catalogs/merge';
 import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import { normalizeForSearch } from '../../core/text/normalize';
-import type { CatalogEntrySummary } from '../../shared/catalogs';
+import type {
+  CatalogCopyPreview,
+  CatalogCopyResult,
+  CatalogEntrySummary,
+} from '../../shared/catalogs';
 import type { SqliteDatabase } from '../infrastructure/db/connection';
+import {
+  readLibraryCatalogs,
+  type LibraryCatalogEntry,
+} from '../infrastructure/db/library-catalogs-reader';
+import type { DataPaths } from '../infrastructure/paths';
 import type { SessionManager } from './session-manager';
 
 interface EntryRow {
@@ -56,9 +67,15 @@ const toSummary = (row: EntryRow, aliases: string[]): CatalogEntrySummary => ({
   usage: { total: row.total, game: row.game, movie: row.movie, series: row.series },
 });
 
+export interface CatalogServiceDeps {
+  readonly appDb: SqliteDatabase;
+  readonly paths: DataPaths;
+  readonly sessions: SessionManager;
+}
+
 /** The reusable values (catalogs) of the open profile. */
 export class CatalogService {
-  constructor(private readonly deps: { readonly sessions: SessionManager }) {}
+  constructor(private readonly deps: CatalogServiceDeps) {}
 
   /** Values of one catalog, ordered by name ignoring case and accents, numbers by value. */
   list(token: string, catalog: Catalog): CatalogEntrySummary[] {
@@ -92,14 +109,9 @@ export class CatalogService {
     assertScopeAllowed(catalog, input.scope);
     this.assertNameFree(db, catalog, name, null);
 
-    const id = db.transaction(() => {
-      const result = db
-        .prepare('INSERT INTO catalog_entry (catalog, name, name_key, scope) VALUES (?, ?, ?, ?)')
-        .run(catalog, name, normalizeForSearch(name), input.scope);
-      const newId = Number(result.lastInsertRowid);
-      writeAliases(db, newId, aliases);
-      return newId;
-    })();
+    const id = db.transaction(() =>
+      insertEntry(db, { catalog, name, aliases, scope: input.scope }),
+    )();
     return this.read(db, id);
   }
 
@@ -197,6 +209,51 @@ export class CatalogService {
       .run(catalog).changes;
   }
 
+  /** How many values of each catalog of another profile are new here, and how many exist. */
+  previewCopy(token: string, sourceProfileId: string): CatalogCopyPreview[] {
+    const db = this.db(token);
+    const source = this.readOtherProfile(token, sourceProfileId);
+    return CATALOGS.map((catalog) => {
+      const { added, existing } = splitCatalog(db, source, catalog);
+      return { catalog, added: added.length, existing };
+    });
+  }
+
+  /**
+   * Adds the values of some catalogs of another profile, with their other names and scope but
+   * without links to items. Values that already exist with exactly the same name are left as
+   * they are. All or nothing; the other profile is only read.
+   */
+  copyFrom(
+    token: string,
+    sourceProfileId: string,
+    catalogs: readonly Catalog[],
+  ): CatalogCopyResult {
+    const db = this.db(token);
+    const source = this.readOtherProfile(token, sourceProfileId);
+    return db.transaction(() => {
+      let copied = 0;
+      let existing = 0;
+      for (const catalog of new Set(catalogs)) {
+        const split = splitCatalog(db, source, catalog);
+        for (const entry of split.added) insertEntry(db, entry);
+        copied += split.added.length;
+        existing += split.existing;
+      }
+      return { copied, existing };
+    })();
+  }
+
+  private readOtherProfile(token: string, profileId: string): LibraryCatalogEntry[] {
+    if (this.deps.sessions.require(token).profileId === profileId) {
+      throw new ValidationError('catalog.copy_same_profile', 'The source is the open profile');
+    }
+    if (!this.deps.appDb.prepare('SELECT 1 FROM profile WHERE id = ?').get(profileId)) {
+      throw new NotFoundError('profile.not_found', `Profile ${profileId} does not exist`);
+    }
+    return readLibraryCatalogs(this.deps.paths.libraryDatabase(profileId));
+  }
+
   private db(token: string): SqliteDatabase {
     return this.deps.sessions.require(token).db;
   }
@@ -235,6 +292,32 @@ function assertScopeAllowed(catalog: Catalog, scope: GenreScope | null): void {
   if (scope !== null && catalog !== 'screen_genre') {
     throw new ValidationError('catalog.scope_not_allowed', 'Only movie/series genres have a scope');
   }
+}
+
+/** The values of one catalog of another library, against those of the open one. */
+function splitCatalog(
+  db: SqliteDatabase,
+  source: readonly LibraryCatalogEntry[],
+  catalog: Catalog,
+): CopySplit<LibraryCatalogEntry> {
+  const names = db
+    .prepare('SELECT name FROM catalog_entry WHERE catalog = ?')
+    .pluck()
+    .all(catalog) as string[];
+  return splitCopy(
+    source.filter((entry) => entry.catalog === catalog),
+    new Set(names),
+  );
+}
+
+/** Adds a value with its other names; returns its id. */
+function insertEntry(db: SqliteDatabase, entry: LibraryCatalogEntry): number {
+  const result = db
+    .prepare('INSERT INTO catalog_entry (catalog, name, name_key, scope) VALUES (?, ?, ?, ?)')
+    .run(entry.catalog, entry.name, normalizeForSearch(entry.name), entry.scope);
+  const id = Number(result.lastInsertRowid);
+  writeAliases(db, id, entry.aliases);
+  return id;
 }
 
 /** Replaces the other names of a value. */

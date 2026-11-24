@@ -72,7 +72,7 @@ The channel list is `IpcChannels` in [`shared/ipc.ts`](../src/shared/ipc.ts), an
 ## Profiles and sessions
 
 - **`app.db`** holds the profiles, the preferences (a global value and each profile's own) and the common background gallery.
-- **Each profile has its own `library.db`**, plus its `media` folder. Profiles share nothing else.
+- **Each profile has its own `library.db`**, plus its `media` folder. Profiles share nothing else. The only read across profiles is copying catalogs: the main process opens the other `library.db` read-only.
 - **Only one profile is open at a time.** Opening it returns a **session token**, and every call about library data must send it. A token from a previous session is rejected (`session.stale`), so a late call can never write into another profile while switching.
 - The first time a profile opens, it receives the **default catalogs** (platforms, genres, countries…) in its language. A flag in `library_meta` marks each list as loaded.
 

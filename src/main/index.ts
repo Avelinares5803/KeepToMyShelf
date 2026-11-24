@@ -113,7 +113,7 @@ function startApp(): void {
   // Backups a restore interrupted by the last run left half extracted.
   restores.removeLeftovers();
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
-  const catalogs = new CatalogService({ sessions });
+  const catalogs = new CatalogService({ appDb, paths, sessions });
   const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
   const backgrounds = new BackgroundService({
     appDb,

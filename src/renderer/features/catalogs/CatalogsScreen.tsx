@@ -17,6 +17,7 @@ import {
   visibleEntries,
   type KindFilter,
 } from './catalog-view';
+import { CopyCatalogsDialog } from './CopyCatalogsDialog';
 import { DuplicateSuggestions } from './DuplicateSuggestions';
 import { MergeEntryDialog } from './MergeEntryDialog';
 
@@ -31,16 +32,19 @@ type PendingAction =
       readonly target: CatalogEntrySummary | null;
     }
   | { readonly kind: 'deleteUnused'; readonly count: number }
+  | { readonly kind: 'copy' }
   | null;
 
 interface CatalogsScreenProps {
   token: string;
+  /** The open profile. */
+  profileId: string | null;
   /** The library the screen was opened from, or null when opened from the mode selection. */
   initialKind: ItemKind | null;
 }
 
 /** Lists and manages the reusable values (catalogs) of the open profile. */
-export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
+export function CatalogsScreen({ token, profileId, initialKind }: CatalogsScreenProps) {
   const { t } = useTranslation();
   const id = useId();
   const [catalog, setCatalog] = useState<Catalog>(() => initialCatalog(initialKind));
@@ -48,6 +52,8 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
   const [query, setQuery] = useState('');
   const [pending, setPending] = useState<PendingAction>(null);
   const entries = useLoad(() => window.api.catalogs.list({ token, catalog }), [token, catalog]);
+  const profiles = useLoad(() => window.api.profiles.list(), []);
+  const otherProfiles = (profiles.data ?? []).filter((profile) => profile.id !== profileId);
 
   const filtered = KIND_FILTERED_CATALOGS.includes(catalog);
   // Unused values are only listed (and can only be deleted) when all values are shown.
@@ -69,6 +75,15 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
     <section className="catalogs">
       <header className="library__header">
         <h1>{t('catalogs.title')}</h1>
+        {otherProfiles.length > 0 && (
+          <button
+            type="button"
+            className="button button--ghost"
+            onClick={() => setPending({ kind: 'copy' })}
+          >
+            {t('catalogs.copy.open')}
+          </button>
+        )}
       </header>
 
       <div className="catalogs__layout">
@@ -149,6 +164,11 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
             )}
           </div>
 
+          {profiles.error !== null && (
+            <p className="banner banner--error" role="alert">
+              {errorMessage(t, profiles.error)}
+            </p>
+          )}
           {entries.error !== null && (
             <p className="banner banner--error" role="alert">
               {errorMessage(t, entries.error)}
@@ -231,6 +251,14 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
           catalog={catalog}
           entry={pending.kind === 'edit' ? pending.entry : null}
           onSaved={closeAndReload}
+          onClose={close}
+        />
+      )}
+      {pending?.kind === 'copy' && (
+        <CopyCatalogsDialog
+          token={token}
+          profiles={otherProfiles}
+          onCopied={entries.reload}
           onClose={close}
         />
       )}

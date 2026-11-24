@@ -1797,6 +1797,22 @@ h1 {
   overflow-wrap: anywhere;
 }
 
+.copy-catalogs {
+  max-width: 36rem;
+}
+
+.copy-catalogs > p {
+  margin: 0;
+}
+
+.copy-catalogs__list {
+  gap: 0;
+}
+
+.copy-catalogs__option:has(input:disabled) {
+  color: var(--color-muted);
+}
+
 .catalogs__toolbar {
   display: flex;
   flex-wrap: wrap;

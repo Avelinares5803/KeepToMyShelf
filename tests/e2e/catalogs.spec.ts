@@ -232,3 +232,65 @@ test('suggests probable duplicates, and merges them only after asking', async ()
   await expect(rows().first()).toContainText('Hipó');
   await expect(rows().first()).toContainText('3 elementos');
 });
+
+test('copies catalogs from another profile', async () => {
+  seedItems(dataDir, [
+    { title: 'A', entries: [developer('HIPO', ['Hipopótamo'])] },
+    { title: 'B', entries: [developer('Nintendo')] },
+    { title: 'C', entries: [{ role: 'tag', catalog: 'tag', name: 'Romhack' }] },
+  ]);
+  // With only one profile there is nothing to copy from.
+  await openCompanies();
+  await expect(rows()).toHaveCount(2);
+  await expect(button('Copiar de otro perfil…')).toBeHidden();
+
+  await button('Perfiles').click();
+  await button('Nuevo perfil').click();
+  await dialog().getByLabel('Nombre').fill('Bea');
+  await dialog().getByRole('button', { name: 'Crear perfil' }).click();
+  await button('Abrir el perfil de Bea').click();
+  await openCompanies();
+  for (const name of ['Hipo', 'Nintendo']) {
+    await button('Añadir').click();
+    await nameField().fill(name);
+    await dialog().getByRole('button', { name: 'Guardar' }).click();
+    await expect(dialog()).toBeHidden();
+  }
+
+  // Nothing is marked at first, and catalogs with nothing new cannot be.
+  await button('Copiar de otro perfil…').click();
+  const source = dialog().getByLabel('Perfil de origen', { exact: true });
+  await expect(source.getByRole('option')).toHaveText(['Ana']);
+  const option = (name: string) => dialog().getByRole('checkbox', { name, exact: true });
+  const companies = option('Empresas 1 nuevo · 1 ya existe');
+  const confirm = dialog().getByRole('button', { name: 'Copiar', exact: true });
+  await expect(companies).not.toBeChecked();
+  await expect(confirm).toBeDisabled();
+  await expect(option('Personas sin valores')).toBeDisabled();
+  await expect(
+    dialog().getByRole('checkbox', { name: /^Plataformas ninguno nuevo/ }),
+  ).toBeDisabled();
+  await expect(option('Etiquetas 1 nuevo · ninguno existe ya')).toBeEnabled();
+
+  // Cancelling copies nothing.
+  await companies.check();
+  await dialog().getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(rows()).toHaveCount(2);
+
+  await button('Copiar de otro perfil…').click();
+  await companies.check();
+  await confirm.click();
+  await expect(dialog().getByRole('status')).toHaveText('1 valor copiado, 1 ya existía.');
+  await expect(dialog().getByRole('button', { name: 'Cerrar', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(dialog()).toBeHidden();
+
+  // The copied value has its other names and no items; it looks like one that was here.
+  await expect(rows()).toHaveCount(3);
+  const copied = rows().filter({ hasText: /HIPO/ });
+  await expect(copied).toContainText('También: Hipopótamo');
+  await expect(copied).toContainText('Sin usar');
+  await expect(page.getByText('Posibles duplicados (1)', { exact: true })).toBeVisible();
+  await catalogList().getByRole('button', { name: 'Etiquetas' }).click();
+  await expect(page.getByRole('heading', { name: 'Etiquetas (0)' })).toBeVisible();
+});

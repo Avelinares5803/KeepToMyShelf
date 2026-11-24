@@ -363,7 +363,13 @@ export function App({ initialSettings }: AppProps) {
       case 'trash':
         return <TrashScreen token={token} initialKind={screen.kind} />;
       case 'catalogs':
-        return <CatalogsScreen token={token} initialKind={screen.kind} />;
+        return (
+          <CatalogsScreen
+            token={token}
+            profileId={session?.profile.id ?? null}
+            initialKind={screen.kind}
+          />
+        );
       case 'collections':
         return (
           <CollectionsScreen

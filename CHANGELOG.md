@@ -11,6 +11,7 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 #### Añadido
 
 - **Fusionar valores duplicados** de un catálogo, con «Fusionar con…»: los elementos, las fechas de lanzamiento y los otros nombres de un valor pasan al que se conserva. Los catálogos sugieren los posibles duplicados, y nunca se fusiona nada sin confirmarlo.
+- **Copiar catálogos de otro perfil**, desde «Catálogos»: se eligen el perfil y los catálogos, y se añaden los valores que faltan, con sus otros nombres. Los que ya existen no cambian, y el otro perfil tampoco.
 
 #### Cambiado
 
@@ -22,6 +23,7 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 #### Added
 
 - **Merge duplicate values** of a catalog, with "Merge with…": the items, release dates and other names of a value pass to the one that is kept. The catalogs suggest possible duplicates, and nothing is ever merged without confirmation.
+- **Copy catalogs from another profile**, in "Catalogs": choose the profile and the catalogs, and the missing values are added, with their other names. Those that already exist do not change, and neither does the other profile.
 
 #### Changed
 

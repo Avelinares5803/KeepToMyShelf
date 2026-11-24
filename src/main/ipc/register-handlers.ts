@@ -147,6 +147,10 @@ export function registerIpcHandlers({
     deleteCatalogEntry: createHandler(ipcInputSchemas.deleteCatalogEntry, ({ token, id }) =>
       catalogs.delete(token, id),
     ),
+    mergeCatalogEntries: createHandler(
+      ipcInputSchemas.mergeCatalogEntries,
+      ({ token, sourceId, targetId }) => catalogs.merge(token, sourceId, targetId),
+    ),
     deleteUnusedCatalogEntries: createHandler(
       ipcInputSchemas.deleteUnusedCatalogEntries,
       ({ token, catalog }) => catalogs.deleteUnused(token, catalog),

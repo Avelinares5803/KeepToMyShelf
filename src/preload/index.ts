@@ -60,6 +60,7 @@ const api: KeepToMyShelfApi = {
     create: invoke(IpcChannels.createCatalogEntry),
     update: invoke(IpcChannels.updateCatalogEntry),
     delete: invoke(IpcChannels.deleteCatalogEntry),
+    merge: invoke(IpcChannels.mergeCatalogEntries),
     deleteUnused: invoke(IpcChannels.deleteUnusedCatalogEntries),
   },
   media: {

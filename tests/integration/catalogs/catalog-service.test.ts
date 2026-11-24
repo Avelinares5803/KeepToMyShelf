@@ -287,6 +287,199 @@ describe('CatalogService', () => {
     });
   });
 
+  describe('merge', () => {
+    const addWith = (catalog: Catalog, name: string, aliases: string[]) =>
+      fx.catalogs.create(token, catalog, { name, aliases, scope: null });
+    const links = (itemId: number) =>
+      db()
+        .prepare(
+          `SELECT ie.role, e.name, ie.sort_order AS position FROM item_entry ie
+           JOIN catalog_entry e ON e.id = ie.entry_id
+           WHERE ie.item_id = ? ORDER BY ie.role, ie.sort_order`,
+        )
+        .all(itemId);
+    const linkAt = (itemId: number, entryId: number, role: string, position: number) =>
+      db()
+        .prepare('INSERT INTO item_entry (item_id, entry_id, role, sort_order) VALUES (?, ?, ?, ?)')
+        .run(itemId, entryId, role, position);
+    const release = (itemId: number, regionId: number, date: string) =>
+      db()
+        .prepare('INSERT INTO item_release (item_id, region_id, date) VALUES (?, ?, ?)')
+        .run(itemId, regionId, date);
+
+    it('moves the items of every role and kind, also in the trash, and deletes the value', () => {
+      const kept = add('company', 'Square Enix');
+      const merged = add('company', 'SquareEnix');
+      const game = createItem('game', 'Nier');
+      const movie = createItem('movie', 'Advent Children');
+      const trashed = createItem('game', 'Bravely Default');
+      link(game, merged.id, 'developer');
+      link(game, merged.id, 'publisher');
+      link(movie, merged.id, 'producer');
+      link(trashed, merged.id, 'developer');
+      fx.items.moveToTrash(token, trashed);
+
+      const result = fx.catalogs.merge(token, merged.id, kept.id);
+
+      expect(result).toMatchObject({
+        id: kept.id,
+        name: 'Square Enix',
+        usage: { total: 3, game: 2, movie: 1, series: 0 },
+      });
+      expect(names('company')).toEqual(['Square Enix']);
+      expect(links(game)).toEqual([
+        { role: 'developer', name: 'Square Enix', position: 0 },
+        { role: 'publisher', name: 'Square Enix', position: 0 },
+      ]);
+      expect(links(trashed)).toHaveLength(1);
+      expect(db().pragma('foreign_key_check')).toEqual([]);
+    });
+
+    it('links an item with both values in a role once, in the position of the kept one', () => {
+      const kept = add('person', 'Ana de Armas');
+      const merged = add('person', 'Ana De Armas');
+      const other = add('person', 'Ryan Gosling');
+      const both = createItem('movie', 'Blade Runner 2049');
+      linkAt(both, merged.id, 'actor', 0);
+      linkAt(both, other.id, 'actor', 1);
+      linkAt(both, kept.id, 'actor', 2);
+      linkAt(both, merged.id, 'director', 0);
+
+      fx.catalogs.merge(token, merged.id, kept.id);
+
+      expect(links(both)).toEqual([
+        { role: 'actor', name: 'Ryan Gosling', position: 1 },
+        { role: 'actor', name: 'Ana de Armas', position: 2 },
+        { role: 'director', name: 'Ana de Armas', position: 0 },
+      ]);
+    });
+
+    it('keeps the position in the cast of the merged value', () => {
+      const kept = add('person', 'Ana de Armas');
+      const merged = add('person', 'Ana De Armas');
+      const other = add('person', 'Ryan Gosling');
+      const movie = createItem('movie', 'Blade Runner 2049');
+      linkAt(movie, merged.id, 'actor', 0);
+      linkAt(movie, other.id, 'actor', 1);
+
+      fx.catalogs.merge(token, merged.id, kept.id);
+
+      expect(fx.items.get(token, movie).relations.actor?.map((e) => e.name)).toEqual([
+        'Ana de Armas',
+        'Ryan Gosling',
+      ]);
+    });
+
+    it('moves release dates, keeping once the ones that become identical', () => {
+      const kept = add('region', 'Corea');
+      const merged = add('region', 'COREA');
+      const game = createItem('game', 'Tetris');
+      const otherGame = createItem('game', 'Columns');
+      release(game, kept.id, '1996');
+      release(game, merged.id, '1996');
+      release(game, merged.id, '2001-05');
+      release(otherGame, merged.id, '1996');
+
+      fx.catalogs.merge(token, merged.id, kept.id);
+
+      expect(
+        db().prepare('SELECT item_id, region_id, date FROM item_release ORDER BY id').all(),
+      ).toEqual([
+        { item_id: game, region_id: kept.id, date: '1996' },
+        { item_id: game, region_id: kept.id, date: '2001-05' },
+        { item_id: otherGame, region_id: kept.id, date: '1996' },
+      ]);
+    });
+
+    it('turns the merged name and its other names into other names of the kept value', () => {
+      const kept = addWith('company', 'Square Enix', ['SE']);
+      const merged = addWith('company', 'SquareEnix', ['Square', 'se']);
+
+      expect(fx.catalogs.merge(token, merged.id, kept.id).aliases).toEqual([
+        'SE',
+        'SquareEnix',
+        'Square',
+      ]);
+      expect(
+        db()
+          .prepare('SELECT name_key FROM catalog_entry_alias WHERE entry_id = ? ORDER BY id')
+          .pluck()
+          .all(kept.id),
+      ).toEqual(['se', 'squareenix', 'square']);
+    });
+
+    it('makes a genre available for both kinds when the scopes differ', () => {
+      const genre = (name: string, scope: 'movie' | 'series' | null) =>
+        fx.catalogs.create(token, 'screen_genre', { name, aliases: [], scope }).id;
+
+      const onlyMovies = genre('Corto', 'movie');
+      expect(fx.catalogs.merge(token, genre('Cortos', 'series'), onlyMovies).scope).toBe(null);
+      const alsoMovies = genre('Largo', 'movie');
+      expect(fx.catalogs.merge(token, genre('Largos', 'movie'), alsoMovies).scope).toBe('movie');
+    });
+
+    it('changes nothing when the other names do not fit', () => {
+      const many = Array.from({ length: 50 }, (_, i) => `Alias ${i}`);
+      const kept = addWith('tag', 'Difícil', many);
+      const merged = add('tag', 'Complicado');
+      const game = createItem('game', 'Dark Souls');
+      link(game, merged.id, 'tag');
+
+      expectCode(
+        () => fx.catalogs.merge(token, merged.id, kept.id),
+        ValidationError,
+        'catalog.merge_too_many_aliases',
+      );
+      expect(names('tag')).toEqual(['Complicado', 'Difícil']);
+      expect(links(game)).toEqual([{ role: 'tag', name: 'Complicado', position: 0 }]);
+    });
+
+    it('undoes everything when a step fails', () => {
+      const kept = add('tag', 'Difícil');
+      const merged = add('tag', 'Complicado');
+      const game = createItem('game', 'Dark Souls');
+      link(game, merged.id, 'tag');
+      // The last step, deleting the merged value, fails after the links have moved.
+      db().exec(
+        "CREATE TEMP TRIGGER no_delete BEFORE DELETE ON catalog_entry BEGIN SELECT RAISE(ABORT, 'no'); END;",
+      );
+
+      expect(() => fx.catalogs.merge(token, merged.id, kept.id)).toThrow('no');
+      expect(links(game)).toEqual([{ role: 'tag', name: 'Complicado', position: 0 }]);
+      expect(fx.catalogs.list(token, 'tag').find((e) => e.id === kept.id)?.aliases).toEqual([]);
+    });
+
+    it('rejects the same value, values of other catalogs and values that do not exist', () => {
+      const tag = add('tag', 'Nintendo');
+      const company = add('company', 'Nintendo');
+
+      expectCode(
+        () => fx.catalogs.merge(token, tag.id, tag.id),
+        ValidationError,
+        'catalog.merge_same_value',
+      );
+      expectCode(
+        () => fx.catalogs.merge(token, tag.id, company.id),
+        ValidationError,
+        'catalog.merge_other_catalog',
+      );
+      expectCode(() => fx.catalogs.merge(token, tag.id, 9999), NotFoundError, 'catalog.not_found');
+      expectCode(() => fx.catalogs.merge(token, 9999, tag.id), NotFoundError, 'catalog.not_found');
+    });
+
+    it('leaves the modification date of the items as it was', () => {
+      const kept = add('tag', 'Difícil');
+      const merged = add('tag', 'Complicado');
+      const game = createItem('game', 'Dark Souls');
+      link(game, merged.id, 'tag');
+      const before = fx.items.get(token, game).updatedAt;
+
+      fx.catalogs.merge(token, merged.id, kept.id);
+
+      expect(fx.items.get(token, game).updatedAt).toBe(before);
+    });
+  });
+
   describe('other names (aliases)', () => {
     it('come with the default regional platform names', () => {
       const find = (name: string) =>

@@ -1,6 +1,7 @@
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Catalog } from '../../../core/catalogs/catalogs';
+import { findDuplicates } from '../../../core/catalogs/merge';
 import type { CatalogEntrySummary } from '../../../shared/catalogs';
 import { ITEM_KINDS, type ItemKind } from '../../../shared/content';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -16,11 +17,19 @@ import {
   visibleEntries,
   type KindFilter,
 } from './catalog-view';
+import { DuplicateSuggestions } from './DuplicateSuggestions';
+import { MergeEntryDialog } from './MergeEntryDialog';
 
 type PendingAction =
   | { readonly kind: 'add' }
   | { readonly kind: 'edit'; readonly entry: CatalogEntrySummary }
   | { readonly kind: 'delete'; readonly entry: CatalogEntrySummary }
+  | {
+      readonly kind: 'merge';
+      readonly source: CatalogEntrySummary;
+      /** Null until it is chosen; a suggestion already has it. */
+      readonly target: CatalogEntrySummary | null;
+    }
   | { readonly kind: 'deleteUnused'; readonly count: number }
   | null;
 
@@ -46,6 +55,8 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
   const all = entries.data ?? [];
   const visible = visibleEntries(all, catalog, kindShown, query);
   const unused = all.filter((entry) => entry.usage.total === 0).length;
+  // The whole catalog, whatever the search and the kind shown.
+  const duplicates = useMemo(() => findDuplicates(entries.data ?? []), [entries.data]);
   const catalogName = t(`catalogs.names.${catalog}`);
 
   const close = () => setPending(null);
@@ -143,6 +154,13 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
               {errorMessage(t, entries.error)}
             </p>
           )}
+          {duplicates.length > 0 && (
+            <DuplicateSuggestions
+              key={catalog}
+              suggestions={duplicates}
+              onReview={({ source, target }) => setPending({ kind: 'merge', source, target })}
+            />
+          )}
           {entries.data && visible.length === 0 && (
             <p className="muted">
               {query.trim() !== ''
@@ -181,6 +199,16 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
                     >
                       {t('catalogs.edit')}
                     </button>
+                    {all.length > 1 && (
+                      <button
+                        type="button"
+                        className="link-button"
+                        aria-label={t('catalogs.merge.openValue', { name: entry.name })}
+                        onClick={() => setPending({ kind: 'merge', source: entry, target: null })}
+                      >
+                        {t('catalogs.merge.open')}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="link-button link-button--danger"
@@ -203,6 +231,16 @@ export function CatalogsScreen({ token, initialKind }: CatalogsScreenProps) {
           catalog={catalog}
           entry={pending.kind === 'edit' ? pending.entry : null}
           onSaved={closeAndReload}
+          onClose={close}
+        />
+      )}
+      {pending?.kind === 'merge' && (
+        <MergeEntryDialog
+          token={token}
+          entries={all}
+          initialSource={pending.source}
+          initialTarget={pending.target}
+          onMerged={closeAndReload}
           onClose={close}
         />
       )}

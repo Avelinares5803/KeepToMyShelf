@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeAliases, normalizeCatalogName } from '../../../core/catalogs/catalogs';
+import { findDuplicates } from '../../../core/catalogs/merge';
 import { normalizeForSearch } from '../../../core/text/normalize';
 import { DEFAULT_CATALOGS, DEFAULT_PLATFORM_ALIASES } from './default-catalogs';
 
@@ -35,6 +36,27 @@ describe('default catalogs', () => {
       }
       for (const name of Object.keys(lists.country_aliases)) {
         expect(lists.country).toContain(name);
+      }
+    }
+  });
+
+  it('suggest no probable duplicates, in any language', () => {
+    for (const lists of Object.values(DEFAULT_CATALOGS)) {
+      const catalogs: [readonly string[], Readonly<Record<string, readonly string[]>>][] = [
+        [lists.platform, DEFAULT_PLATFORM_ALIASES],
+        [lists.game_genre, lists.game_genre_aliases],
+        [lists.screen_genre.map((e) => e.name), lists.screen_genre_aliases],
+        [lists.region, {}],
+        [lists.country, lists.country_aliases],
+      ];
+      for (const [names, aliases] of catalogs) {
+        const entries = names.map((name, id) => ({
+          id,
+          name,
+          aliases: aliases[name] ?? [],
+          usage: { total: 0 },
+        }));
+        expect(findDuplicates(entries)).toEqual([]);
       }
     }
   });

@@ -1754,7 +1754,7 @@ h1 {
 }
 
 .catalog-duplicates {
-  margin-top: 1rem;
+  margin-block: 1rem;
   padding: 0.6rem 1rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);

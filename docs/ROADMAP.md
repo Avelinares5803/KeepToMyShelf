@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-23, con la v1.2-A (errores por campo, apartado 3.12).
+**Última actualización:** 2026-11-24, con la v1.2-B (fusionar valores duplicados, apartado 3.12).
 
 ---
 
@@ -32,23 +32,23 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 
 ## 2. Estado de las fases
 
-| Fase                         | Contenido                                                                                                                                        | Estado                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| F0 Fundaciones               | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                            |
-| F1 Núcleo                    | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                            |
-| F2 Perfiles                  | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                            |
-| F3 Estructura de la UI       | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                            |
-| F4 Elementos                 | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                            |
-| F5 Catálogos                 | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)       |
-| F6 Multimedia                | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)   |
-| F7 Búsqueda y filtros        | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)   |
-| F8 Películas y series        | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)     |
-| F9 Colecciones               | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
-| F10 Personalización          | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
-| F11 Copias de seguridad      | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
-| v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
-| v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | 🚧 En curso (v1.2-A hecha)          |
+| Fase                         | Contenido                                                                                                                                        | Estado                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| F0 Fundaciones               | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                             |
+| F1 Núcleo                    | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                             |
+| F2 Perfiles                  | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                             |
+| F3 Estructura de la UI       | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                             |
+| F4 Elementos                 | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                             |
+| F5 Catálogos                 | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)        |
+| F6 Multimedia                | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)    |
+| F7 Búsqueda y filtros        | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)    |
+| F8 Películas y series        | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)      |
+| F9 Colecciones               | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)     |
+| F10 Personalización          | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2)  |
+| F11 Copias de seguridad      | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)    |
+| F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                    |
+| v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                    |
+| v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | 🚧 En curso (v1.2-A y v1.2-B hechas) |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -512,11 +512,19 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
   - **Se marca la parte concreta de una fecha** (día, mes o año). Si el fin es anterior al inicio, se marca el año del fin.
   - **Resumen junto a «Guardar»:** «Revisa los N campos marcados.», que se actualiza al corregir. Los errores que no son de un campo (más de 50 títulos alternativos, un error del proceso principal…) siguen en ese aviso.
   - **Reglas sin duplicar:** en `core/`, `checkItemDraft` reúne los errores del borrador por campo (`title`, `startedOn`, `releases.<n>`…) con un recolector (`FieldErrorCollector`, en `core/field-errors.ts`), y `validateItemDraft` lanza el primero, en el mismo orden de siempre, así que el proceso principal no cambia. El formulario (`checkItemForm`) reúne los errores al leer el texto (año que falta, horas no numéricas…) y traduce los campos del borrador a sus controles; los nombres de los documentos se comprueban con `documentLabelErrors`.
-- **v1.2-B: fusionar valores duplicados** de un catálogo. Acordado el 2026-11-23:
+- **v1.2-B: fusionar valores duplicados** de un catálogo. ✅ Hecha (`feat/merge-catalog-values`). Ver el [ADR 0004](adr/0004-catalogs.md#fusionar-valores-v12-b). Acordado el 2026-11-23:
   - **«Fusionar con…»** en cada valor de la pantalla «Catálogos»: se elige otro valor **del mismo catálogo**, que se conserva. Sus elementos, sus fechas de lanzamiento (si es una región) y sus alias pasan al valor conservado, y **el nombre del valor fusionado se convierte en un alias**, para que se siga encontrando por él.
   - **Confirmación** con los dos nombres y el número de elementos afectados, con el foco en «Cancelar».
   - **Sugerencias de duplicados probables:** valores cuyo nombre coincide sin distinguir mayúsculas ni tildes (`name_key`), o cuyo nombre coincide con un alias de otro valor. **Nunca se fusiona nada solo**: la sugerencia lleva a la misma confirmación.
-  - Quedan para el chat de la entrega: el elemento que tenía los dos valores en el mismo papel (se guarda una vez, en la posición del conservado), el orden del reparto, el ámbito (`scope`) de los géneros que difieren, el tope de 50 alias, y si hace falta migración (en principio no: se mueven filas de tablas que ya existen).
+  - Completado el 2026-11-24, sin migración:
+    - **Un elemento con los dos valores en el mismo papel** lo guarda una vez, en la posición del conservado. Si solo tenía el fusionado, el conservado ocupa su posición.
+    - **Las fechas de lanzamiento que quedan idénticas** (mismo elemento, región y fecha) se guardan una vez; las de fecha distinta se conservan.
+    - **Si el ámbito de dos géneros difiere**, el conservado pasa a «Películas y series», y la confirmación lo avisa.
+    - **Más de 50 alias:** la fusión se rechaza sin cambiar nada.
+    - **No se añaden como alias los nombres que solo se diferencian en mayúsculas o tildes** de uno que ya está, porque la búsqueda ya los encuentra. Matiza lo acordado el 2026-11-23.
+    - **«Intercambiar»**, en la confirmación, elige conservar el otro valor. La confirmación avisa de que no se puede deshacer.
+    - **Sugerencias:** un bloque plegado, «Posibles duplicados (N)», sobre la lista, solo si hay alguno. Mira el catálogo entero, sin el tipo ni la búsqueda. Entre los nombres que coinciden se propone conservar el más usado; si el nombre es alias de otro valor, el que tiene el alias.
+    - El valor fusionado se desmarca de los filtros recordados, como al eliminarlo. La fecha de modificación de los elementos no cambia.
 - **v1.2-C: copiar catálogos de otro perfil.** Acordado el 2026-11-23:
   - Se elige el **perfil de origen** y **qué catálogos** copiar (cualquiera de los nueve). Se copian los valores con sus alias y su ámbito, **sin relaciones con elementos**.
   - **Los valores que ya existen con el mismo nombre exacto se omiten.** Al terminar, un resumen: «N copiados, M ya existían».
@@ -574,6 +582,7 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026
 
 **Sin versión asignada:**
 
+- Descartar una sugerencia de duplicado («Hipo» e «Hipó» son distintos) para que no vuelva a aparecer (anotada en la v1.2-B). Hay que guardarlo en el perfil.
 - Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
 - Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.
 - Elegir los valores de los filtros avanzados con autocompletado (también por alias), en lugar de un desplegable, si las listas se hacen muy largas.

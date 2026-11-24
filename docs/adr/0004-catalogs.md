@@ -1,6 +1,6 @@
 # ADR 0004: Catálogos y relaciones
 
-- **Estado:** aceptada e implementada (F5-A a F5-E)
+- **Estado:** aceptada e implementada (F5-A a F5-E; fusión de valores en la v1.2-B)
 - **Fecha:** 2026-10-26 (países de origen añadidos el 2026-10-30)
 
 ## Contexto
@@ -48,7 +48,7 @@ Los **países de origen** tienen su propio catálogo, separado de las regiones: 
 
 ### Reglas de integridad
 
-- **Renombrar** un valor lo cambia en todos los elementos, porque las relaciones apuntan al identificador. Un nombre que ya existe exactamente en el catálogo se rechaza (`catalog.duplicate_name`). La fusión de duplicados queda como mejora futura, opcional y con sugerencias.
+- **Renombrar** un valor lo cambia en todos los elementos, porque las relaciones apuntan al identificador. Un nombre que ya existe exactamente en el catálogo se rechaza (`catalog.duplicate_name`). Los duplicados se pueden [fusionar](#fusionar-valores-v12-b).
 - **Eliminar** un valor lo quita de sus elementos, sin tocar los elementos. Las fechas de una región eliminada se conservan sin región (`ON DELETE SET NULL`).
 - El número de usos de cada valor incluye los elementos de la papelera.
 - «Eliminar valores sin uso» respeta las regiones usadas por fechas de lanzamiento.
@@ -71,6 +71,17 @@ Los **países de origen** tienen su propio catálogo, separado de las regiones: 
   - Mi seguimiento: estado, valoración, fechas de uso, horas, formato, «Mis plataformas», favorito, notas.
   - Ficha. Videojuegos: «Plataformas de lanzamiento», géneros, distribuidoras, desarrolladoras, música, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, música, fechas de estreno.
   - Etiquetas.
+
+### Fusionar valores (v1.2-B)
+
+`catalogs:merge` fusiona un valor (`sourceId`) en otro del mismo catálogo (`targetId`), que se conserva. El servicio lo hace en una sola transacción y sin migración:
+
+- **Relaciones:** `UPDATE OR IGNORE item_entry` las pasa al conservado. Si el elemento ya tenía el conservado en ese papel, la clave primaria impide moverla: se queda la del conservado, con su posición, y la otra se borra en cascada con el valor fusionado.
+- **Fechas de lanzamiento:** pasan a la región conservada. Hay que moverlas antes de borrar, porque `ON DELETE SET NULL` las dejaría sin región. Las que quedarían idénticas se guardan una vez.
+- **Alias:** el nombre del fusionado y sus alias se añaden al conservado, salvo los que solo se diferencian en mayúsculas o tildes de uno que ya está. Si no caben en el tope de 50, se rechaza todo (`catalog.merge_too_many_aliases`), en lugar de perder nombres en silencio.
+- **Ámbito:** si difiere, pasa a `NULL` (ambos), para que ningún elemento quede con un género que no es de su tipo.
+
+Las sugerencias (`findDuplicates`, en `core/catalogs/merge.ts`) se calculan en la interfaz con la lista ya cargada y solo abren la confirmación: nunca se fusiona nada solo. Las listas iniciales no producen ninguna.
 
 ## Consecuencias
 

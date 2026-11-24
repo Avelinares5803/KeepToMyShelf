@@ -65,7 +65,7 @@ export function MergeEntryDialog({
         <p>{t('catalogs.merge.irreversible')}</p>
         <button
           type="button"
-          className="link-button"
+          className="button button--ghost"
           onClick={() => {
             setSource(target);
             setTarget(source);

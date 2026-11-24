@@ -69,7 +69,7 @@ Los **países de origen** tienen su propio catálogo, separado de las regiones: 
 - **Orden del formulario y de la ficha:**
   - Identificación: título, títulos alternativos, descripción, sagas.
   - Mi seguimiento: estado, valoración, fechas de uso, horas, formato, «Mis plataformas», favorito, notas.
-  - Ficha. Videojuegos: «Plataformas de lanzamiento», géneros, distribuidoras, desarrolladoras, música, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, música, fechas de estreno.
+  - Ficha. Videojuegos: «Plataformas de lanzamiento», géneros, distribuidoras, desarrolladoras, compositores, fechas de lanzamiento. Películas y series: (temporadas y capítulos en series), géneros, productoras, dirección, reparto, compositores, fechas de estreno.
   - Etiquetas.
 
 ### Fusionar valores (v1.2-B)

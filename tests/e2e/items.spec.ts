@@ -386,6 +386,32 @@ test('keeps the cast in the chosen order', async () => {
   await expect(detailRow('Países de origen')).toContainText('Estados Unidos');
 });
 
+test('calls the composers by the same name in every kind and language', async () => {
+  for (const mode of ['Videojuegos', 'Películas', 'Series']) {
+    await button(mode).click();
+    await button('Añadir').click();
+    await page.getByLabel('Título', { exact: true }).fill('Con compositor');
+    await field('Compositores').fill('Nobuo Uematsu');
+    await field('Compositores').press('ArrowDown');
+    await field('Compositores').press('Enter');
+    await button('Guardar').click();
+    await expect(heading('Con compositor')).toBeVisible();
+    await expect(detailRow('Compositores')).toContainText('Nobuo Uematsu');
+
+    await button('English').click();
+    await expect(detailRow('Composers')).toContainText('Nobuo Uematsu');
+    await button('Español').click();
+
+    await button('Volver').click();
+    await page.getByRole('button', { name: /^Filtros/ }).click();
+    await expect(page.getByText('Compositores', { exact: true })).toBeVisible();
+    await page
+      .getByRole('navigation', { name: 'Ruta de navegación' })
+      .getByRole('button', { name: 'Ana' })
+      .click();
+  }
+});
+
 test('shows untitled items in the current language', async () => {
   await button('Series').click();
   await button('Añadir').click();

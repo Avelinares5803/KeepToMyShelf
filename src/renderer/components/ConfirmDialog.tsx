@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../lib/ipc';
 import { Dialog } from './Dialog';
@@ -28,6 +28,10 @@ export function ConfirmDialog({
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  // Opening the dialog focuses its first control, which may be one of the children.
+  useEffect(() => cancelRef.current?.focus(), []);
 
   async function confirm() {
     setBusy(true);
@@ -50,7 +54,7 @@ export function ConfirmDialog({
           </p>
         )}
         <div className="form__actions">
-          <button type="button" className="button button--ghost" autoFocus onClick={onClose}>
+          <button ref={cancelRef} type="button" className="button button--ghost" onClick={onClose}>
             {t('common.cancel')}
           </button>
           <button

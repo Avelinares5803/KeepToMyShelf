@@ -4,6 +4,7 @@ import {
   type Catalog,
   type GenreScope,
 } from '../../core/catalogs/catalogs';
+import { mergeAliases, mergeScope } from '../../core/catalogs/merge';
 import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
 import { normalizeForSearch } from '../../core/text/normalize';
 import type { CatalogEntrySummary } from '../../shared/catalogs';
@@ -131,6 +132,57 @@ export class CatalogService {
     const db = this.db(token);
     this.read(db, id);
     db.prepare('DELETE FROM catalog_entry WHERE id = ?').run(id);
+  }
+
+  /**
+   * Merges `sourceId` into `targetId`, of the same catalog: its items, release dates and names
+   * pass to the kept value, and it disappears. All or nothing.
+   */
+  merge(token: string, sourceId: number, targetId: number): CatalogEntrySummary {
+    const db = this.db(token);
+    if (sourceId === targetId) {
+      throw new ValidationError('catalog.merge_same_value', 'Cannot merge a value with itself');
+    }
+    db.transaction(() => {
+      const source = this.read(db, sourceId);
+      const target = this.read(db, targetId);
+      if (source.catalog !== target.catalog) {
+        throw new ValidationError(
+          'catalog.merge_other_catalog',
+          `Value ${sourceId} is in ${source.catalog} and ${targetId} in ${target.catalog}`,
+        );
+      }
+      const aliases = mergeAliases(target, source);
+
+      // An item with both values in a role keeps the link, and the position, of the target:
+      // the link that cannot move is deleted with the source.
+      db.prepare('UPDATE OR IGNORE item_entry SET entry_id = ? WHERE entry_id = ?').run(
+        targetId,
+        sourceId,
+      );
+      // Two releases that would become identical are kept once.
+      db.prepare(
+        `DELETE FROM item_release
+         WHERE region_id = ? AND EXISTS (
+           SELECT 1 FROM item_release kept
+           WHERE kept.item_id = item_release.item_id
+             AND kept.date = item_release.date
+             AND kept.region_id = ?
+         )`,
+      ).run(sourceId, targetId);
+      db.prepare('UPDATE item_release SET region_id = ? WHERE region_id = ?').run(
+        targetId,
+        sourceId,
+      );
+
+      db.prepare('UPDATE catalog_entry SET scope = ? WHERE id = ?').run(
+        mergeScope(target.scope, source.scope),
+        targetId,
+      );
+      writeAliases(db, targetId, aliases);
+      db.prepare('DELETE FROM catalog_entry WHERE id = ?').run(sourceId);
+    })();
+    return this.read(db, targetId);
   }
 
   /** Deletes the values of a catalog that no item uses; returns how many were deleted. */

@@ -417,6 +417,28 @@
       "used_one": "“{{name}}” will be removed from 1 item. The item is not deleted.",
       "used_other": "“{{name}}” will be removed from {{count}} items. The items are not deleted."
     },
+    "merge": {
+      "open": "Merge with…",
+      "openValue": "Merge “{{name}}” with…",
+      "pickTitle": "Merge “{{name}}” with…",
+      "pickHint": "Choose the value to keep.",
+      "confirmTitle": "Merge values",
+      "confirm": "Merge",
+      "swap": "Swap",
+      "effect_zero": "“{{target}}” will be kept and “{{source}}”, which no item uses, will disappear.",
+      "effect_one": "“{{target}}” will be kept and “{{source}}” will disappear. The item that uses it will use “{{target}}”.",
+      "effect_other": "“{{target}}” will be kept and “{{source}}” will disappear. The {{count}} items that use it will use “{{target}}”.",
+      "aliases": "“{{target}}” will also have these other names: {{names}}.",
+      "scope": "“{{target}}” will be available for movies and series.",
+      "irreversible": "This cannot be undone."
+    },
+    "duplicates": {
+      "title": "Possible duplicates ({{count}})",
+      "byName": "“{{source}}” and “{{target}}” only differ in case or accents.",
+      "byAlias": "“{{source}}” is also another name of “{{target}}”.",
+      "review": "Review",
+      "reviewPair": "Review “{{source}}” and “{{target}}”"
+    },
     "deleteUnused": "Delete unused values",
     "deleteUnusedConfirm_one": "1 value from “{{catalog}}” that no item uses will be deleted.",
     "deleteUnusedConfirm_other": "{{count}} values from “{{catalog}}” that no item uses will be deleted."
@@ -638,6 +660,9 @@
       "name_too_long": "The name cannot be longer than 200 characters.",
       "duplicate_name": "A value with exactly that name already exists.",
       "not_found": "That value no longer exists.",
+      "merge_same_value": "A value cannot be merged with itself.",
+      "merge_other_catalog": "Only values of the same catalog can be merged.",
+      "merge_too_many_aliases": "They cannot be merged: the value would have more than 50 other names. Remove some first.",
       "scope_not_allowed": "Only movie and series genres can be limited to one kind.",
       "too_many_aliases": "You cannot add more than 50 other names."
     },

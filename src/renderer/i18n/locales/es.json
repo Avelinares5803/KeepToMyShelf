@@ -417,6 +417,28 @@
       "used_one": "«{{name}}» se quitará de 1 elemento. El elemento no se elimina.",
       "used_other": "«{{name}}» se quitará de {{count}} elementos. Los elementos no se eliminan."
     },
+    "merge": {
+      "open": "Fusionar con…",
+      "openValue": "Fusionar «{{name}}» con…",
+      "pickTitle": "Fusionar «{{name}}» con…",
+      "pickHint": "Elige el valor que se conserva.",
+      "confirmTitle": "Fusionar valores",
+      "confirm": "Fusionar",
+      "swap": "Intercambiar",
+      "effect_zero": "Se conservará «{{target}}» y desaparecerá «{{source}}», que no usa ningún elemento.",
+      "effect_one": "Se conservará «{{target}}» y desaparecerá «{{source}}». El elemento que lo usa pasará a «{{target}}».",
+      "effect_other": "Se conservará «{{target}}» y desaparecerá «{{source}}». Los {{count}} elementos que lo usan pasarán a «{{target}}».",
+      "aliases": "«{{target}}» tendrá también estos otros nombres: {{names}}.",
+      "scope": "«{{target}}» pasará a estar disponible para películas y series.",
+      "irreversible": "Esta acción no se puede deshacer."
+    },
+    "duplicates": {
+      "title": "Posibles duplicados ({{count}})",
+      "byName": "«{{source}}» y «{{target}}» solo se diferencian en mayúsculas o tildes.",
+      "byAlias": "«{{source}}» es también otro nombre de «{{target}}».",
+      "review": "Revisar",
+      "reviewPair": "Revisar «{{source}}» y «{{target}}»"
+    },
     "deleteUnused": "Eliminar valores sin uso",
     "deleteUnusedConfirm_one": "Se eliminará 1 valor de «{{catalog}}» que no usa ningún elemento.",
     "deleteUnusedConfirm_other": "Se eliminarán {{count}} valores de «{{catalog}}» que no usa ningún elemento."
@@ -638,6 +660,9 @@
       "name_too_long": "El nombre no puede tener más de 200 caracteres.",
       "duplicate_name": "Ya existe un valor con ese nombre exacto.",
       "not_found": "Ese valor ya no existe.",
+      "merge_same_value": "Un valor no se puede fusionar consigo mismo.",
+      "merge_other_catalog": "Solo se pueden fusionar valores del mismo catálogo.",
+      "merge_too_many_aliases": "No se pueden fusionar: el valor tendría más de 50 nombres alternativos. Quita alguno antes.",
       "scope_not_allowed": "Solo los géneros de películas y series pueden limitarse a un tipo.",
       "too_many_aliases": "No se pueden añadir más de 50 nombres alternativos."
     },

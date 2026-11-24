@@ -46,6 +46,7 @@ export const IpcChannels = {
   createCatalogEntry: 'catalogs:create',
   updateCatalogEntry: 'catalogs:update',
   deleteCatalogEntry: 'catalogs:delete',
+  mergeCatalogEntries: 'catalogs:merge',
   deleteUnusedCatalogEntries: 'catalogs:delete-unused',
   pickImages: 'media:pick-images',
   pickDocuments: 'media:pick-documents',
@@ -177,6 +178,8 @@ export interface KeepToMyShelfApi {
     create(input: IpcInput<'createCatalogEntry'>): Promise<IpcResult<CatalogEntrySummary>>;
     update(input: IpcInput<'updateCatalogEntry'>): Promise<IpcResult<CatalogEntrySummary>>;
     delete(input: IpcInput<'deleteCatalogEntry'>): Promise<IpcResult<void>>;
+    /** Merges one value into another of the same catalog; resolves to the kept one. */
+    merge(input: IpcInput<'mergeCatalogEntries'>): Promise<IpcResult<CatalogEntrySummary>>;
     /** Resolves to the number of values deleted. */
     deleteUnused(input: IpcInput<'deleteUnusedCatalogEntries'>): Promise<IpcResult<number>>;
   };

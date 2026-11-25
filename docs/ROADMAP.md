@@ -551,8 +551,8 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 - **v1.3-A: copias programadas.** Acordado el 2026-11-25:
   - En Ajustes, cada perfil elige nunca, diaria, semanal o mensual.
   - **Las hace la propia app al abrir el perfil**, en segundo plano, si ha pasado el plazo desde la última. No se usa el Programador de tareas de Windows ni se deja la app en segundo plano al cerrarla.
-  - **Cupo aparte:** se conservan las 5 últimas de cada perfil, en una carpeta con el identificador del perfil, porque su nombre puede cambiar. No cuentan para las 10 automáticas, que siguen como en el [ADR 0009](adr/0009-backups.md).
-  - Por decidir en su chat: la opción por defecto, dónde se guarda la fecha de la última copia (no debe entrar en las preferencias del manifiesto), qué pasa si coincide con otra copia o restauración o si se cierra la app a mitad, y qué hacer con ellas al eliminar el perfil. También, si el espacio que ocupan (cada copia incluye las imágenes y los PDF) pide un número ajustable o no copiar cuando no hay cambios.
+  - **Cupo aparte:** se conservan las 10 últimas de cada perfil (número fijo), en una carpeta con el identificador del perfil, porque su nombre puede cambiar. No cuentan para las 10 automáticas, que siguen como en el [ADR 0009](adr/0009-backups.md).
+  - Por decidir en su chat: la opción por defecto, dónde se guarda la fecha de la última copia (no debe entrar en las preferencias del manifiesto), qué pasa si coincide con otra copia o restauración o si se cierra la app a mitad, y qué hacer con ellas al eliminar el perfil. También, si se omite la copia cuando no hay cambios, por el espacio que ocupan (cada una incluye las imágenes y los PDF).
 - **v1.3-B: exportar.** Acordado el 2026-11-25:
   - **JSON completo y versionado** (elementos, catálogos y colecciones) y **CSV por tipo**, para hojas de cálculo.
   - **Sin imágenes ni PDF:** para eso está la copia de seguridad `.zip`. La interfaz lo avisa.

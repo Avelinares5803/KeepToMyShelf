@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-24, con la v1.2-D (versión 1.2.0, apartado 3.12).
+**Última actualización:** 2026-11-25, con el plan de la v1.3 (apartado 3.13).
 
 ---
 
@@ -49,6 +49,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | ✅ Hecha (v1.2.0)                   |
+| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | Planificada (apartado 3.13)         |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -537,7 +538,33 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **Un valor con el mismo nombre exacto no cambia**, aunque el del origen tenga otros alias o ámbito.
     - **Ningún catálogo empieza marcado.** Cada uno indica cuántos valores son nuevos y cuántos ya existen; los que no tienen nada nuevo están desactivados.
     - **Todo o nada**, sin otra confirmación, porque solo añade valores.
-- **v1.2-D: versión 1.2.0** (`chore/release-1.2.0`). ✅ Hecha, como la v1.1-F: `npm version 1.2.0 --no-git-tag-version`, la versión 1.2.0 en el `CHANGELOG.md` con fecha 2026-11-24 y enlaces de comparación, y la v1.2 marcada como hecha. Antes del merge se pasó la prueba de humo en local con los archivos 1.2.0. Después del merge: la etiqueta `v1.2.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md).
+- **v1.2-D: versión 1.2.0** (`chore/release-1.2.0`). ✅ Hecha, como la v1.1-F: `npm version 1.2.0 --no-git-tag-version`, la versión 1.2.0 en el `CHANGELOG.md` con fecha 2026-11-24 y enlaces de comparación, y la v1.2 marcada como hecha. Antes del merge se pasó la prueba de humo en local con los archivos 1.2.0. Después del merge: la etiqueta `v1.2.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md). **La v1.2.0 se publicó el 2026-11-25.**
+
+### 3.13 Versión 1.3: tus datos (planificada el 2026-11-25)
+
+**Objetivo:** proteger, sacar, traer y resumir los datos de la biblioteca. Se siguen las mismas reglas que en la v1.2: sin dependencias nuevas, y las migraciones (si alguna hiciera falta) solo hacia delante y con su prueba. Cada entrega tiene su rama y su PR, y se trabaja un chat por entrega. Antes de implementar cada una, se acuerda su detalle y se anota aquí.
+
+**Orden:** las copias programadas van primero, para tener más protección antes de las importaciones. Exportar va antes que importar, para poder probar el ciclo completo.
+
+**Entregas, en este orden:**
+
+- **v1.3-A: copias programadas.** Acordado el 2026-11-25:
+  - En Ajustes, cada perfil elige nunca, diaria, semanal o mensual.
+  - **Las hace la propia app al abrir el perfil**, en segundo plano, si ha pasado el plazo desde la última. No se usa el Programador de tareas de Windows ni se deja la app en segundo plano al cerrarla.
+  - **Cupo aparte:** se conservan las 10 últimas de cada perfil (número fijo), en una carpeta con el identificador del perfil, porque su nombre puede cambiar. No cuentan para las 10 automáticas, que siguen como en el [ADR 0009](adr/0009-backups.md).
+  - Por decidir en su chat: la opción por defecto, dónde se guarda la fecha de la última copia (no debe entrar en las preferencias del manifiesto), qué pasa si coincide con otra copia o restauración o si se cierra la app a mitad, y qué hacer con ellas al eliminar el perfil. También, si se omite la copia cuando no hay cambios, por el espacio que ocupan (cada una incluye las imágenes y los PDF).
+- **v1.3-B: exportar.** Acordado el 2026-11-25:
+  - **JSON completo y versionado** (elementos, catálogos y colecciones) y **CSV por tipo**, para hojas de cálculo.
+  - **Sin imágenes ni PDF:** para eso está la copia de seguridad `.zip`. La interfaz lo avisa.
+  - Por decidir: si se incluye la papelera, y el separador y la codificación del CSV, y cómo evitar que una hoja de cálculo interprete un texto como fórmula.
+- **v1.3-C: importar JSON.** Acordado el 2026-11-25:
+  - Resumen previo, confirmación, copia automática e importación en una sola transacción.
+  - **Un elemento con un UUID que ya existe, también en la papelera, se omite.** Nunca se sobrescribe nada.
+- **v1.3-D: importar CSV.** Acordado el 2026-11-25:
+  - **Plantilla de columnas fija**, con vista previa y errores por fila. Asignar las columnas de cualquier CSV queda en las mejoras anotadas.
+  - **Si coinciden el título y el tipo con un elemento existente, se avisa** y se elige si omitirlo, que es lo marcado por defecto.
+- **v1.3-E: estadísticas.** Acordado el 2026-11-25: una pantalla del perfil con totales, estados, valoraciones, horas, terminados por año, géneros y plataformas. Cifras y barras propias en HTML y CSS, sin librería de gráficos. No cuenta la papelera.
+- **v1.3-F: versión 1.3.0**, como la v1.2-D.
 
 ---
 
@@ -564,12 +591,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 
 ## 6. Mejoras anotadas (fuera del alcance actual)
 
-Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026-11-23, al planificar la v1.2. Lo que entra en la v1.1 está en el apartado 3.11, y lo de la v1.2 (fusionar duplicados, copiar catálogos de otro perfil y errores por campo), en el 3.12. **El reparto de la v1.3 en adelante es provisional** y se revisará al terminar la v1.2.
-
-**v1.3: tus datos (provisional):**
-
-- Exportar e importar bibliotecas (JSON/CSV) y copias programadas.
-- Estadísticas personales.
+Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026-11-23, al planificar la v1.2, y el 2026-11-25, al planificar la v1.3. Lo que entra en la v1.1 está en el apartado 3.11; lo de la v1.2 (fusionar duplicados, copiar catálogos de otro perfil y errores por campo), en el 3.12; y lo de la v1.3 (copias programadas, exportar, importar y estadísticas), en el 3.13.
 
 **Calidad, cuando encaje** (cambia los workflows, así que necesita permiso):
 
@@ -589,6 +611,7 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026
 
 **Sin versión asignada:**
 
+- Importar cualquier CSV, asignando sus columnas a los campos de la app (anotada al planificar la v1.3).
 - Descartar una sugerencia de duplicado («Hipo» e «Hipó» son distintos) para que no vuelva a aparecer (anotada en la v1.2-B). Hay que guardarlo en el perfil.
 - Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
 - Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.

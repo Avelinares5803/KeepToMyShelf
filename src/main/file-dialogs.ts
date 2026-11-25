@@ -23,13 +23,30 @@ export function chooseDocumentFiles(filterName: string): Promise<string[] | null
  * chosen path, or null if the user cancelled. Windows adds ".zip" from the filter when the user
  * leaves it out, and asks before replacing an existing file.
  */
-export async function chooseBackupDestination(
+export function chooseBackupDestination(
   filterName: string,
+  defaultPath: string,
+): Promise<string | null> {
+  return chooseDestination(filterName, 'zip', defaultPath);
+}
+
+/** Like `chooseBackupDestination`, for an export of the library. */
+export function chooseExportDestination(
+  filterName: string,
+  format: 'json' | 'csv',
+  defaultPath: string,
+): Promise<string | null> {
+  return chooseDestination(filterName, format, defaultPath);
+}
+
+async function chooseDestination(
+  filterName: string,
+  extension: string,
   defaultPath: string,
 ): Promise<string | null> {
   const options: Electron.SaveDialogOptions = {
     defaultPath,
-    filters: [{ name: filterName, extensions: ['zip'] }],
+    filters: [{ name: filterName, extensions: [extension] }],
     properties: ['showOverwriteConfirmation'],
   };
   const window = BrowserWindow.getFocusedWindow();

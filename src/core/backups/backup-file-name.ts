@@ -6,13 +6,13 @@ export type AutomaticBackupReason = 'before-delete' | 'before-restore';
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /** "2026-11-13 18-30-05", in local time, as the user reads it; never with ":". */
-function localStamp(date: Date, withSeconds: boolean): string {
+export function localStamp(date: Date, withSeconds: boolean): string {
   const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const time = `${pad(date.getHours())}-${pad(date.getMinutes())}`;
   return `${day} ${time}${withSeconds ? `-${pad(date.getSeconds())}` : ''}`;
 }
 
-function safeProfileName(profileName: string): string {
+export function safeProfileName(profileName: string): string {
   return replaceForbiddenFileNameCharacters(profileName).trim() || 'profile';
 }
 

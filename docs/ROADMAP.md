@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-25, con la v1.3-A (apartado 3.13).
+**Última actualización:** 2026-11-25, con la v1.3-B (apartado 3.13).
 
 ---
 
@@ -49,7 +49,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | ✅ Hecha (v1.2.0)                   |
-| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A hecha)             |
+| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A y v1.3-B hechas)   |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -559,10 +559,17 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **La acción del usuario manda:** copiar, restaurar o eliminar un perfil cancela la copia programada en curso, que se reintenta al volver a abrir el perfil. Cambiar de perfil no la cancela; cerrar la app la abandona.
     - **Eliminar un perfil elimina sus copias programadas**, y la confirmación lo dice. Si su biblioteca ya no existía, se conservan.
     - **Si falla, un aviso que se puede cerrar.** Si va bien, no se dice nada; Ajustes muestra la fecha de la última y abre su carpeta.
-- **v1.3-B: exportar.** Acordado el 2026-11-25:
+- **v1.3-B: exportar.** ✅ Hecha (`feat/export-library`). Ver el [ADR 0012](adr/0012-export.md). Acordado el 2026-11-25:
   - **JSON completo y versionado** (elementos, catálogos y colecciones) y **CSV por tipo**, para hojas de cálculo.
   - **Sin imágenes ni PDF:** para eso está la copia de seguridad `.zip`. La interfaz lo avisa.
-  - Por decidir: si se incluye la papelera, y el separador y la codificación del CSV, y cómo evitar que una hoja de cálculo interprete un texto como fórmula.
+  - Completado el 2026-11-25, sin migración:
+    - **En Ajustes, la sección «Exportar»**, con un perfil abierto: qué exportar, el separador (solo con CSV) y «Exportar…».
+    - **La papelera va en el JSON**, marcada, y la interfaz lo avisa. **En el CSV no.**
+    - **CSV en UTF-8 con BOM**, con el separador a elegir: por defecto, `;` en español y `,` en inglés.
+    - **Contra las fórmulas**, se antepone `'` a las celdas que podrían serlo, de forma que la v1.3-D pueda deshacerlo.
+    - **Cabeceras y valores del CSV en el idioma del perfil.** La v1.3-D aceptará los dos idiomas, los dos separadores y los dos decimales.
+    - **Varios valores en una celda:** `|`. La valoración, en estrellas, con el decimal que corresponde al separador. Los elementos sin título, con la celda vacía.
+    - **El JSON no lleva ids internos:** UUID para elementos y colecciones, y nombres para los valores de catálogo.
 - **v1.3-C: importar JSON.** Acordado el 2026-11-25:
   - Resumen previo, confirmación, copia automática e importación en una sola transacción.
   - **Un elemento con un UUID que ya existe, también en la papelera, se omite.** Nunca se sobrescribe nada.

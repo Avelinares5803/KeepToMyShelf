@@ -7,6 +7,7 @@ import type { BackgroundService } from '../application/background-service';
 import type { BackupService } from '../application/backup-service';
 import type { CatalogService } from '../application/catalog-service';
 import type { CollectionService } from '../application/collection-service';
+import type { ExportService } from '../application/export-service';
 import type { ItemService } from '../application/item-service';
 import type { MediaService } from '../application/media-service';
 import type { ProfileService } from '../application/profile-service';
@@ -17,6 +18,7 @@ import {
   chooseBackupDestination,
   chooseBackupToRestore,
   chooseDocumentFiles,
+  chooseExportDestination,
   chooseImageFiles,
 } from '../file-dialogs';
 import { isTrustedSender } from '../security';
@@ -34,6 +36,7 @@ export interface Services {
   readonly backgrounds: BackgroundService;
   readonly backups: BackupService;
   readonly restores: RestoreService;
+  readonly exports: ExportService;
 }
 
 /** Tells the UI that a scheduled backup failed; a message sent without being asked. */
@@ -55,6 +58,7 @@ export function registerIpcHandlers({
   backgrounds,
   backups,
   restores,
+  exports,
 }: Services): void {
   // The app has a single window; webContents is the page it shows, which receives the event.
   const sendBackupProgress = (progress: BackupProgress) => {
@@ -299,6 +303,19 @@ export function registerIpcHandlers({
     restoreBackupOverProfile: createAsyncHandler(
       ipcInputSchemas.restoreBackupOverProfile,
       ({ token, restoreId }) => restores.restoreOver(token, restoreId, sendBackupProgress),
+    ),
+    saveExport: createAsyncHandler(
+      ipcInputSchemas.saveExport,
+      async ({ token, target, filterName }) => {
+        // A stale session is reported before the dialog opens, not after the user chose.
+        const suggested = exports.suggestedFileName(token, target);
+        const destination = await chooseExportDestination(
+          filterName,
+          target.format,
+          join(app.getPath('documents'), suggested),
+        );
+        return destination === null ? null : exports.exportForSession(token, target, destination);
+      },
     ),
   };
 

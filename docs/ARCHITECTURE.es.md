@@ -121,6 +121,10 @@ Detalles: [ADR 0006](adr/0006-search-and-filters.md).
 
 Una copia es un `.zip` con una instantánea de la base de datos del perfil (`VACUUM INTO`), sus archivos de `media`, sus preferencias propias y un manifiesto con el SHA-256 de cada archivo. Las miniaturas se regeneran. Las copias programadas las hace la propia app, en segundo plano, después de abrir un perfil, y ceden el paso a cualquier copia o restauración que pida el usuario. Al restaurar se comprueba todo (rutas contra una lista cerrada, CRC-32 y SHA-256, `integrity_check`, versión del esquema) en una carpeta temporal antes de sustituir nada. Detalles: [ADR 0009](adr/0009-backups.md).
 
+## Exportar
+
+La biblioteca se exporta a un JSON versionado (elementos, catálogos y colecciones, por UUID y por nombre, sin ids internos) o, por tipo, a un CSV para hojas de cálculo. Las columnas del CSV y la protección contra fórmulas están en `core/export/`. Detalles: [ADR 0012](adr/0012-export.md).
+
 ## Datos en disco
 
 ```
@@ -175,3 +179,4 @@ electron-builder genera un instalador NSIS por usuario, y `scripts/package-porta
 | [0009](adr/0009-backups.md)             | Copias de seguridad de los perfiles     |
 | [0010](adr/0010-distribution.md)        | Distribución en Windows                 |
 | [0011](adr/0011-security.md)            | Seguridad de la aplicación              |
+| [0012](adr/0012-export.md)              | Exportar la biblioteca                  |

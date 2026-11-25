@@ -125,6 +125,9 @@ const api: KeepToMyShelfApi = {
       };
     },
   },
+  exports: {
+    save: invoke(IpcChannels.saveExport),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

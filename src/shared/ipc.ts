@@ -16,6 +16,7 @@ import type {
 } from './backups';
 import type { CatalogCopyPreview, CatalogCopyResult, CatalogEntrySummary } from './catalogs';
 import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
+import type { ExportSaved } from './exports';
 import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemFilterValues, ItemSummary } from './items';
 import type { ItemMedia, PickedImports } from './media';
@@ -84,6 +85,7 @@ export const IpcChannels = {
   restoreBackupAsNewProfile: 'backups:restore-as-new',
   previewBackupRestore: 'backups:preview-restore',
   restoreBackupOverProfile: 'backups:restore-over',
+  saveExport: 'exports:save',
 } as const;
 
 /**
@@ -300,5 +302,12 @@ export interface KeepToMyShelfApi {
      * Calls `listener` when a scheduled backup fails. Returns the function that stops listening.
      */
     onScheduledFailure(listener: (failure: ScheduledBackupFailure) => void): () => void;
+  };
+  exports: {
+    /**
+     * Asks where to save an export of the open profile's library and writes it; null if the
+     * dialog was cancelled.
+     */
+    save(input: IpcInput<'saveExport'>): Promise<IpcResult<ExportSaved | null>>;
   };
 }

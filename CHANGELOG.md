@@ -11,12 +11,14 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 #### Añadido
 
 - **Copias programadas:** al abrir un perfil, la app guarda una copia de seguridad en segundo plano si toca y hay cambios desde la última. En Ajustes, cada perfil elige nunca, cada día, cada semana (por defecto) o cada mes. Se conservan las 10 últimas de cada perfil, y se eliminan con él.
+- **Exportar la biblioteca**, desde Ajustes: todos los datos en un archivo JSON (elementos, catálogos y colecciones, con la papelera) o los videojuegos, las películas o las series en un CSV para hojas de cálculo. No incluye imágenes ni documentos.
 
 ### English
 
 #### Added
 
 - **Scheduled backups:** when a profile is opened, the app saves a backup in the background if one is due and something has changed since the last one. In Settings, each profile chooses never, every day, every week (by default) or every month. The last 10 of each profile are kept, and they are deleted with it.
+- **Export the library**, in Settings: all the data in a JSON file (items, catalogs and collections, with the trash), or the video games, movies or series in a CSV file for spreadsheets. Images and documents are not included.
 
 ## [1.2.0] - 2026-11-24
 

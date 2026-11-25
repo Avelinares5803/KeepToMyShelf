@@ -1,9 +1,13 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BACKUP_SCHEDULES, type BackupSchedule } from '../../../core/backups/backup-schedule';
 import type { BackupSaved, RestorePreview } from '../../../shared/backups';
-import type { SessionInfo } from '../../../shared/ipc';
+import type { IpcResult, SessionInfo } from '../../../shared/ipc';
+import type { Language, SettingUpdate } from '../../../shared/settings';
 import { errorMessage, IpcError, unwrap } from '../../lib/ipc';
+import { useLoad } from '../../lib/use-load';
 import { BackupProgressDialog, useBackupProgress } from './BackupProgressDialog';
+import { formatMoment } from './format-moment';
 import { RestoreOverDialog } from './RestoreOverDialog';
 
 /** What the section needs to restore a backup over the open profile. */
@@ -26,6 +30,12 @@ export interface BackupSettingsProps extends RestoreOverOptions {
   token: string;
 }
 
+interface ScheduleProps {
+  schedule: BackupSchedule;
+  onChange: (update: SettingUpdate) => void;
+  onApplyToAll: (update: SettingUpdate) => void;
+}
+
 type Running = 'create' | 'restore' | null;
 
 /** The "Backups" section of the settings dialog; only shown with a profile open. */
@@ -35,9 +45,14 @@ export function BackupSettings({
   beforeRestore,
   onRestored,
   onSessionLost,
-}: BackupSettingsProps) {
-  const { t } = useTranslation();
+  schedule,
+  onChange,
+  onApplyToAll,
+}: BackupSettingsProps & ScheduleProps) {
+  const { t, i18n } = useTranslation();
   const headingId = useId();
+  const scheduleId = useId();
+  const scheduled = useLoad(() => window.api.backups.getScheduled({ token }), [token]);
   const [running, setRunning] = useState<Running>(null);
   const [status, setStatus] = useState<{ text: string; missing: number } | null>(null);
   const [preview, setPreview] = useState<RestorePreview | null>(null);
@@ -105,10 +120,10 @@ export function BackupSettings({
     }
   }
 
-  async function openFolder() {
+  async function openFolder(open: () => Promise<IpcResult<void>>) {
     setError(null);
     try {
-      unwrap(await window.api.backups.openFolder());
+      unwrap(await open());
     } catch (caught) {
       setError(caught);
     }
@@ -154,8 +169,66 @@ export function BackupSettings({
 
       <p className="muted field__hint">{t('backups.automaticHint')}</p>
       <div className="setting-row">
-        <button type="button" className="button button--ghost" onClick={() => void openFolder()}>
+        <button
+          type="button"
+          className="button button--ghost"
+          onClick={() => void openFolder(() => window.api.backups.openFolder())}
+        >
           {t('backups.openFolder')}
+        </button>
+      </div>
+
+      <div className="setting-row">
+        <div className="field">
+          <label htmlFor={scheduleId}>{t('backups.schedule.label')}</label>
+          <select
+            id={scheduleId}
+            aria-describedby={`${scheduleId}-hint`}
+            value={schedule}
+            onChange={(event) =>
+              onChange({ key: 'backupSchedule', value: event.target.value as BackupSchedule })
+            }
+          >
+            {BACKUP_SCHEDULES.map((option) => (
+              <option key={option} value={option}>
+                {t(`backups.schedule.${option}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          className="button button--ghost"
+          aria-label={t('backups.schedule.applyToAll')}
+          onClick={() => onApplyToAll({ key: 'backupSchedule', value: schedule })}
+        >
+          {t('settings.applyToAll')}
+        </button>
+      </div>
+      <p id={`${scheduleId}-hint`} className="muted field__hint setting-row__hint">
+        {t('backups.schedule.hint')}
+      </p>
+      {scheduled.data !== null && (
+        <p className="field__hint">
+          {scheduled.data.lastAt === null
+            ? t('backups.schedule.none')
+            : t('backups.schedule.last', {
+                moment: formatMoment(scheduled.data.lastAt, i18n.language as Language),
+              })}
+        </p>
+      )}
+      {scheduled.error !== null && (
+        <p className="field__error" role="alert">
+          {errorMessage(t, scheduled.error)}
+        </p>
+      )}
+      <div className="setting-row">
+        <button
+          type="button"
+          className="button button--ghost"
+          onClick={() => void openFolder(() => window.api.backups.openScheduledFolder({ token }))}
+        >
+          {t('backups.schedule.openFolder')}
         </button>
       </div>
 

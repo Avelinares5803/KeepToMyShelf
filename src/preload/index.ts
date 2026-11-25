@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
-import type { BackupProgress } from '../shared/backups';
+import type { BackupProgress, ScheduledBackupFailure } from '../shared/backups';
 import { IpcChannels, IpcEvents, type KeepToMyShelfApi } from '../shared/ipc';
 
 // The only bridge between the UI and the main process: each method maps to one IPC channel.
@@ -103,6 +103,8 @@ const api: KeepToMyShelfApi = {
   backups: {
     create: invoke(IpcChannels.createBackup),
     openFolder: invoke(IpcChannels.openBackupsFolder),
+    getScheduled: invoke(IpcChannels.getScheduledBackups),
+    openScheduledFolder: invoke(IpcChannels.openScheduledBackupsFolder),
     restoreAsNew: invoke(IpcChannels.restoreBackupAsNewProfile),
     previewRestore: invoke(IpcChannels.previewBackupRestore),
     restoreOver: invoke(IpcChannels.restoreBackupOverProfile),
@@ -112,6 +114,14 @@ const api: KeepToMyShelfApi = {
       ipcRenderer.on(IpcEvents.backupProgress, forward);
       return () => {
         ipcRenderer.removeListener(IpcEvents.backupProgress, forward);
+      };
+    },
+    onScheduledFailure: (listener) => {
+      const forward = (_event: IpcRendererEvent, failure: ScheduledBackupFailure) =>
+        listener(failure);
+      ipcRenderer.on(IpcEvents.scheduledBackupFailed, forward);
+      return () => {
+        ipcRenderer.removeListener(IpcEvents.scheduledBackupFailed, forward);
       };
     },
   },

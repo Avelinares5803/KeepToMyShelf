@@ -11,6 +11,8 @@ import { join } from 'node:path';
  *   profiles/.restoring-<id>/   a backup being restored, before it becomes a profile's folder
  *   backgrounds/                imported backgrounds, shared by every profile
  *   backups/                    automatic backups of profiles (and app.db's pre-migration copies)
+ *   backups/scheduled/<id>/     scheduled backups of each profile
+ *   backups/scheduled/.deleted-<id>/  those of a deleted profile awaiting removal
  *   window-state.json           size, position, maximized and full screen of the window at exit
  */
 export interface DataPaths {
@@ -25,6 +27,10 @@ export interface DataPaths {
   mediaDir(profileId: string): string;
   cacheDir(profileId: string): string;
   deletedProfileDir(profileId: string): string;
+  /** Parent of every profile's scheduled backups. */
+  readonly scheduledBackupsRoot: string;
+  scheduledBackupsDir(profileId: string): string;
+  deletedScheduledBackupsDir(profileId: string): string;
   /** Where a backup is extracted and checked; `id` is a new UUID for each restore. */
   restoringDir(id: string): string;
 }
@@ -45,6 +51,7 @@ function assertProfileId(profileId: string): string {
 export function createDataPaths(root: string): DataPaths {
   const profilesDir = join(root, 'profiles');
   const profileDir = (profileId: string) => join(profilesDir, assertProfileId(profileId));
+  const scheduledBackupsRoot = join(root, 'backups', 'scheduled');
   return {
     root,
     appDatabase: join(root, 'app.db'),
@@ -58,6 +65,10 @@ export function createDataPaths(root: string): DataPaths {
     cacheDir: (profileId) => join(profileDir(profileId), 'cache'),
     deletedProfileDir: (profileId) =>
       join(profilesDir, `${DELETED_PROFILE_PREFIX}${assertProfileId(profileId)}`),
+    scheduledBackupsRoot,
+    scheduledBackupsDir: (profileId) => join(scheduledBackupsRoot, assertProfileId(profileId)),
+    deletedScheduledBackupsDir: (profileId) =>
+      join(scheduledBackupsRoot, `${DELETED_PROFILE_PREFIX}${assertProfileId(profileId)}`),
     restoringDir: (id) => join(profilesDir, `${RESTORING_PROFILE_PREFIX}${assertProfileId(id)}`),
   };
 }

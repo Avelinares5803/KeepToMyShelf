@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageStorageChoice } from '../../core/media/import-rules';
+import type { ScheduledBackupFailure } from '../../shared/backups';
 import type { SessionInfo } from '../../shared/ipc';
 import type { ItemSummary } from '../../shared/items';
 import { BACKGROUND_DIM_KEYS, type AppSettings, type SettingUpdate } from '../../shared/settings';
@@ -60,6 +61,10 @@ export function App({ initialSettings }: AppProps) {
   const dimKey = BACKGROUND_DIM_KEYS[shownTheme];
   const [dimPreview, setDimPreview] = useState<number | null>(null);
   const shownDim = dimPreview ?? settings[dimKey];
+
+  // A scheduled backup runs unseen; if it fails, the main process says so on its own.
+  const [failedBackup, setFailedBackup] = useState<ScheduledBackupFailure | null>(null);
+  useEffect(() => window.api.backups.onScheduledFailure(setFailedBackup), []);
 
   // The item editor registers a guard; leaving it with unsaved changes asks first.
   const editorGuard = useRef<EditorGuard | null>(null);
@@ -425,6 +430,18 @@ export function App({ initialSettings }: AppProps) {
         <p className="banner banner--error" role="alert">
           {errorMessage(t, error)}
         </p>
+      )}
+      {failedBackup !== null && (
+        <div className="banner banner--error banner--closable" role="alert">
+          <p>{t('backups.schedule.failed', { name: failedBackup.profileName })}</p>
+          <button
+            type="button"
+            className="button button--ghost"
+            onClick={() => setFailedBackup(null)}
+          >
+            {t('backups.schedule.dismiss')}
+          </button>
+        </div>
       )}
       <main className="app-main" id={SCROLL_AREA_ID}>
         {session ? (

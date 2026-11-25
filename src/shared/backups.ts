@@ -13,7 +13,7 @@ export const BACKUP_FORMAT = 'keeptomyshelf-backup';
 export const BACKUP_FORMAT_VERSION = 1;
 
 /** Why a backup was made. Automatic backups go to the app's own `backups` folder. */
-export type BackupReason = 'manual' | 'before-delete' | 'before-restore';
+export type BackupReason = 'manual' | 'before-delete' | 'before-restore' | 'scheduled';
 
 export interface BackupManifest {
   readonly format: typeof BACKUP_FORMAT;
@@ -58,6 +58,17 @@ export interface RestorePreview {
   readonly profileName: string;
   readonly createdAt: string;
   readonly files: number;
+}
+
+/** The scheduled backups of the open profile. */
+export interface ScheduledBackupsInfo {
+  /** When the last one was saved (ISO), or null if there is none. */
+  readonly lastAt: string | null;
+}
+
+/** Sent to the UI when a scheduled backup fails: it runs unseen, so nothing else would tell. */
+export interface ScheduledBackupFailure {
+  readonly profileName: string;
 }
 
 /** What the UI is told when a manual backup is saved. */

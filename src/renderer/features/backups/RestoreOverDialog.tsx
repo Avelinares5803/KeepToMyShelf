@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { formatPartialDate, localDayOf } from '../../../core/dates/format-date';
 import type { RestorePreview } from '../../../shared/backups';
 import type { Language } from '../../../shared/settings';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { formatMoment } from './format-moment';
 
 interface RestoreOverDialogProps {
   preview: RestorePreview;
@@ -10,13 +10,6 @@ interface RestoreOverDialogProps {
   profileName: string;
   onConfirm: () => void;
   onClose: () => void;
-}
-
-/** "14/11/2026, 18:30" or "14 Nov 2026, 18:30", in local time. */
-function formatMoment(iso: string, language: Language): string {
-  const moment = new Date(iso);
-  const time = `${String(moment.getHours()).padStart(2, '0')}:${String(moment.getMinutes()).padStart(2, '0')}`;
-  return `${formatPartialDate(localDayOf(moment), language)}, ${time}`;
 }
 
 /**

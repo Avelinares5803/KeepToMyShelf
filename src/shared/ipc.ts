@@ -7,7 +7,13 @@
  */
 import type { z } from 'zod';
 import type { ImportedBackground } from './backgrounds';
-import type { BackupProgress, BackupSaved, RestorePreview } from './backups';
+import type {
+  BackupProgress,
+  BackupSaved,
+  RestorePreview,
+  ScheduledBackupFailure,
+  ScheduledBackupsInfo,
+} from './backups';
 import type { CatalogCopyPreview, CatalogCopyResult, CatalogEntrySummary } from './catalogs';
 import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
 import type { IpcInputSchemas } from './ipc-schemas';
@@ -73,6 +79,8 @@ export const IpcChannels = {
   deleteBackground: 'backgrounds:delete',
   createBackup: 'backups:create',
   openBackupsFolder: 'backups:open-folder',
+  getScheduledBackups: 'backups:get-scheduled',
+  openScheduledBackupsFolder: 'backups:open-scheduled-folder',
   restoreBackupAsNewProfile: 'backups:restore-as-new',
   previewBackupRestore: 'backups:preview-restore',
   restoreBackupOverProfile: 'backups:restore-over',
@@ -85,6 +93,8 @@ export const IpcChannels = {
 export const IpcEvents = {
   /** How far the backup or restore that is running has got (see `BackupProgress.stage`). */
   backupProgress: 'backups:progress',
+  /** A scheduled backup, which runs unseen, could not be saved. */
+  scheduledBackupFailed: 'backups:scheduled-failed',
   /** The window entered (true) or left (false) full screen, with the button or with F11. */
   fullScreenChanged: 'window:full-screen-changed',
 } as const;
@@ -259,6 +269,9 @@ export interface KeepToMyShelfApi {
     create(input: IpcInput<'createBackup'>): Promise<IpcResult<BackupSaved | null>>;
     /** Opens the folder of automatic backups in the file explorer. */
     openFolder(): Promise<IpcResult<void>>;
+    getScheduled(input: IpcInput<'getScheduledBackups'>): Promise<IpcResult<ScheduledBackupsInfo>>;
+    /** Opens the folder of the open profile's scheduled backups in the file explorer. */
+    openScheduledFolder(input: IpcInput<'openScheduledBackupsFolder'>): Promise<IpcResult<void>>;
     /**
      * Asks for a backup and restores it as a new profile; null if the dialog was cancelled.
      * No profile needs to be open. Progress arrives through `onProgress` meanwhile.
@@ -283,5 +296,9 @@ export interface KeepToMyShelfApi {
      * profile) or a backup is restored. Returns the function that stops listening.
      */
     onProgress(listener: (progress: BackupProgress) => void): () => void;
+    /**
+     * Calls `listener` when a scheduled backup fails. Returns the function that stops listening.
+     */
+    onScheduledFailure(listener: (failure: ScheduledBackupFailure) => void): () => void;
   };
 }

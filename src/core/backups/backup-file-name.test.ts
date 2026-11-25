@@ -3,7 +3,10 @@ import {
   automaticBackupFileName,
   automaticBackupsToRemove,
   isAutomaticBackupFileName,
+  latestScheduledBackup,
   manualBackupFileName,
+  scheduledBackupFileName,
+  scheduledBackupsToRemove,
 } from './backup-file-name';
 
 // Built from local parts, so the names do not depend on the machine's time zone.
@@ -71,5 +74,35 @@ describe('automaticBackupsToRemove', () => {
 
   it('removes nothing while there are no more than it keeps', () => {
     expect(automaticBackupsToRemove([at(1), at(2)], 2)).toEqual([]);
+  });
+});
+
+describe('scheduled backups', () => {
+  const at = (day: number, copy = 1) =>
+    scheduledBackupFileName('Ana', new Date(2026, 10, day, 10, 20, 30), copy);
+
+  it('are named by their time and their reason, and are not automatic ones', () => {
+    expect(at(3)).toBe('2026-11-03 10-20-30 - Ana - scheduled.zip');
+    expect(at(3, 2)).toBe('2026-11-03 10-20-30 - Ana - scheduled (2).zip');
+    expect(isAutomaticBackupFileName(at(3))).toBe(false);
+    expect(automaticBackupsToRemove([at(3)], 0)).toEqual([]);
+  });
+
+  it('finds the most recent one, in local time, leaving out those in the future', () => {
+    const names = ['mía.zip', at(3), at(9), at(5), `${at(6)}.x.partial`];
+
+    expect(latestScheduledBackup(names, new Date(2026, 10, 8))).toEqual({
+      fileName: at(5),
+      madeAt: new Date(2026, 10, 5, 10, 20, 30),
+    });
+    expect(latestScheduledBackup(names, new Date(2026, 10, 1))).toBeNull();
+    expect(latestScheduledBackup(['mía.zip'], new Date())).toBeNull();
+  });
+
+  it('keeps the most recent ones and always the one just written', () => {
+    const names = ['mía.zip', at(1), at(2), at(3), at(4)];
+
+    expect(scheduledBackupsToRemove(names, 2, at(4)).sort()).toEqual([at(1), at(2)]);
+    expect(scheduledBackupsToRemove(names, 2, at(1)).sort()).toEqual([at(2), at(3)]);
   });
 });

@@ -27,14 +27,17 @@ export interface ZipContents {
  * as the archive is written, so even large ones never sit whole in memory. `onProgress`
  * receives the bytes of the files read so far and their total.
  *
- * If it fails, every file it opened is closed before it rejects, so the caller can remove
- * them at once (Windows refuses to delete a file that is open).
+ * Aborting `signal` stops it, and it rejects with an AbortError.
+ *
+ * If it fails, every file it opened (`target` too) is closed before it rejects, so the caller
+ * can remove them at once (Windows refuses to delete a file that is open).
  */
 export async function writeZip(
   target: string,
   contents: ZipContents,
   mtime: Date,
   onProgress: (doneBytes: number, totalBytes: number) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const totalBytes = contents.files.reduce((sum, file) => sum + file.size, 0);
   let doneBytes = 0;
@@ -77,11 +80,15 @@ export async function writeZip(
 
   // Tells that writing has started, before the first file is read.
   onProgress(0, totalBytes);
+  // "wx": fails instead of overwriting a file that is already there.
+  const targetStream = createWriteStream(target, { flags: 'wx' });
+  const targetClosed = new Promise<void>((resolve) => targetStream.once('close', resolve));
   try {
-    // "wx": fails instead of overwriting a file that is already there.
-    await pipeline(output, createWriteStream(target, { flags: 'wx' }));
+    await pipeline(output, targetStream, { signal });
   } catch (error) {
     failed = true;
+    targetStream.destroy();
+    await targetClosed;
     await Promise.all(
       [...opened].map((stream) => {
         const closed = once(stream, 'close');

@@ -11,6 +11,7 @@ import { ItemService } from '../../src/main/application/item-service';
 import { DEFAULT_MEDIA_LIMITS } from '../../src/core/media/import-rules';
 import { MediaService } from '../../src/main/application/media-service';
 import { ProfileService } from '../../src/main/application/profile-service';
+import { ScheduledBackupService } from '../../src/main/application/scheduled-backup-service';
 import { SessionManager } from '../../src/main/application/session-manager';
 import { SettingsService } from '../../src/main/application/settings-service';
 import { openAppDatabase } from '../../src/main/infrastructure/db/app-database';
@@ -18,10 +19,12 @@ import type { SqliteDatabase } from '../../src/main/infrastructure/db/connection
 import { createDataPaths, type DataPaths } from '../../src/main/infrastructure/paths';
 import {
   BACKGROUND_SETTING_DEFAULTS,
+  BACKUP_SETTING_DEFAULTS,
   LIBRARY_SETTING_DEFAULTS,
   MEDIA_SETTING_DEFAULTS,
   type AppSettings,
 } from '../../src/shared/settings';
+import type { ScheduledBackupFailure } from '../../src/shared/backups';
 import { createTempDir } from './temp-dir';
 
 /** The app version written in the backups the fixture makes. */
@@ -33,6 +36,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ...MEDIA_SETTING_DEFAULTS,
   ...BACKGROUND_SETTING_DEFAULTS,
   ...LIBRARY_SETTING_DEFAULTS,
+  ...BACKUP_SETTING_DEFAULTS,
 };
 
 export interface ProfileFixture {
@@ -48,6 +52,11 @@ export interface ProfileFixture {
   readonly backgrounds: BackgroundService;
   readonly backups: BackupService;
   readonly restores: RestoreService;
+  /** Not started by opening a profile, as the app does: tests call `runDue`. */
+  readonly scheduledBackups: ScheduledBackupService;
+  readonly scheduledFailures: ScheduledBackupFailure[];
+  /** Moves the clock forward (or back). */
+  advanceDays(days: number): void;
   /** Folders "opened in the file explorer", in order. */
   readonly openedFolders: string[];
   /** Temporary folder for test files outside the app's data folder (e.g. files to import). */
@@ -133,6 +142,16 @@ export function createProfileFixture(): ProfileFixture {
     now,
     newId: randomUUID,
   });
+  const scheduledFailures: ScheduledBackupFailure[] = [];
+  const scheduledBackups = new ScheduledBackupService({
+    sessions,
+    settings,
+    profiles,
+    backups,
+    lock,
+    now,
+    onFailure: (failure) => scheduledFailures.push(failure),
+  });
   const restores = new RestoreService({
     appDb,
     paths,
@@ -159,6 +178,11 @@ export function createProfileFixture(): ProfileFixture {
     backgrounds,
     backups,
     restores,
+    scheduledBackups,
+    scheduledFailures,
+    advanceDays: (days) => {
+      tick += days * 24 * 60 * 60 * 1000;
+    },
     openedFolders,
     catalogs,
     collections,

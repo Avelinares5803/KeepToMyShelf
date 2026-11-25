@@ -29,7 +29,7 @@ export interface ProfileServiceDeps {
   readonly sessions: SessionManager;
   readonly settings: SettingsService;
   /** Saves an automatic backup of a profile before it is deleted. */
-  readonly backups: Pick<BackupService, 'createBeforeDelete'>;
+  readonly backups: Pick<BackupService, 'createBeforeDelete' | 'removeScheduled'>;
   readonly now: () => Date;
   readonly newId: () => string;
 }
@@ -133,15 +133,17 @@ export class ProfileService {
 
   /**
    * Deletes a profile and all its data, after saving an automatic backup of it; if the backup
-   * fails, nothing is deleted. The open profile cannot be deleted.
+   * fails, nothing is deleted. The open profile cannot be deleted. Its scheduled backups go
+   * with it, unless there was no library left to back up: then they are all that remains.
    * The folder is first renamed to ".deleted-<id>": if it cannot be removed right away
    * (e.g. a file is briefly locked), it is removed on a later call or at the next start.
    */
   async delete(profileId: string, onProgress: BackupProgressListener = () => {}): Promise<void> {
     const { appDb, paths } = this.deps;
     this.assertDeletable(profileId);
+    let saved: string | null;
     try {
-      await this.deps.backups.createBeforeDelete(profileId, onProgress);
+      saved = await this.deps.backups.createBeforeDelete(profileId, onProgress);
     } catch (error) {
       throw new AppError(
         'profile.backup_failed',
@@ -157,6 +159,7 @@ export class ProfileService {
       renameSync(profileDir, paths.deletedProfileDir(profileId));
     }
     appDb.prepare('DELETE FROM profile WHERE id = ?').run(profileId);
+    if (saved !== null) this.deps.backups.removeScheduled(profileId);
     this.removeDeletedProfileFolders();
   }
 

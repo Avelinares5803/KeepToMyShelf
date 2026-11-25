@@ -15,6 +15,7 @@ describe('createDataPaths', () => {
     expect(paths.mediaDir(id)).toBe(join(root, 'profiles', id, 'media'));
     expect(paths.cacheDir(id)).toBe(join(root, 'profiles', id, 'cache'));
     expect(paths.deletedProfileDir(id)).toBe(join(root, 'profiles', `.deleted-${id}`));
+    expect(paths.scheduledBackupsDir(id)).toBe(join(root, 'backups', 'scheduled', id));
   });
 
   it.each(['..', '../../Windows', 'C:\\Windows', 'not-a-uuid', ''])(
@@ -23,6 +24,8 @@ describe('createDataPaths', () => {
       expect(() => paths.profileDir(badId)).toThrow(/Invalid profile id/);
       expect(() => paths.libraryDatabase(badId)).toThrow(/Invalid profile id/);
       expect(() => paths.mediaDir(badId)).toThrow(/Invalid profile id/);
+      expect(() => paths.scheduledBackupsDir(badId)).toThrow(/Invalid profile id/);
+      expect(() => paths.deletedScheduledBackupsDir(badId)).toThrow(/Invalid profile id/);
       expect(() => paths.cacheDir(badId)).toThrow(/Invalid profile id/);
       expect(() => paths.deletedProfileDir(badId)).toThrow(/Invalid profile id/);
     },

@@ -378,6 +378,22 @@ h1 {
   color: var(--color-danger);
 }
 
+.banner--closable {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.banner--closable p {
+  margin: 0;
+}
+
+.banner--closable .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* Profiles */
 .profiles,
 .home {

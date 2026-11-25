@@ -20,7 +20,12 @@ import { libraryMigrations } from '../infrastructure/db/migrations/library';
 import { MigrationError } from '../infrastructure/db/migrator';
 import { MediaStore } from '../infrastructure/media/media-store';
 import { RESTORING_PROFILE_PREFIX, type DataPaths } from '../infrastructure/paths';
-import { invalidFile, parseBackupManifest, type ReadManifest } from './backup-manifest';
+import {
+  invalidFile,
+  MANIFEST_MAX_BYTES,
+  parseBackupManifest,
+  type ReadManifest,
+} from './backup-manifest';
 import {
   progressByPercent,
   removeIfPossible,
@@ -31,9 +36,6 @@ import type { BackupService } from './backup-service';
 import type { ProfileService } from './profile-service';
 import type { SessionManager } from './session-manager';
 import type { SettingsService } from './settings-service';
-
-/** The manifest is a few kilobytes; a much larger one is not a manifest. */
-const MANIFEST_MAX_BYTES = 1024 * 1024;
 
 /** Preferences of a backup that cannot be applied here; they are skipped, not fatal. */
 const SKIPPED_SETTING_ERRORS = new Set(['settings.invalid_value', 'background.not_found']);

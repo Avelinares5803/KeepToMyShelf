@@ -67,7 +67,7 @@ Example: the library asks for the list of games.
    - `{ ok: false, error: { code: 'internal' } }` for anything unexpected, which is logged in full in the main process and never reaches the UI in detail.
 5. **Renderer:** `unwrap` ([`lib/ipc.ts`](../src/renderer/lib/ipc.ts), which `useLoad` calls) returns the value or throws an `IpcError`; `errorMessage` translates its code with the key `errors.<code>` in `es.json` and `en.json`.
 
-The channel list is `IpcChannels` in [`shared/ipc.ts`](../src/shared/ipc.ts), and `KeepToMyShelfApi` types every method. The main process also sends two **events** without being asked (`IpcEvents`): backup progress and full-screen changes.
+The channel list is `IpcChannels` in [`shared/ipc.ts`](../src/shared/ipc.ts), and `KeepToMyShelfApi` types every method. The main process also sends three **events** without being asked (`IpcEvents`): backup progress, a failed scheduled backup and full-screen changes.
 
 ## Profiles and sessions
 
@@ -119,7 +119,7 @@ Details: [ADR 0006](adr/0006-search-and-filters.md).
 
 ## Backups
 
-A backup is a `.zip` with a snapshot of the profile's database (`VACUUM INTO`), its `media` files, its own preferences and a manifest with the SHA-256 of each file. Thumbnails are regenerated. Restoring checks everything (paths against a closed list, CRC-32 and SHA-256, `integrity_check`, schema version) in a temporary folder before replacing anything. Details: [ADR 0009](adr/0009-backups.md).
+A backup is a `.zip` with a snapshot of the profile's database (`VACUUM INTO`), its `media` files, its own preferences and a manifest with the SHA-256 of each file. Thumbnails are regenerated. Scheduled backups are made by the app itself, in the background, after a profile is opened; they give way to any backup or restore the user asks for. Restoring checks everything (paths against a closed list, CRC-32 and SHA-256, `integrity_check`, schema version) in a temporary folder before replacing anything. Details: [ADR 0009](adr/0009-backups.md).
 
 ## Data on disk
 
@@ -132,6 +132,7 @@ A backup is a `.zip` with a snapshot of the profile's database (`VACUUM INTO`), 
 │  ├─ .tmp\                      imports being prepared; emptied at startup
 │  └─ cache\thumbs\              thumbnails (can be regenerated)
 ├─ backups\                      automatic profile backups (last 10) and copies of app.db before migrating
+│  ├─ scheduled\<uuid>\          scheduled backups of each profile (last 10)
 │  └─ .tmp\                      snapshot of the backup in progress
 ├─ profiles\.restoring-<uuid>\   backup being restored; removed when done and at startup
 └─ profiles\<uuid>\

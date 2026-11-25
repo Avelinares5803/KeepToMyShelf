@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { CATALOGS, ITEM_ROLES } from '../core/catalogs/catalogs';
+import { CSV_SEPARATORS } from '../core/export/csv';
 import { FILTER_OPERATORS } from '../core/filters/filter-fields';
 import type { FilterNode } from '../core/filters/filter-tree';
 import {
@@ -320,6 +321,18 @@ export const ipcInputSchemas = {
     filterName: z.string().min(1).max(100),
   }),
   restoreBackupOverProfile: z.object({ token: sessionTokenSchema, restoreId: z.uuid() }),
+  saveExport: z.object({
+    token: sessionTokenSchema,
+    target: z.discriminatedUnion('format', [
+      z.object({ format: z.literal('json') }),
+      z.object({
+        format: z.literal('csv'),
+        kind: itemKindSchema,
+        separator: z.enum(CSV_SEPARATORS),
+      }),
+    ]),
+    filterName: z.string().min(1).max(100),
+  }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

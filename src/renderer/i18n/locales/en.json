@@ -554,6 +554,31 @@
       "stepBackup": "Step 2 of 2: saving a backup of the current state…"
     }
   },
+  "exports": {
+    "title": "Export",
+    "hint": "Saves the data of the library in a file, without images, documents or settings. To save everything, create a backup.",
+    "content": {
+      "label": "What to export",
+      "library": "Whole library (JSON)",
+      "game": "Video games (CSV)",
+      "movie": "Movies (CSV)",
+      "series": "Series (CSV)"
+    },
+    "separator": {
+      "label": "Separator",
+      "semicolon": "Semicolon (;)",
+      "comma": "Comma (,)"
+    },
+    "jsonHint": "Includes the items, the catalogs and the collections, and also what is in the trash.",
+    "csvHint": "For spreadsheets. Does not include the trash. If everything opens in a single column, try the other separator.",
+    "save": "Export…",
+    "fileType": {
+      "json": "JSON file",
+      "csv": "CSV file"
+    },
+    "saved_one": "Exported: “{{fileName}}” (1 item).",
+    "saved_other": "Exported: “{{fileName}}” ({{count}} items)."
+  },
   "background": {
     "title": "Background",
     "label": "App background",
@@ -796,6 +821,9 @@
     },
     "session": {
       "stale": "Your session has expired. Please choose your profile again."
+    },
+    "export": {
+      "write_failed": "The export could not be saved. Check that there is free space, that the folder can be written to and that the file is not open in another program."
     },
     "background": {
       "not_found": "That background no longer exists."

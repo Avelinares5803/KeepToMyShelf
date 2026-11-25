@@ -20,6 +20,7 @@ import {
   type BackgroundSettingsProps,
 } from '../features/backgrounds/BackgroundSettings';
 import { BackupSettings, type BackupSettingsProps } from '../features/backups/BackupSettings';
+import { ExportSettings } from '../features/exports/ExportSettings';
 import { errorMessage, unwrap } from '../lib/ipc';
 
 /** What the "Background" section needs besides the preferences themselves. */
@@ -254,6 +255,8 @@ export function SettingsDialog({
             onApplyToAll={(update) => void applyToAll(update)}
           />
         )}
+
+        {backups !== null && <ExportSettings token={backups.token} language={settings.language} />}
 
         {status && (
           <p className="banner" role="status">

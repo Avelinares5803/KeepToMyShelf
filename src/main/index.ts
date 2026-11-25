@@ -15,6 +15,7 @@ import { BackupLock } from './application/backup-lock';
 import { BackupService } from './application/backup-service';
 import { CatalogService } from './application/catalog-service';
 import { CollectionService } from './application/collection-service';
+import { ExportService } from './application/export-service';
 import { ItemService } from './application/item-service';
 import { MediaService } from './application/media-service';
 import { ProfileService } from './application/profile-service';
@@ -134,6 +135,13 @@ function startApp(): void {
   const items = new ItemService({ sessions, now, newId: randomUUID, media });
   const catalogs = new CatalogService({ appDb, paths, sessions });
   const collections = new CollectionService({ sessions, now, newId: randomUUID, media });
+  const exports = new ExportService({
+    sessions,
+    profiles,
+    settings,
+    appVersion: app.getVersion(),
+    now,
+  });
   const backgrounds = new BackgroundService({
     appDb,
     dir: paths.backgroundsDir,
@@ -156,6 +164,7 @@ function startApp(): void {
     backgrounds,
     backups,
     restores,
+    exports,
   });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
   protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media, backgrounds));

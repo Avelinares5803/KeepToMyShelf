@@ -223,7 +223,8 @@ describe('scheduled backups', () => {
     ).toEqual(['Chrono Trigger']);
   });
 
-  describe('together with other operations', () => {
+  // They write files of 40 MB several times, which takes a slow CI runner over the usual 5 s.
+  describe('together with other operations', { timeout: 30_000 }, () => {
     it('gives way to a backup the user asks for, leaving nothing behind', async () => {
       const logged = vi.spyOn(console, 'error');
       await addLargeDocument('Metroid');

@@ -6,6 +6,18 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 
 ## [Unreleased]
 
+### Español
+
+#### Añadido
+
+- **Copias programadas:** al abrir un perfil, la app guarda una copia de seguridad en segundo plano si toca y hay cambios desde la última. En Ajustes, cada perfil elige nunca, cada día, cada semana (por defecto) o cada mes. Se conservan las 10 últimas de cada perfil, y se eliminan con él.
+
+### English
+
+#### Added
+
+- **Scheduled backups:** when a profile is opened, the app saves a backup in the background if one is due and something has changed since the last one. In Settings, each profile chooses never, every day, every week (by default) or every month. The last 10 of each profile are kept, and they are deleted with it.
+
 ## [1.2.0] - 2026-11-24
 
 ### Español

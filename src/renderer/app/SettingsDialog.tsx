@@ -246,7 +246,14 @@ export function SettingsDialog({
           onPeekChange={setPeeking}
         />
 
-        {backups !== null && <BackupSettings {...backups} />}
+        {backups !== null && (
+          <BackupSettings
+            {...backups}
+            schedule={settings.backupSchedule}
+            onChange={onChange}
+            onApplyToAll={(update) => void applyToAll(update)}
+          />
+        )}
 
         {status && (
           <p className="banner" role="status">

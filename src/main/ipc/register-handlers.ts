@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
-import type { BackupProgress } from '../../shared/backups';
+import type { BackupProgress, ScheduledBackupFailure } from '../../shared/backups';
 import { IpcChannels, IpcEvents } from '../../shared/ipc';
 import { ipcInputSchemas } from '../../shared/ipc-schemas';
 import type { BackgroundService } from '../application/background-service';
@@ -34,6 +34,13 @@ export interface Services {
   readonly backgrounds: BackgroundService;
   readonly backups: BackupService;
   readonly restores: RestoreService;
+}
+
+/** Tells the UI that a scheduled backup failed; a message sent without being asked. */
+export function sendScheduledBackupFailure(failure: ScheduledBackupFailure): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send(IpcEvents.scheduledBackupFailed, failure);
+  }
 }
 
 /** IPC handlers stay thin: validate input (createHandler) and delegate to a service. */
@@ -265,6 +272,13 @@ export function registerIpcHandlers({
     ),
     openBackupsFolder: createAsyncHandler(ipcInputSchemas.openBackupsFolder, () =>
       backups.openAutomaticFolder(),
+    ),
+    getScheduledBackups: createHandler(ipcInputSchemas.getScheduledBackups, ({ token }) => ({
+      lastAt: backups.lastScheduledAt(sessions.require(token).profileId)?.toISOString() ?? null,
+    })),
+    openScheduledBackupsFolder: createAsyncHandler(
+      ipcInputSchemas.openScheduledBackupsFolder,
+      ({ token }) => backups.openScheduledFolder(token),
     ),
     restoreBackupAsNewProfile: createAsyncHandler(
       ipcInputSchemas.restoreBackupAsNewProfile,

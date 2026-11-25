@@ -5,6 +5,7 @@ import { app, BrowserWindow, dialog, Menu, protocol, session, shell } from 'elec
 import { DEFAULT_MEDIA_LIMITS } from '../core/media/import-rules';
 import {
   BACKGROUND_SETTING_DEFAULTS,
+  BACKUP_SETTING_DEFAULTS,
   LIBRARY_SETTING_DEFAULTS,
   MEDIA_SETTING_DEFAULTS,
   type AppSettings,
@@ -18,15 +19,19 @@ import { ItemService } from './application/item-service';
 import { MediaService } from './application/media-service';
 import { ProfileService } from './application/profile-service';
 import { RestoreService } from './application/restore-service';
+import { ScheduledBackupService } from './application/scheduled-backup-service';
 import { SessionManager } from './application/session-manager';
 import { SettingsService } from './application/settings-service';
 import { openAppDatabase } from './infrastructure/db/app-database';
 import { createDataPaths } from './infrastructure/paths';
 import { ensureWritableDir, resolveUserDataLocation } from './infrastructure/user-data-location';
-import { registerIpcHandlers } from './ipc/register-handlers';
+import { registerIpcHandlers, sendScheduledBackupFailure } from './ipc/register-handlers';
 import { createMediaProtocolHandler, MEDIA_SCHEME } from './media-protocol';
 import { denyAllPermissions } from './security';
 import { createMainWindow } from './window';
+
+/** How long after opening a profile its scheduled backup starts, if one is due. */
+const SCHEDULED_BACKUP_DELAY_MS = 1000;
 
 function startApp(): void {
   const paths = createDataPaths(app.getPath('userData'));
@@ -39,6 +44,7 @@ function startApp(): void {
     ...MEDIA_SETTING_DEFAULTS,
     ...BACKGROUND_SETTING_DEFAULTS,
     ...LIBRARY_SETTING_DEFAULTS,
+    ...BACKUP_SETTING_DEFAULTS,
   };
   const now = () => new Date();
   const settings = new SettingsService(appDb, defaults);
@@ -48,7 +54,11 @@ function startApp(): void {
     now,
     newId: randomUUID,
     languageOf: (profileId) => settings.getForProfile(profileId).language,
-    onOpen: (session) => media.onSessionOpened(session),
+    onOpen: (session) => {
+      media.onSessionOpened(session);
+      // Once the profile is on screen: making the snapshot holds the main process for a moment.
+      setTimeout(() => void scheduledBackups.runDue(), SCHEDULED_BACKUP_DELAY_MS);
+    },
     onClose: (session) => media.onSessionClosing(session),
   });
   const media = new MediaService({
@@ -98,6 +108,15 @@ function startApp(): void {
     backups,
     now,
     newId: randomUUID,
+  });
+  const scheduledBackups = new ScheduledBackupService({
+    sessions,
+    settings,
+    profiles,
+    backups,
+    lock: backupLock,
+    now,
+    onFailure: sendScheduledBackupFailure,
   });
   const restores = new RestoreService({
     appDb,

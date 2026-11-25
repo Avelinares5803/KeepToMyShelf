@@ -44,15 +44,76 @@ export function isAutomaticBackupFileName(fileName: string): boolean {
   return AUTOMATIC_BACKUP.test(fileName);
 }
 
+const SCHEDULED_BACKUP =
+  /^(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}) - .+ - scheduled(?: \((\d+)\))?\.zip$/;
+
+/** The name of a scheduled backup: "2026-11-25 18-30-05 - Adrián - scheduled.zip". */
+export function scheduledBackupFileName(profileName: string, date: Date, copy = 1): string {
+  const suffix = copy > 1 ? ` (${copy})` : '';
+  return `${localStamp(date, true)} - ${safeProfileName(profileName)} - scheduled${suffix}.zip`;
+}
+
+export interface ScheduledBackupFile {
+  readonly fileName: string;
+  /** When it was made, from its name (in local time, down to the second). */
+  readonly madeAt: Date;
+}
+
+/**
+ * The most recent scheduled backup, or null if there is none. Those dated after `now` (the
+ * clock was set back since) do not count: they would put off the next ones.
+ */
+export function latestScheduledBackup(
+  fileNames: readonly string[],
+  now: Date,
+): ScheduledBackupFile | null {
+  for (const { fileName, stamp } of mostRecentFirst(fileNames, SCHEDULED_BACKUP)) {
+    const madeAt = dateOfStamp(stamp);
+    if (madeAt <= now) return { fileName, madeAt };
+  }
+  return null;
+}
+
+/**
+ * The scheduled backups to remove so that only the `keep` most recent remain. The one just
+ * written always does, even if others are dated later (the clock was set back).
+ */
+export function scheduledBackupsToRemove(
+  fileNames: readonly string[],
+  keep: number,
+  justWritten: string,
+): string[] {
+  return mostRecentFirst(fileNames, SCHEDULED_BACKUP)
+    .map(({ fileName }) => fileName)
+    .filter((fileName) => fileName !== justWritten)
+    .slice(keep - 1);
+}
+
+/** Without a zone, an ISO date and time is in local time. */
+function dateOfStamp(stamp: string): Date {
+  const [day, time] = stamp.split(' ') as [string, string];
+  return new Date(`${day}T${time.replaceAll('-', ':')}`);
+}
+
 /**
  * The automatic backups to remove so that only the `keep` most recent remain, by the time in
  * their names (and, within the same second, by their copy number).
  */
 export function automaticBackupsToRemove(fileNames: readonly string[], keep: number): string[] {
+  return mostRecentFirst(fileNames, AUTOMATIC_BACKUP)
+    .slice(keep)
+    .map(({ fileName }) => fileName);
+}
+
+/** The files whose name matches `pattern`, by the time in it and then by their copy number. */
+function mostRecentFirst(
+  fileNames: readonly string[],
+  pattern: RegExp,
+): { fileName: string; stamp: string; copy: number }[] {
   const dated = fileNames.flatMap((fileName) => {
-    const match = AUTOMATIC_BACKUP.exec(fileName);
+    const match = pattern.exec(fileName);
     return match ? [{ fileName, stamp: match[1] as string, copy: Number(match[2] ?? 1) }] : [];
   });
   dated.sort((a, b) => b.stamp.localeCompare(a.stamp) || b.copy - a.copy);
-  return dated.slice(keep).map(({ fileName }) => fileName);
+  return dated;
 }

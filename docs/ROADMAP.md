@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-25, con el plan de la v1.3 (apartado 3.13).
+**Última actualización:** 2026-11-25, con la v1.3-A (apartado 3.13).
 
 ---
 
@@ -49,7 +49,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | ✅ Hecha (v1.2.0)                   |
-| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | Planificada (apartado 3.13)         |
+| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A hecha)             |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -548,11 +548,17 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 
 **Entregas, en este orden:**
 
-- **v1.3-A: copias programadas.** Acordado el 2026-11-25:
+- **v1.3-A: copias programadas.** ✅ Hecha (`feat/scheduled-backups`). Ver el [ADR 0009](adr/0009-backups.md#copias-programadas-v13-a). Acordado el 2026-11-25:
   - En Ajustes, cada perfil elige nunca, diaria, semanal o mensual.
   - **Las hace la propia app al abrir el perfil**, en segundo plano, si ha pasado el plazo desde la última. No se usa el Programador de tareas de Windows ni se deja la app en segundo plano al cerrarla.
   - **Cupo aparte:** se conservan las 10 últimas de cada perfil (número fijo), en una carpeta con el identificador del perfil, porque su nombre puede cambiar. No cuentan para las 10 automáticas, que siguen como en el [ADR 0009](adr/0009-backups.md).
-  - Por decidir en su chat: la opción por defecto, dónde se guarda la fecha de la última copia (no debe entrar en las preferencias del manifiesto), qué pasa si coincide con otra copia o restauración o si se cierra la app a mitad, y qué hacer con ellas al eliminar el perfil. También, si se omite la copia cuando no hay cambios, por el espacio que ocupan (cada una incluye las imágenes y los PDF).
+  - Completado el 2026-11-25, sin migración:
+    - **Por defecto, cada semana**, también en los perfiles que ya existían, contada desde la última copia o desde la creación del perfil. El plazo son días naturales.
+    - **La fecha de la última copia es la del nombre de su archivo.**
+    - **Sin cambios desde la última, no se hace** (biblioteca, preferencias, nombre del perfil y archivos que faltan).
+    - **La acción del usuario manda:** copiar, restaurar o eliminar un perfil cancela la copia programada en curso, que se reintenta al volver a abrir el perfil. Cambiar de perfil no la cancela; cerrar la app la abandona.
+    - **Eliminar un perfil elimina sus copias programadas**, y la confirmación lo dice. Si su biblioteca ya no existía, se conservan.
+    - **Si falla, un aviso que se puede cerrar.** Si va bien, no se dice nada; Ajustes muestra la fecha de la última y abre su carpeta.
 - **v1.3-B: exportar.** Acordado el 2026-11-25:
   - **JSON completo y versionado** (elementos, catálogos y colecciones) y **CSV por tipo**, para hojas de cálculo.
   - **Sin imágenes ni PDF:** para eso está la copia de seguridad `.zip`. La interfaz lo avisa.

@@ -32,7 +32,7 @@
       "title": "Eliminar perfil",
       "question": "¿Seguro que quieres eliminar este perfil?",
       "warning": "Se borrarán para siempre su biblioteca, sus valoraciones y sus colecciones. Esta acción no se puede deshacer.",
-      "backupNotice": "Antes se guardará una copia de seguridad en la carpeta de copias automáticas.",
+      "backupNotice": "Antes se guardará una copia de seguridad en la carpeta de copias automáticas. Sus copias programadas también se eliminarán.",
       "confirm": "Eliminar perfil",
       "deletingTitle": "Eliminando el perfil",
       "savingBackup": "Guardando una copia de seguridad antes de eliminarlo…"
@@ -518,6 +518,20 @@
     "missing_other": "No se han encontrado {{count}} archivos de la biblioteca, así que no se han incluido.",
     "automaticHint": "Antes de eliminar un perfil o de restaurar una copia sobre él se guarda una copia automática. Se conservan las 10 más recientes.",
     "openFolder": "Abrir la carpeta de copias automáticas",
+    "schedule": {
+      "label": "Copias programadas",
+      "never": "Nunca",
+      "daily": "Cada día",
+      "weekly": "Cada semana",
+      "monthly": "Cada mes",
+      "applyToAll": "Aplicar esta frecuencia de las copias programadas a todos los perfiles",
+      "hint": "Se guardan en segundo plano al abrir el perfil, si toca y hay cambios desde la última. Se conservan las 10 más recientes de cada perfil. Cada una incluye las imágenes y los documentos, así que pueden ocupar mucho espacio.",
+      "last": "Última copia programada: {{moment}}.",
+      "none": "Este perfil aún no tiene copias programadas.",
+      "openFolder": "Abrir la carpeta de copias programadas",
+      "failed": "No se ha podido guardar la copia programada del perfil «{{name}}». Comprueba que hay espacio libre. Se volverá a intentar la próxima vez que lo abras.",
+      "dismiss": "Cerrar aviso"
+    },
     "restoringTitle": "Restaurando la copia de seguridad",
     "restored": "Copia restaurada: «{{fileName}}».",
     "restoreAsNew": {
@@ -772,7 +786,7 @@
     "backup": {
       "busy": "Ya se está guardando o restaurando una copia de seguridad. Espera a que termine.",
       "write_failed": "No se ha podido guardar la copia de seguridad. Comprueba que hay espacio libre y que se puede escribir en esa carpeta.",
-      "open_folder_failed": "No se ha podido abrir la carpeta de copias automáticas.",
+      "open_folder_failed": "No se ha podido abrir la carpeta de copias.",
       "invalid_file": "Ese archivo no es una copia de seguridad de KeepToMyShelf, o se ha modificado. No se ha restaurado nada.",
       "damaged": "La copia de seguridad está dañada: parte de su contenido no se puede leer correctamente. No se ha restaurado nada.",
       "too_new": "Esa copia de seguridad se hizo con una versión más nueva de KeepToMyShelf. Actualiza la aplicación para restaurarla.",

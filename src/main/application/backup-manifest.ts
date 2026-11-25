@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { AppError } from '../../core/errors';
 import { BACKUP_FORMAT, BACKUP_FORMAT_VERSION, type BackupManifest } from '../../shared/backups';
 
+/** The manifest is a few kilobytes; a much larger one is not a manifest. */
+export const MANIFEST_MAX_BYTES = 1024 * 1024;
+
 /**
  * A manifest read from a backup. Its preferences are left unchecked here: each one is
  * checked when it is applied, and one that is not valid (or unknown, from a newer app) is

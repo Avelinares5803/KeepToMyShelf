@@ -32,7 +32,7 @@
       "title": "Delete profile",
       "question": "Are you sure you want to delete this profile?",
       "warning": "Its library, ratings and collections will be deleted forever. This cannot be undone.",
-      "backupNotice": "A backup will be saved first in the automatic backups folder.",
+      "backupNotice": "A backup will be saved first in the automatic backups folder. Its scheduled backups will be deleted too.",
       "confirm": "Delete profile",
       "deletingTitle": "Deleting the profile",
       "savingBackup": "Saving a backup before deleting it…"
@@ -518,6 +518,20 @@
     "missing_other": "{{count}} files of the library were not found, so they were not included.",
     "automaticHint": "An automatic backup is saved before a profile is deleted or a backup is restored over it. The 10 most recent are kept.",
     "openFolder": "Open the automatic backups folder",
+    "schedule": {
+      "label": "Scheduled backups",
+      "never": "Never",
+      "daily": "Every day",
+      "weekly": "Every week",
+      "monthly": "Every month",
+      "applyToAll": "Apply this frequency of scheduled backups to all profiles",
+      "hint": "They are saved in the background when the profile is opened, if one is due and something has changed since the last one. The 10 most recent of each profile are kept. Each one includes the images and documents, so they can take up a lot of space.",
+      "last": "Last scheduled backup: {{moment}}.",
+      "none": "This profile has no scheduled backups yet.",
+      "openFolder": "Open the scheduled backups folder",
+      "failed": "The scheduled backup of the profile “{{name}}” could not be saved. Check that there is free space. It will be tried again the next time you open it.",
+      "dismiss": "Dismiss"
+    },
     "restoringTitle": "Restoring the backup",
     "restored": "Backup restored: “{{fileName}}”.",
     "restoreAsNew": {
@@ -772,7 +786,7 @@
     "backup": {
       "busy": "A backup is already being saved or restored. Please wait until it finishes.",
       "write_failed": "The backup could not be saved. Check that there is free space and that the folder can be written to.",
-      "open_folder_failed": "The automatic backups folder could not be opened.",
+      "open_folder_failed": "The backups folder could not be opened.",
       "invalid_file": "That file is not a KeepToMyShelf backup, or it has been modified. Nothing has been restored.",
       "damaged": "The backup is damaged: some of its contents cannot be read correctly. Nothing has been restored.",
       "too_new": "That backup was made with a newer version of KeepToMyShelf. Update the app to restore it.",

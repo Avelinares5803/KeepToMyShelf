@@ -67,7 +67,7 @@ Ejemplo: la biblioteca pide la lista de videojuegos.
    - `{ ok: false, error: { code: 'internal' } }` para cualquier imprevisto, que se registra completo en el proceso principal y nunca llega en detalle a la interfaz.
 5. **Renderizado:** `unwrap` ([`lib/ipc.ts`](../src/renderer/lib/ipc.ts), al que llama `useLoad`) devuelve el valor o lanza un `IpcError`; `errorMessage` traduce su código con la clave `errors.<código>` de `es.json` y `en.json`.
 
-La lista de canales es `IpcChannels`, en [`shared/ipc.ts`](../src/shared/ipc.ts), y `KeepToMyShelfApi` da tipo a cada método. El proceso principal también envía dos **eventos** sin que se los pidan (`IpcEvents`): el progreso de las copias de seguridad y los cambios de pantalla completa.
+La lista de canales es `IpcChannels`, en [`shared/ipc.ts`](../src/shared/ipc.ts), y `KeepToMyShelfApi` da tipo a cada método. El proceso principal también envía tres **eventos** sin que se los pidan (`IpcEvents`): el progreso de las copias de seguridad, el fallo de una copia programada y los cambios de pantalla completa.
 
 ## Perfiles y sesiones
 
@@ -119,7 +119,7 @@ Detalles: [ADR 0006](adr/0006-search-and-filters.md).
 
 ## Copias de seguridad
 
-Una copia es un `.zip` con una instantánea de la base de datos del perfil (`VACUUM INTO`), sus archivos de `media`, sus preferencias propias y un manifiesto con el SHA-256 de cada archivo. Las miniaturas se regeneran. Al restaurar se comprueba todo (rutas contra una lista cerrada, CRC-32 y SHA-256, `integrity_check`, versión del esquema) en una carpeta temporal antes de sustituir nada. Detalles: [ADR 0009](adr/0009-backups.md).
+Una copia es un `.zip` con una instantánea de la base de datos del perfil (`VACUUM INTO`), sus archivos de `media`, sus preferencias propias y un manifiesto con el SHA-256 de cada archivo. Las miniaturas se regeneran. Las copias programadas las hace la propia app, en segundo plano, después de abrir un perfil, y ceden el paso a cualquier copia o restauración que pida el usuario. Al restaurar se comprueba todo (rutas contra una lista cerrada, CRC-32 y SHA-256, `integrity_check`, versión del esquema) en una carpeta temporal antes de sustituir nada. Detalles: [ADR 0009](adr/0009-backups.md).
 
 ## Datos en disco
 
@@ -132,6 +132,7 @@ Una copia es un `.zip` con una instantánea de la base de datos del perfil (`VAC
 │  ├─ .tmp\                      importaciones en preparación; se vacía al arrancar
 │  └─ cache\thumbs\              miniaturas (se pueden regenerar)
 ├─ backups\                      copias automáticas de perfiles (las 10 últimas) y copias de app.db antes de migrar
+│  ├─ scheduled\<uuid>\          copias programadas de cada perfil (las 10 últimas)
 │  └─ .tmp\                      instantánea de la copia en curso
 ├─ profiles\.restoring-<uuid>\   copia que se está restaurando; se borra al terminar y al arrancar
 └─ profiles\<uuid>\

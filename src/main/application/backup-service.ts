@@ -1,12 +1,26 @@
-import { randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { createHash, randomUUID } from 'node:crypto';
+import {
+  createReadStream,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
+import { basename, dirname, join } from 'node:path';
+import { pipeline } from 'node:stream/promises';
+import { isDeepStrictEqual } from 'node:util';
 import { mediaEntryName } from '../../core/backups/backup-entries';
 import {
   automaticBackupFileName,
   automaticBackupsToRemove,
+  latestScheduledBackup,
   manualBackupFileName,
+  scheduledBackupFileName,
+  scheduledBackupsToRemove,
   type AutomaticBackupReason,
+  type ScheduledBackupFile,
 } from '../../core/backups/backup-file-name';
 import { AppError, NotFoundError } from '../../core/errors';
 import {
@@ -18,11 +32,12 @@ import {
 } from '../../shared/backups';
 import type { AppSettings } from '../../shared/settings';
 import { readLibrarySnapshot } from '../infrastructure/backup/library-snapshot';
+import { openZip } from '../infrastructure/backup/zip-reader';
 import { writeZip, type ZipFileEntry } from '../infrastructure/backup/zip-writer';
 import { backupDatabase } from '../infrastructure/db/backup';
 import { openDatabase, type SqliteDatabase } from '../infrastructure/db/connection';
 import { MediaStore } from '../infrastructure/media/media-store';
-import type { DataPaths } from '../infrastructure/paths';
+import { DELETED_PROFILE_PREFIX, type DataPaths } from '../infrastructure/paths';
 import {
   progressByPercent,
   removeIfPossible,
@@ -31,11 +46,14 @@ import {
 } from './backup-lock';
 import type { SessionManager } from './session-manager';
 import type { SettingsService } from './settings-service';
+import { MANIFEST_MAX_BYTES, parseBackupManifest, type ReadManifest } from './backup-manifest';
 
 export type { BackupProgressListener } from './backup-lock';
 
 /** How many automatic backups are kept in the app's `backups` folder, for all profiles. */
 export const AUTOMATIC_BACKUPS_KEPT = 10;
+/** How many scheduled backups are kept of each profile, besides the automatic ones. */
+export const SCHEDULED_BACKUPS_KEPT = 10;
 
 export interface BackupServiceDeps {
   readonly appDb: SqliteDatabase;
@@ -53,6 +71,13 @@ export interface BackupServiceDeps {
    * it worked (like Electron's `shell.openPath`).
    */
   readonly openFolder: (path: string) => Promise<string>;
+}
+
+interface WriteOptions {
+  /** Stops the backup, which then rejects with an AbortError. */
+  readonly signal?: AbortSignal;
+  /** Nothing is written if this backup already holds the same. */
+  readonly unlessSameAs?: string | null;
 }
 
 interface ProfileRow {
@@ -80,10 +105,10 @@ export class BackupService {
     destination: string,
     onProgress: BackupProgressListener,
   ): Promise<BackupSaved> {
-    const session = this.deps.sessions.require(token);
-    const manifest = await this.deps.lock.run(() =>
-      this.write(session.profileId, session.db, destination, 'manual', onProgress),
-    );
+    const manifest = await this.deps.lock.run(() => {
+      const session = this.deps.sessions.require(token);
+      return this.write(session.profileId, session.db, destination, 'manual', onProgress);
+    });
     return {
       fileName: basename(destination),
       files: manifest.media.files,
@@ -129,14 +154,64 @@ export class BackupService {
     return destination;
   }
 
+  /**
+   * Writes a scheduled backup of a profile and keeps only its most recent ones. If nothing
+   * changed since the last one, nothing is written. The profile may be closed meanwhile: its
+   * library is only read at the start. The caller must hold the lock.
+   */
+  async writeScheduled(profileId: string, db: SqliteDatabase, signal: AbortSignal): Promise<void> {
+    const dir = this.deps.paths.scheduledBackupsDir(profileId);
+    const date = this.deps.now();
+    const last = this.lastScheduled(profileId, date);
+    const { name } = this.profileRow(profileId);
+    const destination = freePath(dir, (copy) => scheduledBackupFileName(name, date, copy));
+    const written = await this.write(profileId, db, destination, 'scheduled', () => {}, {
+      signal,
+      unlessSameAs: last && join(dir, last.fileName),
+    });
+    if (written === null) return;
+    const remove = scheduledBackupsToRemove(
+      readdirSync(dir),
+      SCHEDULED_BACKUPS_KEPT,
+      basename(destination),
+    );
+    for (const fileName of remove) removeIfPossible(join(dir, fileName));
+  }
+
+  /** When the last scheduled backup of a profile was saved, as its file name says. */
+  lastScheduledAt(profileId: string): Date | null {
+    return this.lastScheduled(profileId, this.deps.now())?.madeAt ?? null;
+  }
+
+  /**
+   * Removes the scheduled backups of a profile that was deleted. If Windows still holds one of
+   * them, what is left of the folder is removed at the next start.
+   */
+  removeScheduled(profileId: string): void {
+    const { paths } = this.deps;
+    const dir = paths.scheduledBackupsDir(profileId);
+    if (!existsSync(dir)) return;
+    const deletedDir = paths.deletedScheduledBackupsDir(profileId);
+    try {
+      renameSync(dir, deletedDir);
+    } catch (error) {
+      // The profile is already deleted: what is left of its backups must not make that fail.
+      console.warn(`Could not set aside "${dir}" to remove it`, error);
+      removeIfPossible(dir);
+      return;
+    }
+    removeIfPossible(deletedDir);
+  }
+
   /** Opens the folder of automatic backups in the file explorer. */
   async openAutomaticFolder(): Promise<void> {
-    const { backupsDir } = this.deps.paths;
-    mkdirSync(backupsDir, { recursive: true });
-    const error = await this.deps.openFolder(backupsDir);
-    if (error !== '') {
-      throw new AppError('backup.open_folder_failed', `Could not open ${backupsDir}: ${error}`);
-    }
+    await this.openFolder(this.deps.paths.backupsDir);
+  }
+
+  /** Opens the folder of the open profile's scheduled backups in the file explorer. */
+  async openScheduledFolder(token: string): Promise<void> {
+    const { profileId } = this.deps.sessions.require(token);
+    await this.openFolder(this.deps.paths.scheduledBackupsDir(profileId));
   }
 
   /** At startup: removes what a backup interrupted by a crash left in the `backups` folder. */
@@ -144,9 +219,34 @@ export class BackupService {
     const { backupsDir } = this.deps.paths;
     rmSync(join(backupsDir, '.tmp'), { recursive: true, force: true });
     if (!existsSync(backupsDir)) return;
-    for (const fileName of readdirSync(backupsDir)) {
-      if (fileName.endsWith('.partial')) removeIfPossible(join(backupsDir, fileName));
+    removePartials(backupsDir);
+
+    const { scheduledBackupsRoot } = this.deps.paths;
+    if (!existsSync(scheduledBackupsRoot)) return;
+    try {
+      for (const entry of readdirSync(scheduledBackupsRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const dir = join(scheduledBackupsRoot, entry.name);
+        if (entry.name.startsWith(DELETED_PROFILE_PREFIX)) removeIfPossible(dir);
+        else removePartials(dir);
+      }
+    } catch (error) {
+      // Housekeeping: a folder that cannot be read must not stop the app from starting.
+      console.warn(`Could not clean up "${scheduledBackupsRoot}"; will retry later`, error);
     }
+  }
+
+  private async openFolder(dir: string): Promise<void> {
+    mkdirSync(dir, { recursive: true });
+    const error = await this.deps.openFolder(dir);
+    if (error !== '') {
+      throw new AppError('backup.open_folder_failed', `Could not open ${dir}: ${error}`);
+    }
+  }
+
+  private lastScheduled(profileId: string, now: Date): ScheduledBackupFile | null {
+    const dir = this.deps.paths.scheduledBackupsDir(profileId);
+    return existsSync(dir) ? latestScheduledBackup(readdirSync(dir), now) : null;
   }
 
   /**
@@ -159,7 +259,24 @@ export class BackupService {
     destination: string,
     reason: BackupReason,
     onProgress: BackupProgressListener,
-  ): Promise<BackupManifest> {
+  ): Promise<BackupManifest>;
+  /** The same, but resolves to null if `unlessSameAs` already holds the same. */
+  private async write(
+    profileId: string,
+    db: SqliteDatabase,
+    destination: string,
+    reason: BackupReason,
+    onProgress: BackupProgressListener,
+    options: WriteOptions,
+  ): Promise<BackupManifest | null>;
+  private async write(
+    profileId: string,
+    db: SqliteDatabase,
+    destination: string,
+    reason: BackupReason,
+    onProgress: BackupProgressListener,
+    { signal, unlessSameAs = null }: WriteOptions = {},
+  ): Promise<BackupManifest | null> {
     const { paths, now } = this.deps;
     const createdAt = now();
     const profile = this.profileRow(profileId);
@@ -217,6 +334,12 @@ export class BackupService {
         ...(importedBackground && { importedBackground }),
         media: { files: files.length - 1, bytes: mediaBytes, missing },
       };
+      if (unlessSameAs !== null && (await this.holdsTheSame(unlessSameAs, manifest, workDir))) {
+        return null;
+      }
+      signal?.throwIfAborted();
+      // `backups` exists by now (the working folder is in it); a profile's own folder may not.
+      if (reason === 'scheduled') mkdirSync(dirname(destination), { recursive: true });
       const manifestBytes = Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 
       await writeZip(
@@ -224,12 +347,13 @@ export class BackupService {
         { buffers: [{ name: 'manifest.json', bytes: manifestBytes }], files },
         createdAt,
         progressByPercent(onProgress, 'backup'),
+        signal,
       );
       renameSync(partial, destination);
       return manifest;
     } catch (error) {
       rmSync(partial, { force: true });
-      if (error instanceof AppError) throw error;
+      if (error instanceof AppError || signal?.aborted === true) throw error;
       // The handler only logs unexpected errors: this one is expected, but its cause matters.
       console.error('Backup failed', error);
       throw new AppError(
@@ -242,6 +366,37 @@ export class BackupService {
     } finally {
       rmSync(workDir, { recursive: true, force: true });
       releaseSweeps();
+    }
+  }
+
+  /**
+   * Whether the backup at `path` holds what is about to be saved: the same library, byte by
+   * byte (`VACUUM INTO` gives the same file for the same contents), and the same profile name,
+   * preferences and stored files. One that cannot be read does not.
+   */
+  private async holdsTheSame(
+    path: string,
+    manifest: BackupManifest,
+    workDir: string,
+  ): Promise<boolean> {
+    try {
+      const zip = await openZip(path);
+      try {
+        const manifestEntry = zip.entries.find(({ name }) => name === 'manifest.json');
+        const libraryEntry = zip.entries.find(({ name }) => name === 'library.db');
+        if (manifestEntry === undefined || libraryEntry === undefined) return false;
+        const last = parseBackupManifest(await zip.readBuffer(manifestEntry, MANIFEST_MAX_BYTES));
+        if (!isDeepStrictEqual(comparable(last), comparable(manifest))) return false;
+        const snapshotPath = join(workDir, 'library.db');
+        if (libraryEntry.size !== statSync(snapshotPath).size) return false;
+        const lastHash = await zip.extract(libraryEntry, join(workDir, 'last.db'), () => {});
+        return lastHash === (await sha256OfFile(snapshotPath));
+      } finally {
+        zip.close();
+      }
+    } catch (error) {
+      console.warn(`Could not compare with "${path}": a new backup is written`, error);
+      return false;
     }
   }
 
@@ -261,10 +416,7 @@ export class BackupService {
     const { paths, now } = this.deps;
     const name = this.profileRow(profileId).name;
     const date = now();
-    for (let copy = 1; ; copy++) {
-      const destination = join(paths.backupsDir, automaticBackupFileName(name, reason, date, copy));
-      if (!existsSync(destination)) return destination;
-    }
+    return freePath(paths.backupsDir, (copy) => automaticBackupFileName(name, reason, date, copy));
   }
 
   private pruneAutomaticBackups(): void {
@@ -282,6 +434,32 @@ export class BackupService {
     }
     return row;
   }
+}
+
+/** A path in `dir` that is not taken, with the first copy number that is free. */
+function freePath(dir: string, fileName: (copy: number) => string): string {
+  for (let copy = 1; ; copy++) {
+    const path = join(dir, fileName(copy));
+    if (!existsSync(path)) return path;
+  }
+}
+
+function removePartials(dir: string): void {
+  for (const fileName of readdirSync(dir)) {
+    if (fileName.endsWith('.partial')) removeIfPossible(join(dir, fileName));
+  }
+}
+
+/** What tells two backups of a profile apart, besides the library; as plain JSON. */
+function comparable(manifest: ReadManifest | BackupManifest): unknown {
+  const { profile, settings, importedBackground, media } = manifest;
+  return JSON.parse(JSON.stringify({ profile, settings, importedBackground, media }));
+}
+
+async function sha256OfFile(path: string): Promise<string> {
+  const hash = createHash('sha256');
+  await pipeline(createReadStream(path), hash);
+  return hash.digest('hex');
 }
 
 function sizeIfExists(path: string): number | null {

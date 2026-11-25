@@ -1,7 +1,7 @@
 # ADR 0009: Copias de seguridad de los perfiles
 
-- **Estado:** aceptada; implementada en la F11-A (crear copias, copia antes de eliminar un perfil y retención), la F11-B1 (motor de restauración) y la F11-B2 (interfaz de la restauración).
-- **Fecha:** 2026-11-13; restauración, 2026-11-14 y 2026-11-15
+- **Estado:** aceptada; implementada en la F11-A (crear copias, copia antes de eliminar un perfil y retención), la F11-B1 (motor de restauración) y la F11-B2 (interfaz de la restauración). Copias programadas, en la v1.3-A.
+- **Fecha:** 2026-11-13; restauración, 2026-11-14 y 2026-11-15; copias programadas, 2026-11-25
 
 ## Contexto
 
@@ -35,7 +35,7 @@ media/originals/ab/ab12…ef.png
 - **Nunca queda un zip a medias con el nombre bueno:** se escribe en `<destino>.<uuid>.partial` y se renombra al terminar. Si falla, se borra el `.partial` y el error llega como `backup.write_failed`.
 - **Si falla mientras lee archivos**, se cierran antes de devolver el error, porque Windows no deja borrar un archivo abierto.
 - **La carpeta de trabajo** es `backups\.tmp` (la instantánea). Se vacía al terminar y al arrancar la app, junto con los `.partial` que dejara un cierre inesperado.
-- **Una sola copia o restauración a la vez** (`backup.busy`): las dos comparten un `BackupLock`.
+- **Una sola copia o restauración a la vez** (`backup.busy`): las dos comparten un `BackupLock`. Las programadas son la excepción (ver más abajo).
 - **El barrido de la multimedia se suspende mientras se escribe** (`MediaService.holdSweeps`). Si el usuario quita una imagen durante la copia, su archivo no se borra hasta que la copia termina, porque la instantánea lo necesita. El barrido aplazado se hace al final si el perfil sigue abierto.
 
 ### Copia manual
@@ -95,9 +95,21 @@ Al arrancar se borran las carpetas `.restoring-*` que dejara un cierre inesperad
 
 - La ventana de progreso aparece con el primer evento, no mientras «Guardar como» está abierto. No se puede cerrar: Chromium solo deja que una página rechace Esc una vez sin un clic en medio, así que, si se cierra igualmente, se vuelve a abrir.
 
+### Copias programadas (v1.3-A)
+
+- **Las hace la app, un segundo después de abrir el perfil** (`ScheduledBackupService`), si ha pasado el plazo. La preferencia `backupSchedule` (`never`, `daily`, `weekly` o `monthly`; por defecto, semanal) es como las demás y entra en el manifiesto.
+- **El plazo se cuenta en días naturales y hora local**, desde la última copia o, si no hay ninguna, desde la creación del perfil. **La fecha de la última copia es la del nombre de su archivo**: sin migración y sin datos que puedan desfasarse. Las fechas futuras (el reloj se atrasó) no cuentan.
+- **Se guardan en `backups\scheduled\<id>\`**, como `<fecha hora:segundos> - <perfil> - scheduled.zip`, y se conservan las 10 más recientes de cada perfil. Solo se borran archivos con ese nombre, y nunca la copia recién escrita. El formato no cambia, así que se restauran como cualquier otra.
+- **Sin cambios, no se hace.** Se compara la instantánea con el `library.db` de la última copia (SHA-256), además del nombre del perfil, las preferencias y el recuento de archivos del manifiesto. Funciona porque `VACUUM INTO` da el mismo archivo para el mismo contenido. Si la última no se puede leer, se hace otra.
+- **Ceden el paso:** `BackupLock.runInBackground` da a la operación una señal de cancelación (`AbortSignal`). Si el usuario pide copiar, restaurar o eliminar un perfil, `run` la cancela, espera a que cierre sus archivos y borre el `.partial`, y sigue. Se vuelve a intentar al abrir el perfil otra vez.
+- **Cerrar el perfil no la cancela**, porque la base de datos solo se lee al principio; al terminar se mira el perfil que esté abierto. **Cerrar la app la abandona**, y el `.partial` se borra al arrancar.
+- **No envían progreso** (abriría la ventana modal). Si una falla, el evento `backups:scheduled-failed` muestra un aviso que se puede cerrar.
+- **Eliminar el perfil elimina también las suyas**, después de guardar la copia `before-delete`. Si no había biblioteca que copiar, se conservan, porque son lo único que queda.
+
 ## Consecuencias
 
 - La restauración confía en un formato con manifiesto y versión, y en que cada archivo de media se llama como su hash: comprueba cada uno.
 - Durante una restauración conviven en el disco la copia extraída y los datos actuales; si falta espacio, falla sin cambiar nada.
 - Eliminar un perfil grande tarda lo que tarde su copia, con la barra de progreso.
-- La carpeta `backups\` puede crecer hasta 10 copias completas de perfiles; se indica en Ajustes.
+- La carpeta `backups\` puede crecer hasta 10 copias completas de perfiles; se indica en Ajustes. Además, hasta 10 copias programadas de cada perfil.
+- Con una biblioteca muy grande y sesiones muy cortas, la copia programada puede no terminar nunca; Ajustes muestra la fecha de la última.

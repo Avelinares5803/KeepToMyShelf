@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BACKUP_SCHEDULES } from '../core/backups/backup-schedule';
 import { IMAGE_STORAGE_CHOICES } from '../core/media/import-rules';
 
 export const LANGUAGES = ['es', 'en'] as const;
@@ -42,6 +43,8 @@ export const libraryColumnsSchema = z
   .min(LIBRARY_COLUMNS_MIN)
   .max(LIBRARY_COLUMNS_MAX);
 
+export const backupScheduleSchema = z.enum(BACKUP_SCHEDULES);
+
 /** Every user preference, with the schema its stored value must satisfy. */
 export const settingSchemas = {
   language: languageSchema,
@@ -58,6 +61,8 @@ export const settingSchemas = {
   backgroundMaxSide: backgroundMaxSideSchema,
   // The size of the covers in the libraries and collections, chosen from their toolbar.
   libraryColumns: libraryColumnsSchema,
+  // How often a scheduled backup is saved when the profile is opened.
+  backupSchedule: backupScheduleSchema,
 } as const;
 
 export type Language = z.infer<typeof languageSchema>;
@@ -107,6 +112,11 @@ export const LIBRARY_SETTING_DEFAULTS = {
   libraryColumns: 5,
 } as const satisfies Pick<AppSettings, 'libraryColumns'>;
 
+/** Defaults of the backup preferences. */
+export const BACKUP_SETTING_DEFAULTS = {
+  backupSchedule: 'weekly',
+} as const satisfies Pick<AppSettings, 'backupSchedule'>;
+
 /** The dimming preference of each theme as shown (the system's, for "system"). */
 export const BACKGROUND_DIM_KEYS = {
   light: 'backgroundDimLight',
@@ -127,6 +137,7 @@ export const settingUpdateSchema = z.discriminatedUnion('key', [
   z.object({ key: z.literal('backgroundImportChoice'), value: imageImportChoiceSchema }),
   z.object({ key: z.literal('backgroundMaxSide'), value: backgroundMaxSideSchema }),
   z.object({ key: z.literal('libraryColumns'), value: libraryColumnsSchema }),
+  z.object({ key: z.literal('backupSchedule'), value: backupScheduleSchema }),
 ]);
 export type SettingUpdate = z.infer<typeof settingUpdateSchema>;
 

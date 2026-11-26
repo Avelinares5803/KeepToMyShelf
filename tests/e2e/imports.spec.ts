@@ -176,6 +176,91 @@ test('says which item is not valid, and imports nothing', async () => {
   expect(automaticBackups()).toEqual([]);
 });
 
+const csvButton = () => section().getByRole('button', { name: 'Importar desde CSV…', exact: true });
+const duplicatesDialog = () => page.getByRole('dialog', { name: 'Elementos que ya existen' });
+
+/** A CSV file as a spreadsheet would save it, with ";". */
+function writeCsv(name: string, lines: string[]): string {
+  const path = join(inDir, name);
+  writeFileSync(path, `\u{FEFF}${lines.join('\r\n')}\r\n`);
+  return path;
+}
+
+test('imports a CSV file, leaving out the rows chosen among those that exist', async () => {
+  await chooseOpenPath(writeExport('De Bea.json', [game('Okami'), game('Hipó')]));
+  await importButton().click();
+  await confirmDialog().getByRole('button', { name: 'Importar', exact: true }).click();
+  await expect(section().getByRole('status')).toContainText('Importado');
+
+  await chooseOpenPath(
+    writeCsv('juegos.csv', [
+      'Título;Valoración;Colecciones',
+      'OKAMI;4,5;Clásicos',
+      'Hipo;;',
+      'Ico;5;clasicos',
+    ]),
+  );
+  await csvButton().click();
+  await expect(duplicatesDialog()).toContainText('2 filas de «juegos.csv» tienen el título');
+  const okami = duplicatesDialog().getByRole('checkbox', {
+    name: 'Fila 2: OKAMI (ya existe «Okami»)',
+    exact: true,
+  });
+  const hipo = duplicatesDialog().getByRole('checkbox', {
+    name: 'Fila 3: Hipo (ya existe «Hipó»)',
+    exact: true,
+  });
+  await expect(okami).toBeChecked();
+  await expect(hipo).toBeChecked();
+  await expect(
+    duplicatesDialog().getByRole('button', { name: 'Cancelar', exact: true }),
+  ).toBeFocused();
+
+  // "Hipo" is another item than "Hipó": it is imported.
+  await hipo.uncheck();
+  await expect(duplicatesDialog()).toContainText(
+    'Filas que se omitirán: 1. Filas que se importarán: 2.',
+  );
+  await duplicatesDialog().getByRole('button', { name: 'Continuar', exact: true }).click();
+  await expect(confirmDialog()).toContainText('¿Importar «juegos.csv» en el perfil «Ana»?');
+  await expect(confirmDialog()).toContainText('Elementos del CSVVideojuegos');
+  await expect(confirmDialog()).toContainText('Elementos nuevos2');
+  await expect(confirmDialog()).toContainText('Elementos que ya existen (se omiten)1');
+  await expect(confirmDialog()).toContainText('Colecciones que reciben elementos1');
+  await confirmDialog().getByRole('button', { name: 'Importar', exact: true }).click();
+  await expect(section().getByRole('status')).toContainText('Importado: «juegos.csv».');
+  expect(automaticBackups()).toHaveLength(2);
+
+  await settings().getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Videojuegos (4)', exact: true })).toBeVisible();
+  await expect(itemCard('Hipo')).toBeVisible();
+  await expect(itemCard('Ico')).toBeVisible();
+});
+
+test('lists the errors of a CSV file by row and column, and imports nothing', async () => {
+  await chooseOpenPath(
+    writeCsv('mal.csv', ['Título;Valoración;Fin', 'Okami;4,5;2021', 'Ico;7;ayer']),
+  );
+  await csvButton().click();
+  const alert = section().getByRole('alert');
+  await expect(alert).toContainText(
+    'No se ha importado nada: «mal.csv» tiene 2 errores. Corrígelos y vuelve a intentarlo.',
+  );
+  await expect(alert.getByRole('listitem')).toHaveText([
+    'Fila 3, «Valoración»: La valoración va de 0,5 a 5 estrellas, en medias estrellas.',
+    'Fila 3, «Fin»: Escribe la fecha como AAAA, AAAA-MM o AAAA-MM-DD, o «Indeterminada».',
+  ]);
+
+  // A file of games chosen as movies says so.
+  await section().getByLabel('Elementos del CSV').selectOption('Películas');
+  await chooseOpenPath(writeCsv('juegos.csv', ['Título;Horas jugadas', 'Okami;45:30']));
+  await csvButton().click();
+  await expect(section().getByRole('alert').getByRole('listitem')).toHaveText([
+    'Cabeceras: Son las de un CSV de videojuegos. Elige «Videojuegos» y vuelve a intentarlo.',
+  ]);
+  expect(automaticBackups()).toEqual([]);
+});
+
 test('says when a file is not a library export', async () => {
   const path = join(inDir, 'otra cosa.json');
   writeFileSync(path, '{"hola": 1}');

@@ -87,7 +87,9 @@ function existing(
       ]),
     ),
     collections: new Map((parts.collections ?? []).map(([id, members]) => [id, new Set(members)])),
-    collectionNameKeys: new Set((parts.collectionNames ?? []).map(collectionNameKey)),
+    collectionsByNameKey: new Map(
+      (parts.collectionNames ?? []).map((name) => [collectionNameKey(name), uuid()]),
+    ),
   };
 }
 

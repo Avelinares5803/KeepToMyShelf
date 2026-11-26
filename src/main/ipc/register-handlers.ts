@@ -20,6 +20,7 @@ import {
   chooseBackupToRestore,
   chooseDocumentFiles,
   chooseExportDestination,
+  chooseCsvToImport,
   chooseImageFiles,
   chooseLibraryToImport,
 } from '../file-dialogs';
@@ -329,6 +330,19 @@ export function registerIpcHandlers({
         const path = await chooseLibraryToImport(filterName);
         return path === null ? null : imports.preview(token, path);
       },
+    ),
+    previewCsvImport: createAsyncHandler(
+      ipcInputSchemas.previewCsvImport,
+      async ({ token, kind, filterName }) => {
+        // A stale session is reported before the dialog opens, not after the user chose.
+        sessions.require(token);
+        const path = await chooseCsvToImport(filterName);
+        return path === null ? null : imports.previewCsv(token, kind, path);
+      },
+    ),
+    chooseCsvImportRows: createHandler(
+      ipcInputSchemas.chooseCsvImportRows,
+      ({ token, importId, skipRows }) => imports.chooseCsvRows(token, importId, skipRows),
     ),
     // Takes time: an automatic backup of the profile is written first.
     importLibrary: createAsyncHandler(ipcInputSchemas.importLibrary, ({ token, importId }) =>

@@ -2122,6 +2122,24 @@ h1 {
   justify-content: flex-end;
 }
 
+/* Why a CSV file cannot be imported: one line per error, scrolled when there are many. */
+.import-errors {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.import-errors__list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: min(16rem, 40vh);
+  margin: 0;
+  padding-left: 1.25rem;
+  overflow-y: auto;
+  color: var(--color-danger);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
 /* Its padding is always there, so the slider never moves under the pointer when it shows
    alone while held. */
 .setting-row--slider {

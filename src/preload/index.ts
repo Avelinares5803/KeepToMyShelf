@@ -130,6 +130,8 @@ const api: KeepToMyShelfApi = {
   },
   imports: {
     preview: invoke(IpcChannels.previewLibraryImport),
+    previewCsv: invoke(IpcChannels.previewCsvImport),
+    chooseCsvRows: invoke(IpcChannels.chooseCsvImportRows),
     confirm: invoke(IpcChannels.importLibrary),
   },
 };

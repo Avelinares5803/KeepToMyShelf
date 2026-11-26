@@ -38,7 +38,8 @@ export interface ExistingLibrary {
   readonly catalogEntries: ReadonlyMap<string, GenreScope | null>;
   /** The UUIDs of the items of each collection, by the collection's UUID. */
   readonly collections: ReadonlyMap<string, ReadonlySet<string>>;
-  readonly collectionNameKeys: ReadonlySet<string>;
+  /** The UUID of each collection, by `collectionNameKey` of its name. */
+  readonly collectionsByNameKey: ReadonlyMap<string, string>;
 }
 
 export interface PlannedItem {
@@ -249,7 +250,7 @@ function checkItem(item: ExportedItem, position: number): ValidItemDraft {
 }
 
 /** The exported item as the item form would send it; dates are read here. */
-function toItemDraft(item: ExportedItem): ItemDraft {
+export function toItemDraft(item: ExportedItem): ItemDraft {
   const named = (name: string): EntryRef => ({ kind: 'new', name });
   return {
     title: item.title ?? '',
@@ -302,7 +303,7 @@ function planCollections(
   counts: Pick<ImportCounts, 'collections' | 'updatedCollections' | 'renamedCollections'>;
 } {
   const known = new Set([...existing.itemUuids, ...items.map((item) => item.uuid)]);
-  const takenNames = new Set(existing.collectionNameKeys);
+  const takenNames = new Set(existing.collectionsByNameKey.keys());
   const seen = new Set<string>();
   const collections: PlannedCollection[] = [];
   const counts = { collections: 0, updatedCollections: 0, renamedCollections: 0 };

@@ -8,7 +8,12 @@ import { BackupLock } from '../../../src/main/application/backup-lock';
 import { ImportService } from '../../../src/main/application/import-service';
 import type { ItemKind } from '../../../src/shared/content';
 import type { LibraryExportFile } from '../../../src/shared/exports';
-import type { ImportCheck, ImportPreview } from '../../../src/shared/imports';
+import type {
+  CsvImportCheck,
+  CsvImportPreview,
+  ImportCheck,
+  ImportPreview,
+} from '../../../src/shared/imports';
 import { createProfileFixture, type ProfileFixture } from '../../support/profile-fixture';
 
 const named = (name: string) => ({ kind: 'new' as const, name });
@@ -384,5 +389,150 @@ describe('ImportService', () => {
     const { path } = await exportOpen(source);
     fx.sessions.close(source);
     expect((await errorOf(() => fx.imports.preview(source, path))).code).toBe('session.stale');
+  });
+
+  describe('from CSV', () => {
+    /** Exports the items of a kind of the open profile to CSV and returns the file's path. */
+    async function exportCsv(session: string, kind: ItemKind, name: string, separator = ';') {
+      const path = join(fx.scratchDir, name);
+      await fx.exports.exportForSession(
+        session,
+        { format: 'csv', kind, separator: separator as ';' | ',' },
+        path,
+      );
+      return path;
+    }
+
+    function writeCsv(lines: string[], name = 'hoja.csv', encoding: BufferEncoding = 'utf8') {
+      const path = join(fx.scratchDir, name);
+      writeFileSync(path, Buffer.from(lines.join('\r\n'), encoding));
+      return path;
+    }
+
+    function validCsv(check: CsvImportCheck): CsvImportPreview {
+      if (!check.valid) return expect.fail(`Invalid file: ${JSON.stringify(check.errors)}`);
+      return check.preview;
+    }
+
+    const openBea = () => {
+      token = fx.sessions.open(
+        fx.profiles.create({ name: 'Bea', language: 'es' }).profile.id,
+      ).token;
+    };
+
+    it('brings the items of a kind: exporting both gives the same', async () => {
+      add('game', FULL_GAME);
+      add('game', {});
+      add('movie', { title: 'Alien' });
+      const okami = fx.items.list(source, 'game').find(({ title }) => title === 'Okami')!.id;
+      const favorites = fx.collections.create(source, { name: 'Favoritas' });
+      fx.collections.changeMemberships(source, {
+        add: [{ collectionId: favorites.id, itemId: okami }],
+        remove: [],
+      });
+      const path = await exportCsv(source, 'game', 'juegos.csv');
+      openBea();
+
+      const preview = validCsv(await fx.imports.previewCsv(token, 'game', path));
+      const counts = await fx.imports.confirm(token, preview.importId, () => {});
+
+      expect(preview).toMatchObject({ fileName: 'juegos.csv', kind: 'game', rows: 2 });
+      expect(counts).toEqual(preview.counts);
+      expect(counts).toMatchObject({ items: 2, collections: 1, existingItems: 0 });
+      const again = readFileSync(await exportCsv(token, 'game', 'otra.csv'), 'utf8');
+      expect(again).toBe(readFileSync(path, 'utf8'));
+      expect(fx.items.list(token, 'movie')).toEqual([]);
+    });
+
+    it('leaves out the rows whose title exists, unless chosen otherwise', async () => {
+      add('game', { title: 'Okami' });
+      add('game', { title: 'Hipó' });
+      add('game', { title: 'Ico' });
+      const path = await exportCsv(source, 'game', 'juegos.csv');
+      openBea();
+      add('game', { title: 'OKAMI' }, token);
+      const trashed = add('game', { title: 'Hipo' }, token);
+      fx.items.moveToTrash(token, trashed);
+
+      const preview = validCsv(await fx.imports.previewCsv(token, 'game', path));
+      expect(preview.duplicates).toEqual([
+        { row: 2, title: 'Hipó', existingTitle: 'Hipo' },
+        { row: 4, title: 'Okami', existingTitle: 'OKAMI' },
+      ]);
+      expect(preview.counts).toMatchObject({ items: 1, existingItems: 2 });
+
+      // "Hipó" is another item: only "Okami" is left out.
+      const chosen = fx.imports.chooseCsvRows(token, preview.importId, [4]);
+      expect(chosen).toMatchObject({ items: 2, existingItems: 1 });
+      const counts = await fx.imports.confirm(token, preview.importId, () => {});
+
+      expect(counts).toEqual(chosen);
+      expect(
+        fx.items
+          .list(token, 'game')
+          .map(({ title }) => title)
+          .sort(),
+      ).toEqual(['Hipó', 'Ico', 'OKAMI']);
+    });
+
+    it('adds items to the collections that exist by name, as the app compares them', async () => {
+      const zen = fx.collections.create(source, { name: 'Zen' });
+      const path = writeCsv(['Título;Colecciones', 'Okami;zén | Nueva', 'Ico;nueva']);
+
+      const preview = validCsv(await fx.imports.previewCsv(source, 'game', path));
+      await fx.imports.confirm(source, preview.importId, () => {});
+
+      expect(preview.counts).toMatchObject({ collections: 1, updatedCollections: 1 });
+      expect(fx.collections.memberIds(source, zen.id)).toHaveLength(1);
+      const nueva = fx.collections.list(source).find(({ name }) => name === 'Nueva')!;
+      expect(fx.collections.memberIds(source, nueva.id)).toHaveLength(2);
+    });
+
+    it('reads a file that Excel saved in Windows-1252', async () => {
+      const path = writeCsv(['Título;Estado', 'Pokémon Ñ;Terminado'], 'excel.csv', 'latin1');
+      const preview = validCsv(await fx.imports.previewCsv(source, 'game', path));
+      await fx.imports.confirm(source, preview.importId, () => {});
+      expect(fx.items.list(source, 'game')).toEqual([
+        expect.objectContaining({ title: 'Pokémon Ñ' }),
+      ]);
+    });
+
+    it('tells the errors, at most 100, and imports nothing', async () => {
+      const rows = Array.from({ length: 150 }, (_, index) => `Juego ${index};9`);
+      const check = await fx.imports.previewCsv(
+        source,
+        'game',
+        writeCsv(['Título;Valoración', ...rows]),
+      );
+
+      expect(check).toMatchObject({ valid: false, fileName: 'hoja.csv', errorCount: 150 });
+      if (check.valid) return;
+      expect(check.errors).toHaveLength(100);
+      expect(check.errors[0]).toEqual({
+        row: 2,
+        column: 'Valoración',
+        code: 'import.csv_invalid_rating',
+      });
+      await expect(
+        fx.imports.confirm(source, '00000000-0000-4000-8000-000000000000', () => {}),
+      ).rejects.toMatchObject({ code: 'import.expired' });
+      expect(fx.items.list(source, 'game')).toEqual([]);
+    });
+
+    it('refuses a file it cannot read as CSV', async () => {
+      const error = await errorOf(() =>
+        fx.imports.previewCsv(source, 'game', writeCsv(['Título', '"Okami'])),
+      );
+      expect(error.code).toBe('import.csv_unclosed_quote');
+    });
+
+    it('only chooses rows of the CSV file previewed', async () => {
+      add('game', { title: 'Okami' });
+      const { path } = await exportOpen(source);
+      const preview = validPreview(await fx.imports.preview(source, path));
+      expect(
+        (await errorOf(async () => fx.imports.chooseCsvRows(source, preview.importId, []))).code,
+      ).toBe('import.expired');
+    });
   });
 });

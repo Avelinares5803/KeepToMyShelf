@@ -125,7 +125,7 @@ Una copia es un `.zip` con una instantánea de la base de datos del perfil (`VAC
 
 La biblioteca se exporta a un JSON versionado (elementos, catálogos y colecciones, por UUID y por nombre, sin ids internos) o, por tipo, a un CSV para hojas de cálculo. Las columnas del CSV y la protección contra fórmulas están en `core/export/`. Detalles: [ADR 0012](adr/0012-export.md).
 
-Un JSON exportado se importa en el perfil abierto solo añadiendo: los elementos y las colecciones se reconocen por su UUID, y los valores de catálogo por su nombre exacto. `core/import/` decide qué se añade, con las mismas reglas que el formulario, y el proceso principal lo escribe en una sola transacción, después de una copia automática. Detalles: [ADR 0013](adr/0013-import.md).
+Un JSON exportado se importa en el perfil abierto solo añadiendo: los elementos y las colecciones se reconocen por su UUID, y los valores de catálogo por su nombre exacto. `core/import/` decide qué se añade, con las mismas reglas que el formulario, y el proceso principal lo escribe en una sola transacción, después de una copia automática. Un CSV con las columnas de la exportación se lee en `core/import/` (`csv-parse.ts` y `csv-import.ts`), que convierte cada fila en un elemento con UUID nuevo y lo añade con las mismas reglas que el JSON. Detalles: [ADR 0013](adr/0013-import.md).
 
 ## Datos en disco
 

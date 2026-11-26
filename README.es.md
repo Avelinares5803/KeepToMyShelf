@@ -15,7 +15,7 @@ Aplicación de escritorio para organizar tu colección de **videojuegos, pelícu
 - **Imágenes gestionadas por la app:** copias optimizadas (WebP), con la opción de conservar el original, miniaturas y sin duplicados.
 - **Español e inglés**, tema claro y oscuro, y fondos con desenfoque y atenuación ajustables.
 - **Copias de seguridad:** guarda un perfil en un `.zip` y restáuralo como perfil nuevo o sobre el perfil abierto. Las copias programadas se guardan solas.
-- **Exportar e importar:** saca los datos de la biblioteca a JSON, o cada tipo a CSV para hojas de cálculo, y trae a un perfil una biblioteca exportada en JSON.
+- **Exportar e importar:** saca los datos de la biblioteca a JSON, o cada tipo a CSV para hojas de cálculo, y trae a un perfil una biblioteca exportada en JSON o los elementos de un CSV.
 - **Papelera:** los elementos eliminados se pueden recuperar.
 
 ## Descarga e instalación
@@ -42,7 +42,7 @@ KeepToMyShelf funciona en **Windows 10 y 11** (64 bits). Descárgala en la pági
 - **Copias de seguridad:** en **Ajustes → Copias de seguridad**, «Crear copia de seguridad…» guarda el perfil abierto en un `.zip`. Guárdala en otro sitio (otro disco, la nube…). Para recuperarla, usa «Restaurar copia de seguridad…» en la pantalla de perfiles (como perfil nuevo) o «Restaurar copia sobre este perfil…» en Ajustes.
 - **Copias programadas:** en **Ajustes → Copias de seguridad**, cada perfil elige nunca, cada día, cada semana (por defecto) o cada mes. La app guarda una en segundo plano al abrir el perfil, si toca y hay cambios, y conserva las 10 últimas de cada perfil. Incluyen las imágenes y los documentos, así que pueden ocupar mucho espacio, y se eliminan con el perfil.
 - **Exportar:** en **Ajustes → Exportar**, se guardan los datos de la biblioteca en un JSON (con la papelera) o los elementos de un tipo en un CSV (sin ella). No incluye imágenes, documentos ni ajustes, así que no sustituye a una copia de seguridad.
-- **Importar:** en **Ajustes → Importar**, «Importar desde JSON…» añade al perfil abierto una biblioteca exportada, de ese perfil o de otro. Antes muestra qué añadirá y pide confirmación. Solo añade lo que falta: los elementos y las colecciones que ya existen no se modifican.
+- **Importar:** en **Ajustes → Importar**, «Importar desde JSON…» añade al perfil abierto una biblioteca exportada, de ese perfil o de otro. Antes muestra qué añadirá y pide confirmación. Solo añade lo que falta: los elementos y las colecciones que ya existen no se modifican. «Importar desde CSV…» añade los elementos del tipo elegido desde un CSV con las columnas de la exportación (solo «Título» es obligatoria). Si hay errores, se indican por fila y columna; las filas cuyo título ya existe se muestran, y por defecto se omiten.
 - **Copias automáticas:** la app guarda una antes de eliminar un perfil, de restaurar una copia sobre él y de importar en él (conserva las 10 últimas). También copia cada base de datos antes de actualizar su formato.
 - **Desinstalar nunca borra tus datos.** Si quieres borrarlos también, elimina la carpeta de arriba después de desinstalar.
 

@@ -125,7 +125,7 @@ A backup is a `.zip` with a snapshot of the profile's database (`VACUUM INTO`), 
 
 The library is exported to a versioned JSON file (items, catalogs and collections, by UUID and by name, without internal ids) or, by kind, to a CSV file for spreadsheets. The CSV columns and the guard against formulas are in `core/export/`. Details: [ADR 0012](adr/0012-export.md).
 
-An exported JSON file is imported into the open profile by adding only: items and collections are recognized by their UUID, and catalog values by their exact name. `core/import/` decides what is added, with the same rules as the item form, and the main process writes it in a single transaction, after an automatic backup. Details: [ADR 0013](adr/0013-import.md).
+An exported JSON file is imported into the open profile by adding only: items and collections are recognized by their UUID, and catalog values by their exact name. `core/import/` decides what is added, with the same rules as the item form, and the main process writes it in a single transaction, after an automatic backup. A CSV file with the columns of the export is read in `core/import/` (`csv-parse.ts` and `csv-import.ts`), which turns each row into an item with a new UUID and adds it with the same rules as the JSON file. Details: [ADR 0013](adr/0013-import.md).
 
 ## Data on disk
 

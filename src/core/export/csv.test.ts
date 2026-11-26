@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseCsv } from '../../../tests/support/csv';
-import { formatDecimal, guardFormula, joinList, toCsv } from './csv';
+import { formatDecimal, guardFormula, joinList, splitList, toCsv, unguardFormula } from './csv';
 
 describe('toCsv', () => {
   it('starts with the byte order mark and ends every row with CRLF', () => {
@@ -39,11 +39,41 @@ describe('guardFormula', () => {
   });
 });
 
+describe('unguardFormula', () => {
+  it.each(['=1', '+1', '-1', '@x', '\tx', '\rx', '＝1', "'=1", "''=1", '', 'a=b', "'Tis", "'"])(
+    'gives back %j as it was before guardFormula',
+    (text) => {
+      expect(unguardFormula(guardFormula(text))).toBe(text);
+    },
+  );
+
+  it('leaves alone an apostrophe that guards nothing', () => {
+    expect(unguardFormula("'Tis")).toBe("'Tis");
+    expect(unguardFormula("'1")).toBe("'1");
+  });
+});
+
 describe('joinList', () => {
   it('joins values and escapes what separates them', () => {
     expect(joinList(['PC', 'Switch'])).toBe('PC | Switch');
     expect(joinList(['a|b', 'c\\d'])).toBe('a\\|b | c\\\\d');
     expect(joinList([])).toBe('');
+  });
+});
+
+describe('splitList', () => {
+  it.each([[['PC', 'Switch']], [['a|b', 'c\\d', '\\|']], [['Uno']], [[]]])(
+    'gives back the values of joinList(%j)',
+    (values) => {
+      expect(splitList(joinList(values))).toEqual(values);
+    },
+  );
+
+  it('accepts lists typed by hand', () => {
+    expect(splitList('PC|Switch')).toEqual(['PC', 'Switch']);
+    expect(splitList(' PC |  | Switch ')).toEqual(['PC', 'Switch']);
+    expect(splitList('C:\\Juegos')).toEqual(['C:\\Juegos']);
+    expect(splitList('   ')).toEqual([]);
   });
 });
 

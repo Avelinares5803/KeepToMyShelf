@@ -18,9 +18,41 @@ export function guardFormula(text: string): string {
   return LOOKS_LIKE_FORMULA.test(text) ? `'${text}` : text;
 }
 
+const GUARDED_FORMULA = /^'+[=+\-@\t\r＝＋－＠]/u;
+
+/** Undoes `guardFormula`: removes the apostrophe it put, and leaves any other text as it is. */
+export function unguardFormula(text: string): string {
+  return GUARDED_FORMULA.test(text) ? text.slice(1) : text;
+}
+
 /** Several values in one cell: "PC | Switch". A "|" or "\" inside a value gets a "\" before. */
 export function joinList(values: readonly string[]): string {
   return values.map((value) => value.replace(/[\\|]/g, '\\$&')).join(' | ');
+}
+
+/**
+ * Undoes `joinList`: splits a cell at each "|" without a "\" before, and trims each value.
+ * Blank values are dropped, so "PC|Switch" and "PC |  | Switch" also work.
+ */
+export function splitList(cell: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  for (let index = 0; index < cell.length; index++) {
+    const character = cell[index]!;
+    const next = cell[index + 1];
+    // Only the escapes joinList writes: any other "\" is part of the value.
+    if (character === '\\' && (next === '\\' || next === '|')) {
+      current += next;
+      index++;
+    } else if (character === '|') {
+      values.push(current);
+      current = '';
+    } else {
+      current += character;
+    }
+  }
+  values.push(current);
+  return values.map((value) => value.trim()).filter((value) => value.length > 0);
 }
 
 /** 9 half stars are "4,5" with ";" and "4.5" with ",", as the regions that use each one. */

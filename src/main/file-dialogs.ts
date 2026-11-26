@@ -68,6 +68,12 @@ export async function chooseLibraryToImport(filterName: string): Promise<string 
   return paths?.[0] ?? null;
 }
 
+/** Like `chooseLibraryToImport`, for a CSV file with the items of one kind. */
+export async function chooseCsvToImport(filterName: string): Promise<string | null> {
+  const paths = await chooseFiles(filterName, ['csv'], false);
+  return paths?.[0] ?? null;
+}
+
 async function chooseFiles(
   filterName: string,
   extensions: string[],

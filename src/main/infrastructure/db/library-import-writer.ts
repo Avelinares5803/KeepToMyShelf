@@ -32,10 +32,12 @@ export function readExistingLibrary(db: SqliteDatabase): ExistingLibrary {
     scope: GenreScope | null;
   }[];
 
+  const collectionRows = db.prepare('SELECT uuid, name_key FROM collection').all() as {
+    uuid: string;
+    name_key: string;
+  }[];
   const collections = new Map<string, Set<string>>();
-  for (const { uuid } of db.prepare('SELECT uuid FROM collection').all() as { uuid: string }[]) {
-    collections.set(uuid, new Set());
-  }
+  for (const { uuid } of collectionRows) collections.set(uuid, new Set());
   const members = db
     .prepare(
       `SELECT c.uuid AS collection, item.uuid AS item FROM collection_item ci
@@ -52,10 +54,22 @@ export function readExistingLibrary(db: SqliteDatabase): ExistingLibrary {
       entries.map(({ catalog, name, scope }) => [catalogEntryKey(catalog, name), scope]),
     ),
     collections,
-    collectionNameKeys: new Set(
-      db.prepare('SELECT name_key FROM collection').pluck().all() as string[],
-    ),
+    collectionsByNameKey: new Map(collectionRows.map(({ uuid, name_key }) => [name_key, uuid])),
   };
+}
+
+/**
+ * The titles of the items of `kind` (also those in the trash), by their search key: the ones
+ * a CSV row would duplicate. Untitled items have none.
+ */
+export function readItemTitles(db: SqliteDatabase, kind: ItemKind): Map<string, string> {
+  const rows = db
+    .prepare('SELECT title, title_norm FROM item WHERE kind = ? AND title IS NOT NULL ORDER BY id')
+    .all(kind) as { title: string; title_norm: string }[];
+  const titles = new Map<string, string>();
+  for (const { title, title_norm } of rows)
+    if (!titles.has(title_norm)) titles.set(title_norm, title);
+  return titles;
 }
 
 /**

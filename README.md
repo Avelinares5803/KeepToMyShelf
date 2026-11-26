@@ -15,7 +15,7 @@ A desktop app to organize your collection of **video games, movies and TV series
 - **Images handled for you:** optimized copies (WebP), optionally keeping the original, thumbnails and no duplicates.
 - **Spanish and English**, light and dark theme, and backgrounds with adjustable blur and dimming.
 - **Backups:** save a profile to a `.zip` and restore it as a new profile or over the open one. Scheduled backups are saved on their own.
-- **Export and import:** take the data of the library out to JSON, or each kind to CSV for spreadsheets, and bring a library exported to JSON into a profile.
+- **Export and import:** take the data of the library out to JSON, or each kind to CSV for spreadsheets, and bring into a profile a library exported to JSON or the items of a CSV file.
 - **Trash:** deleted items can be restored.
 
 ## Download and install
@@ -42,7 +42,7 @@ KeepToMyShelf runs on **Windows 10 and 11** (64-bit). Download it from the [Rele
 - **Backups:** in **Settings → Backups**, "Create backup…" saves the open profile to a `.zip`. Keep it somewhere else (another disk, the cloud…). To restore it, use "Restore backup…" on the profile screen (as a new profile) or "Restore backup over this profile…" in Settings.
 - **Scheduled backups:** in **Settings → Backups**, each profile chooses never, every day, every week (by default) or every month. The app saves one in the background when you open the profile, if one is due and something has changed, and keeps the last 10 of each profile. They include the images and documents, so they can take up a lot of space, and they are deleted with the profile.
 - **Export:** **Settings → Export** saves the data of the library to a JSON file (with the trash) or the items of one kind to a CSV file (without it). It does not include images, documents or settings, so it does not replace a backup.
-- **Import:** in **Settings → Import**, "Import from JSON…" adds to the open profile a library exported from it or from another profile. It first shows what it will add and asks for confirmation. It only adds what is missing: items and collections that already exist are not changed.
+- **Import:** in **Settings → Import**, "Import from JSON…" adds to the open profile a library exported from it or from another profile. It first shows what it will add and asks for confirmation. It only adds what is missing: items and collections that already exist are not changed. "Import from CSV…" adds the items of the chosen kind from a CSV file with the columns of the export (only "Title" is required). Errors are listed by row and column; rows whose title already exists are shown, and left out by default.
 - **Automatic backups:** the app saves one before deleting a profile, restoring over one or importing into one (it keeps the last 10). It also backs up each database before updating its format.
 - **Uninstalling never deletes your data.** To remove it too, delete the folder above after uninstalling.
 

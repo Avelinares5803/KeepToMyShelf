@@ -337,6 +337,17 @@ export const ipcInputSchemas = {
     token: sessionTokenSchema,
     filterName: z.string().min(1).max(100),
   }),
+  previewCsvImport: z.object({
+    token: sessionTokenSchema,
+    kind: itemKindSchema,
+    filterName: z.string().min(1).max(100),
+  }),
+  chooseCsvImportRows: z.object({
+    token: sessionTokenSchema,
+    importId: z.uuid(),
+    // Rows of the spreadsheet; the header is row 1.
+    skipRows: z.array(z.number().int().min(2)).max(1_000_000),
+  }),
   importLibrary: z.object({ token: sessionTokenSchema, importId: z.uuid() }),
 } as const;
 

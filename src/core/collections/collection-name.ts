@@ -35,3 +35,25 @@ export function normalizeCollectionName(raw: string): string {
 export function collectionNameKey(name: string): string {
   return normalizeForSearch(name);
 }
+
+/**
+ * `desired` if no collection uses that name yet (by `collectionNameKey`); otherwise the name
+ * with the lowest free suffix, "Favoritas (1)", "Favoritas (2)"… shortened if needed so it
+ * still fits in 100 characters.
+ */
+export function uniqueCollectionName(
+  desired: string,
+  takenKeys: ReadonlySet<string>,
+): { readonly name: string; readonly renamed: boolean } {
+  if (!takenKeys.has(collectionNameKey(desired))) return { name: desired, renamed: false };
+  const characters = [...desired];
+  for (let number = 1; ; number++) {
+    const suffix = ` (${number})`;
+    const base = characters
+      .slice(0, COLLECTION_NAME_MAX_LENGTH - suffix.length)
+      .join('')
+      .trimEnd();
+    const name = `${base}${suffix}`;
+    if (!takenKeys.has(collectionNameKey(name))) return { name, renamed: true };
+  }
+}

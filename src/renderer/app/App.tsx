@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageStorageChoice } from '../../core/media/import-rules';
 import type { ScheduledBackupFailure } from '../../shared/backups';
@@ -8,6 +8,7 @@ import { BACKGROUND_DIM_KEYS, type AppSettings, type SettingUpdate } from '../..
 import { AppBackground } from '../features/backgrounds/AppBackground';
 import type { BackupSettingsProps } from '../features/backups/BackupSettings';
 import { backgroundSource } from '../features/backgrounds/presets';
+import type { ImportSettingsProps } from '../features/imports/ImportSettings';
 import { CatalogsScreen } from '../features/catalogs/CatalogsScreen';
 import {
   collectionViewOf,
@@ -202,6 +203,16 @@ export function App({ initialSettings }: AppProps) {
     onSessionLost: async () => {
       setSession(unwrap(await window.api.session.open({ profileId: session.profile.id })));
     },
+  };
+
+  // Importing only adds to the library: the screen shown is loaded again (a new key mounts it
+  // anew), keeping where the user is. The editor, if open, is asked about first.
+  const [importRevision, setImportRevision] = useState(0);
+  const imports: ImportSettingsProps | null = session && {
+    token: session.token,
+    profileName: session.profile.name,
+    beforeImport: leaveEditor,
+    onImported: () => setImportRevision((revision) => revision + 1),
   };
 
   const leaveProfile = () =>
@@ -445,7 +456,9 @@ export function App({ initialSettings }: AppProps) {
       )}
       <main className="app-main" id={SCROLL_AREA_ID}>
         {session ? (
-          renderScreen(currentScreen(navigation), session.token)
+          <Fragment key={importRevision}>
+            {renderScreen(currentScreen(navigation), session.token)}
+          </Fragment>
         ) : (
           <ProfileSelectionScreen
             // Outside a profile, the preferences in force are the global ones.
@@ -468,6 +481,7 @@ export function App({ initialSettings }: AppProps) {
           profileName={session?.profile.name ?? null}
           background={background}
           backups={backups}
+          imports={imports}
           onChange={(update) => void updateSetting(update)}
           onClose={() => setSettingsOpen(false)}
         />

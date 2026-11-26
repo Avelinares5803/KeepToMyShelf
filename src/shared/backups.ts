@@ -13,7 +13,8 @@ export const BACKUP_FORMAT = 'keeptomyshelf-backup';
 export const BACKUP_FORMAT_VERSION = 1;
 
 /** Why a backup was made. Automatic backups go to the app's own `backups` folder. */
-export type BackupReason = 'manual' | 'before-delete' | 'before-restore' | 'scheduled';
+export type BackupReason =
+  'manual' | 'before-delete' | 'before-restore' | 'before-import' | 'scheduled';
 
 export interface BackupManifest {
   readonly format: typeof BACKUP_FORMAT;

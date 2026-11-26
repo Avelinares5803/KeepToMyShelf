@@ -8,6 +8,7 @@ import type { BackupService } from '../application/backup-service';
 import type { CatalogService } from '../application/catalog-service';
 import type { CollectionService } from '../application/collection-service';
 import type { ExportService } from '../application/export-service';
+import type { ImportService } from '../application/import-service';
 import type { ItemService } from '../application/item-service';
 import type { MediaService } from '../application/media-service';
 import type { ProfileService } from '../application/profile-service';
@@ -20,6 +21,7 @@ import {
   chooseDocumentFiles,
   chooseExportDestination,
   chooseImageFiles,
+  chooseLibraryToImport,
 } from '../file-dialogs';
 import { isTrustedSender } from '../security';
 import { appPageUrl } from '../window';
@@ -37,6 +39,7 @@ export interface Services {
   readonly backups: BackupService;
   readonly restores: RestoreService;
   readonly exports: ExportService;
+  readonly imports: ImportService;
 }
 
 /** Tells the UI that a scheduled backup failed; a message sent without being asked. */
@@ -59,6 +62,7 @@ export function registerIpcHandlers({
   backups,
   restores,
   exports,
+  imports,
 }: Services): void {
   // The app has a single window; webContents is the page it shows, which receives the event.
   const sendBackupProgress = (progress: BackupProgress) => {
@@ -316,6 +320,19 @@ export function registerIpcHandlers({
         );
         return destination === null ? null : exports.exportForSession(token, target, destination);
       },
+    ),
+    previewLibraryImport: createAsyncHandler(
+      ipcInputSchemas.previewLibraryImport,
+      async ({ token, filterName }) => {
+        // A stale session is reported before the dialog opens, not after the user chose.
+        sessions.require(token);
+        const path = await chooseLibraryToImport(filterName);
+        return path === null ? null : imports.preview(token, path);
+      },
+    ),
+    // Takes time: an automatic backup of the profile is written first.
+    importLibrary: createAsyncHandler(ipcInputSchemas.importLibrary, ({ token, importId }) =>
+      imports.confirm(token, importId, sendBackupProgress),
     ),
   };
 

@@ -53,7 +53,7 @@ media/originals/ab/ab12…ef.png
 
 ### Retención
 
-- **Copias automáticas** (`before-delete` y `before-restore`): se conservan las **10 más recientes** de todos los perfiles juntos. Solo se borran archivos con el nombre de una copia automática; una copia manual guardada en esa carpeta no se toca nunca.
+- **Copias automáticas** (`before-delete`, `before-restore` y, desde la v1.3-C, `before-import`): se conservan las **10 más recientes** de todos los perfiles juntos. Solo se borran archivos con el nombre de una copia automática; una copia manual guardada en esa carpeta no se toca nunca.
 - **Copias previas a migrar:** se conservan las **5 más recientes de cada base de datos**, por la fecha de su nombre (no por la versión: v10 es posterior a v9). Las de `app.db` están también en `backups\`, junto a las automáticas, y se distinguen por el nombre.
 - Un archivo que Windows no deja borrar se queda para la vez siguiente, con un aviso en la consola: la limpieza nunca impide abrir la base de datos ni terminar una copia.
 

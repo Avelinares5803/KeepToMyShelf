@@ -516,7 +516,7 @@
     "saved": "Backup saved: “{{fileName}}”.",
     "missing_one": "1 file of the library was not found, so it was not included.",
     "missing_other": "{{count}} files of the library were not found, so they were not included.",
-    "automaticHint": "An automatic backup is saved before a profile is deleted or a backup is restored over it. The 10 most recent are kept.",
+    "automaticHint": "An automatic backup is saved before a profile is deleted, a backup is restored over it or a library is imported into it. The 10 most recent are kept.",
     "openFolder": "Open the automatic backups folder",
     "schedule": {
       "label": "Scheduled backups",
@@ -578,6 +578,39 @@
     },
     "saved_one": "Exported: “{{fileName}}” (1 item).",
     "saved_other": "Exported: “{{fileName}}” ({{count}} items)."
+  },
+  "imports": {
+    "title": "Import",
+    "hint": "Adds to this profile a library exported to JSON, from this profile or another one. Only what is missing is added: what already exists is not changed.",
+    "open": "Import from JSON…",
+    "fileType": "JSON file",
+    "nothingNew": "“{{fileName}}” has nothing new for this profile.",
+    "invalidItem": "Nothing has been imported: item no. {{position}} of “{{fileName}}” ({{title}}) is not valid. {{reason}}",
+    "untitled": "untitled",
+    "counts": {
+      "items": "New items",
+      "existingItems": "Items that already exist (left out)",
+      "catalogValues": "New catalog values",
+      "collections": "New collections",
+      "updatedCollections": "Collections that gain items"
+    },
+    "confirm": {
+      "title": "Import library",
+      "question": "Import “{{fileName}}” into the profile “{{name}}”?",
+      "profile": "Exported from the profile",
+      "exportedAt": "Export date",
+      "inTrash_one": "1 of the new items was in the trash and will be added to the trash.",
+      "inTrash_other": "{{count}} of the new items were in the trash and will be added to the trash.",
+      "renamed_one": "A collection already has the name of 1 of the new ones, so a number such as “(1)” will be added to it.",
+      "renamed_other": "Collections already have the names of {{count}} of the new ones, so a number such as “(1)” will be added to them.",
+      "widened_one": "1 genre of this profile limited to movies or to series will become “Movies and series”, because items of the other kind use it.",
+      "widened_other": "{{count}} genres of this profile limited to movies or to series will become “Movies and series”, because items of the other kind use them.",
+      "warning": "A backup of the current state will be saved first in the automatic backups folder.",
+      "confirm": "Import"
+    },
+    "importingTitle": "Importing the library",
+    "importing": "Saving a backup of the current state…",
+    "done": "Imported: “{{fileName}}”."
   },
   "background": {
     "title": "Background",
@@ -824,6 +857,15 @@
     },
     "export": {
       "write_failed": "The export could not be saved. Check that there is free space, that the folder can be written to and that the file is not open in another program."
+    },
+    "import": {
+      "invalid_file": "That file is not a KeepToMyShelf JSON export, or it has been modified and is no longer valid. Nothing has been imported.",
+      "too_new": "That file was exported with a newer version of KeepToMyShelf. Update the app to import it.",
+      "too_large": "The file is too large to import: it takes up more than 100 MB.",
+      "read_failed": "The chosen file could not be read.",
+      "expired": "Choose the file to import again.",
+      "safety_backup_failed": "The backup of the current state of the profile could not be saved, so nothing has been imported.",
+      "failed": "The import failed. Your data has not changed."
     },
     "background": {
       "not_found": "That background no longer exists."

@@ -62,6 +62,12 @@ export async function chooseBackupToRestore(filterName: string): Promise<string 
   return paths?.[0] ?? null;
 }
 
+/** Opens the system dialog to choose one JSON export of a library to import; null if cancelled. */
+export async function chooseLibraryToImport(filterName: string): Promise<string | null> {
+  const paths = await chooseFiles(filterName, ['json'], false);
+  return paths?.[0] ?? null;
+}
+
 async function chooseFiles(
   filterName: string,
   extensions: string[],

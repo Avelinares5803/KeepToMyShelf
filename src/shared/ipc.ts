@@ -17,6 +17,7 @@ import type {
 import type { CatalogCopyPreview, CatalogCopyResult, CatalogEntrySummary } from './catalogs';
 import type { CollectionDetails, CollectionName, CollectionSummary } from './collections';
 import type { ExportSaved } from './exports';
+import type { ImportCheck, ImportCounts } from './imports';
 import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemFilterValues, ItemSummary } from './items';
 import type { ItemMedia, PickedImports } from './media';
@@ -86,6 +87,8 @@ export const IpcChannels = {
   previewBackupRestore: 'backups:preview-restore',
   restoreBackupOverProfile: 'backups:restore-over',
   saveExport: 'exports:save',
+  previewLibraryImport: 'imports:preview',
+  importLibrary: 'imports:confirm',
 } as const;
 
 /**
@@ -309,5 +312,17 @@ export interface KeepToMyShelfApi {
      * dialog was cancelled.
      */
     save(input: IpcInput<'saveExport'>): Promise<IpcResult<ExportSaved | null>>;
+  };
+  imports: {
+    /**
+     * Asks for a JSON export of a library and tells what importing it into the open profile
+     * would add, or which item prevents it; null if the dialog was cancelled. Nothing changes.
+     */
+    preview(input: IpcInput<'previewLibraryImport'>): Promise<IpcResult<ImportCheck | null>>;
+    /**
+     * Imports the file previewed, after saving an automatic backup of the open profile, whose
+     * progress arrives through `backups.onProgress`. Resolves to what was added.
+     */
+    confirm(input: IpcInput<'importLibrary'>): Promise<IpcResult<ImportCounts>>;
   };
 }

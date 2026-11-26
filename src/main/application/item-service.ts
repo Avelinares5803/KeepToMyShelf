@@ -1,18 +1,11 @@
-import {
-  catalogForRole,
-  isScopeCompatible,
-  type Catalog,
-  type GenreScope,
-  type ItemRole,
-} from '../../core/catalogs/catalogs';
-import { parseIsoPartialDate, toIsoPartialDate } from '../../core/dates/partial-date';
-import { parseStoredUsageDate, toStoredUsageDate } from '../../core/dates/usage-period';
-import { ConflictError, NotFoundError, ValidationError } from '../../core/errors';
+import type { ItemRole } from '../../core/catalogs/catalogs';
+import { parseIsoPartialDate } from '../../core/dates/partial-date';
+import { parseStoredUsageDate } from '../../core/dates/usage-period';
+import { ConflictError, NotFoundError } from '../../core/errors';
 import { filterFieldsFor, type NumberMeasure } from '../../core/filters/filter-fields';
 import { validateFilter, type FilterNode } from '../../core/filters/filter-tree';
 import type { ItemSort } from '../../core/filters/item-sort';
 import { validateItemDraft, type ItemDraft, type ItemStatus } from '../../core/items/item-draft';
-import type { EntryRef } from '../../core/items/item-relations';
 import { lowestFreeNumber } from '../../core/naming/lowest-free-number';
 import { normalizeForSearch } from '../../core/text/normalize';
 import type { ItemKind } from '../../shared/content';
@@ -31,6 +24,7 @@ import {
   buildMeasureRangeQuery,
   type ItemSearch,
 } from '../infrastructure/db/item-query';
+import { writeItemAttributes } from '../infrastructure/db/item-writer';
 import type { ItemMediaPlan } from '../../shared/media';
 import type { MediaForItems, StagedMedia } from './media-service';
 import type { SessionManager } from './session-manager';
@@ -238,7 +232,7 @@ export class ItemService {
             timestamp,
           );
         const newId = Number(result.lastInsertRowid);
-        this.writeAttributes(db, newId, kind, valid, timestamp);
+        writeItemAttributes(db, newId, kind, valid, timestamp);
         staged?.write(db, newId);
         return newId;
       })(),
@@ -276,7 +270,7 @@ export class ItemService {
           placeholder,
           id,
         );
-        this.writeAttributes(db, id, current.kind, valid, timestamp);
+        writeItemAttributes(db, id, current.kind, valid, timestamp);
         staged?.write(db, id);
       })(),
     );
@@ -376,77 +370,6 @@ export class ItemService {
     return lowestFreeNumber(used);
   }
 
-  private writeAttributes(
-    db: SqliteDatabase,
-    id: number,
-    kind: ItemKind,
-    valid: ReturnType<typeof validateItemDraft>,
-    timestamp: string,
-  ): void {
-    db.prepare(
-      `UPDATE item SET description = ?, notes = ?, is_favorite = ?, rating = ?, status = ?,
-         is_replay = ?, owns_physical = ?, owns_digital = ?, started_on = ?, finished_on = ?,
-         minutes_played = ?, updated_at = ?
-       WHERE id = ?`,
-    ).run(
-      valid.description,
-      valid.notes,
-      Number(valid.isFavorite),
-      valid.rating,
-      valid.status,
-      Number(valid.isReplay),
-      Number(valid.ownsPhysical),
-      Number(valid.ownsDigital),
-      valid.startedOn === null ? null : toStoredUsageDate(valid.startedOn),
-      valid.finishedOn === null ? null : toStoredUsageDate(valid.finishedOn),
-      valid.minutesPlayed,
-      timestamp,
-      id,
-    );
-
-    db.prepare('DELETE FROM item_alt_title WHERE item_id = ?').run(id);
-    const insertAlternate = db.prepare(
-      'INSERT INTO item_alt_title (item_id, title, title_norm, sort_order) VALUES (?, ?, ?, ?)',
-    );
-    valid.alternateTitles.forEach((title, index) =>
-      insertAlternate.run(id, title, normalizeForSearch(title), index),
-    );
-
-    if (kind === 'series') {
-      db.prepare(
-        `INSERT INTO series_details (item_id, seasons_count, episodes_count) VALUES (?, ?, ?)
-         ON CONFLICT (item_id) DO UPDATE SET
-           seasons_count = excluded.seasons_count, episodes_count = excluded.episodes_count`,
-      ).run(id, valid.seasonsCount, valid.episodesCount);
-    }
-
-    db.prepare('DELETE FROM item_entry WHERE item_id = ?').run(id);
-    // A value referenced twice (e.g. as existing and as a new name) is linked once.
-    const insertEntry = db.prepare(
-      'INSERT OR IGNORE INTO item_entry (item_id, entry_id, role, sort_order) VALUES (?, ?, ?, ?)',
-    );
-    for (const [role, refs] of Object.entries(valid.relations) as [ItemRole, EntryRef[]][]) {
-      // validateItemDraft only keeps roles that apply to the kind.
-      const catalog = catalogForRole(kind, role)!;
-      refs.forEach((ref, index) =>
-        insertEntry.run(id, resolveEntry(db, catalog, kind, ref), role, index),
-      );
-    }
-
-    db.prepare('DELETE FROM item_release WHERE item_id = ?').run(id);
-    const insertRelease = db.prepare(
-      'INSERT INTO item_release (item_id, region_id, date, sort_order) VALUES (?, ?, ?, ?)',
-    );
-    valid.releases.forEach(({ region, date }, index) =>
-      insertRelease.run(
-        id,
-        region === null ? null : resolveEntry(db, 'region', kind, region),
-        toIsoPartialDate(date),
-        index,
-      ),
-    );
-  }
-
   private readRelations(db: SqliteDatabase, id: number): ItemDetails['relations'] {
     const rows = db
       .prepare(
@@ -512,35 +435,4 @@ export class ItemService {
       updatedAt: row.updated_at,
     };
   }
-}
-
-/**
- * The id of the catalog value a reference points to. A new name is created, unless a value
- * with exactly that name already exists (e.g. created meanwhile in another window).
- */
-function resolveEntry(db: SqliteDatabase, catalog: Catalog, kind: ItemKind, ref: EntryRef): number {
-  const entry = (
-    ref.kind === 'existing'
-      ? db.prepare('SELECT id, catalog, scope FROM catalog_entry WHERE id = ?').get(ref.id)
-      : db
-          .prepare('SELECT id, catalog, scope FROM catalog_entry WHERE catalog = ? AND name = ?')
-          .get(catalog, ref.name)
-  ) as { id: number; catalog: Catalog; scope: GenreScope | null } | undefined;
-
-  if (entry === undefined) {
-    if (ref.kind === 'existing') {
-      throw new NotFoundError('catalog.not_found', `Catalog value ${ref.id} does not exist`);
-    }
-    const result = db
-      .prepare('INSERT INTO catalog_entry (catalog, name, name_key) VALUES (?, ?, ?)')
-      .run(catalog, ref.name, normalizeForSearch(ref.name));
-    return Number(result.lastInsertRowid);
-  }
-  if (entry.catalog !== catalog) {
-    throw new ValidationError('item.wrong_catalog', `Value ${entry.id} is not in ${catalog}`);
-  }
-  if (!isScopeCompatible(entry.scope, kind)) {
-    throw new ValidationError('item.genre_scope_mismatch', `Genre ${entry.id} is not for ${kind}`);
-  }
-  return entry.id;
 }

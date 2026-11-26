@@ -4,6 +4,7 @@ import {
   COLLECTION_NAME_MAX_LENGTH,
   collectionNameKey,
   normalizeCollectionName,
+  uniqueCollectionName,
 } from './collection-name';
 
 function expectValidationError(run: () => unknown, code: string): void {
@@ -49,5 +50,31 @@ describe('collectionNameKey', () => {
       collectionNameKey('peliculas pendientes'),
     );
     expect(collectionNameKey('Favoritas')).not.toBe(collectionNameKey('Favoritos'));
+  });
+});
+
+describe('uniqueCollectionName', () => {
+  const taken = (...names: string[]) => new Set(names.map(collectionNameKey));
+
+  it('keeps a free name', () => {
+    expect(uniqueCollectionName('Favoritas', taken('Pendientes'))).toEqual({
+      name: 'Favoritas',
+      renamed: false,
+    });
+  });
+
+  it('adds the lowest free suffix, ignoring case and accents', () => {
+    expect(uniqueCollectionName('Películas', taken('peliculas', 'Películas (1)'))).toEqual({
+      name: 'Películas (2)',
+      renamed: true,
+    });
+  });
+
+  it('shortens a long name so the suffix still fits', () => {
+    const longest = '🎮'.repeat(COLLECTION_NAME_MAX_LENGTH);
+    const { name } = uniqueCollectionName(longest, taken(longest));
+
+    expect(name).toBe(`${'🎮'.repeat(COLLECTION_NAME_MAX_LENGTH - 4)} (1)`);
+    expect(normalizeCollectionName(name)).toBe(name);
   });
 });

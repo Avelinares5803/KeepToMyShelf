@@ -8,6 +8,7 @@ import { RestoreService } from '../../src/main/application/restore-service';
 import { CatalogService } from '../../src/main/application/catalog-service';
 import { CollectionService } from '../../src/main/application/collection-service';
 import { ExportService } from '../../src/main/application/export-service';
+import { ImportService } from '../../src/main/application/import-service';
 import { ItemService } from '../../src/main/application/item-service';
 import { DEFAULT_MEDIA_LIMITS } from '../../src/core/media/import-rules';
 import { MediaService } from '../../src/main/application/media-service';
@@ -54,6 +55,7 @@ export interface ProfileFixture {
   readonly backups: BackupService;
   readonly restores: RestoreService;
   readonly exports: ExportService;
+  readonly imports: ImportService;
   /** Not started by opening a profile, as the app does: tests call `runDue`. */
   readonly scheduledBackups: ScheduledBackupService;
   readonly scheduledFailures: ScheduledBackupFailure[];
@@ -175,6 +177,7 @@ export function createProfileFixture(): ProfileFixture {
     appVersion: FIXTURE_APP_VERSION,
     now,
   });
+  const imports = new ImportService({ sessions, backups, lock, newId: randomUUID });
   const backgrounds = new BackgroundService({
     appDb,
     dir: paths.backgroundsDir,
@@ -184,6 +187,7 @@ export function createProfileFixture(): ProfileFixture {
   });
 
   return {
+    imports,
     backgrounds,
     backups,
     restores,

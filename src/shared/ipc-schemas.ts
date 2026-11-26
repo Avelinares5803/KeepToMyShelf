@@ -333,6 +333,11 @@ export const ipcInputSchemas = {
     ]),
     filterName: z.string().min(1).max(100),
   }),
+  previewLibraryImport: z.object({
+    token: sessionTokenSchema,
+    filterName: z.string().min(1).max(100),
+  }),
+  importLibrary: z.object({ token: sessionTokenSchema, importId: z.uuid() }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

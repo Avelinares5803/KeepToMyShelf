@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-25, con la v1.3-B (apartado 3.13).
+**Última actualización:** 2026-11-26, con la v1.3-C (apartado 3.13).
 
 ---
 
@@ -49,7 +49,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | ✅ Hecha (v1.2.0)                   |
-| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A y v1.3-B hechas)   |
+| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A a v1.3-C hechas)   |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -570,9 +570,19 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **Cabeceras y valores del CSV en el idioma del perfil.** La v1.3-D aceptará los dos idiomas, los dos separadores y los dos decimales.
     - **Varios valores en una celda:** `|`. La valoración, en estrellas, con el decimal que corresponde al separador. Los elementos sin título, con la celda vacía.
     - **El JSON no lleva ids internos:** UUID para elementos y colecciones, y nombres para los valores de catálogo.
-- **v1.3-C: importar JSON.** Acordado el 2026-11-25:
+- **v1.3-C: importar JSON.** ✅ Hecha (`feat/import-json`). Ver el [ADR 0013](adr/0013-import.md). Acordado el 2026-11-25:
   - Resumen previo, confirmación, copia automática e importación en una sola transacción.
   - **Un elemento con un UUID que ya existe, también en la papelera, se omite.** Nunca se sobrescribe nada.
+  - Completado el 2026-11-26, sin migración ni dependencias nuevas:
+    - **En Ajustes, la sección «Importar»**, con un perfil abierto: «Importar desde JSON…». Si el archivo no tiene nada nuevo, se dice sin pedir confirmación.
+    - **Los elementos de la papelera del archivo se importan a la papelera**, y la confirmación lo avisa. **Se conservan sus fechas de alta y de modificación.**
+    - **Valores de catálogo por nombre exacto**, como al copiar catálogos: los existentes no cambian. **Un género del perfil limitado al otro tipo pasa a «Películas y series»**, como al fusionar, y la confirmación lo avisa.
+    - **Colecciones por UUID:** a las existentes solo se les añaden elementos. Una colección nueva con el nombre ocupado recibe «(1)», «(2)»…
+    - **El número de «Sin nombre» se conserva si está libre**; si no, el libre más bajo.
+    - **Todo o nada:** cada elemento que se añade pasa las reglas del formulario, y el primero que no las cumple impide importar; se indica su posición, su título y el motivo. Límite de 100 MB.
+    - **Copia automática `before-import`**, que cuenta para las 10 automáticas.
+    - **Tras importar, la pantalla abierta se vuelve a cargar**; con cambios sin guardar en el editor, se pregunta antes.
+    - La escritura de los atributos de un elemento pasa de `ItemService` a `infrastructure/db/item-writer.ts`, para que el formulario y la importación guarden igual.
 - **v1.3-D: importar CSV.** Acordado el 2026-11-25:
   - **Plantilla de columnas fija**, con vista previa y errores por fila. Asignar las columnas de cualquier CSV queda en las mejoras anotadas.
   - **Si coinciden el título y el tipo con un elemento existente, se avisa** y se elige si omitirlo, que es lo marcado por defecto.

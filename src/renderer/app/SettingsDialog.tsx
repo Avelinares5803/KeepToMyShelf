@@ -21,6 +21,7 @@ import {
 } from '../features/backgrounds/BackgroundSettings';
 import { BackupSettings, type BackupSettingsProps } from '../features/backups/BackupSettings';
 import { ExportSettings } from '../features/exports/ExportSettings';
+import { ImportSettings, type ImportSettingsProps } from '../features/imports/ImportSettings';
 import { errorMessage, unwrap } from '../lib/ipc';
 
 /** What the "Background" section needs besides the preferences themselves. */
@@ -36,6 +37,8 @@ interface SettingsDialogProps {
   background: BackgroundSettingsOptions;
   /** The "Backups" section, only with a profile open. */
   backups: BackupSettingsProps | null;
+  /** The "Import" section, only with a profile open. */
+  imports: ImportSettingsProps | null;
   onChange: (update: SettingUpdate) => void;
   onClose: () => void;
 }
@@ -45,6 +48,7 @@ export function SettingsDialog({
   profileName,
   background,
   backups,
+  imports,
   onChange,
   onClose,
 }: SettingsDialogProps) {
@@ -257,6 +261,8 @@ export function SettingsDialog({
         )}
 
         {backups !== null && <ExportSettings token={backups.token} language={settings.language} />}
+
+        {imports !== null && <ImportSettings {...imports} />}
 
         {status && (
           <p className="banner" role="status">

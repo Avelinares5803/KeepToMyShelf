@@ -72,6 +72,17 @@ describe('automaticBackupsToRemove', () => {
     expect(automaticBackupsToRemove([at(1), beforeRestore, at(3)], 2)).toEqual([at(1)]);
   });
 
+  it('counts the backups made before importing together with the others', () => {
+    const beforeImport = automaticBackupFileName(
+      'Ana',
+      'before-import',
+      new Date(2026, 10, 4, 10, 0, 0),
+    );
+
+    expect(isAutomaticBackupFileName(beforeImport)).toBe(true);
+    expect(automaticBackupsToRemove([at(1), beforeImport, at(3)], 2)).toEqual([at(1)]);
+  });
+
   it('removes nothing while there are no more than it keeps', () => {
     expect(automaticBackupsToRemove([at(1), at(2)], 2)).toEqual([]);
   });

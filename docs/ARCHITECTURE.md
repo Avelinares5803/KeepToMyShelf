@@ -121,9 +121,11 @@ Details: [ADR 0006](adr/0006-search-and-filters.md).
 
 A backup is a `.zip` with a snapshot of the profile's database (`VACUUM INTO`), its `media` files, its own preferences and a manifest with the SHA-256 of each file. Thumbnails are regenerated. Scheduled backups are made by the app itself, in the background, after a profile is opened; they give way to any backup or restore the user asks for. Restoring checks everything (paths against a closed list, CRC-32 and SHA-256, `integrity_check`, schema version) in a temporary folder before replacing anything. Details: [ADR 0009](adr/0009-backups.md).
 
-## Export
+## Export and import
 
 The library is exported to a versioned JSON file (items, catalogs and collections, by UUID and by name, without internal ids) or, by kind, to a CSV file for spreadsheets. The CSV columns and the guard against formulas are in `core/export/`. Details: [ADR 0012](adr/0012-export.md).
+
+An exported JSON file is imported into the open profile by adding only: items and collections are recognized by their UUID, and catalog values by their exact name. `core/import/` decides what is added, with the same rules as the item form, and the main process writes it in a single transaction, after an automatic backup. Details: [ADR 0013](adr/0013-import.md).
 
 ## Data on disk
 
@@ -180,3 +182,4 @@ electron-builder makes a per-user NSIS installer, and `scripts/package-portable.
 | [0010](adr/0010-distribution.md)        | Distribution on Windows                |
 | [0011](adr/0011-security.md)            | Application security                   |
 | [0012](adr/0012-export.md)              | Exporting the library                  |
+| [0013](adr/0013-import.md)              | Importing the library                  |

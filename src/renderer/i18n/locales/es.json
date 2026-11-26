@@ -516,7 +516,7 @@
     "saved": "Copia guardada: «{{fileName}}».",
     "missing_one": "No se ha encontrado 1 archivo de la biblioteca, así que no se ha incluido.",
     "missing_other": "No se han encontrado {{count}} archivos de la biblioteca, así que no se han incluido.",
-    "automaticHint": "Antes de eliminar un perfil o de restaurar una copia sobre él se guarda una copia automática. Se conservan las 10 más recientes.",
+    "automaticHint": "Antes de eliminar un perfil, de restaurar una copia sobre él o de importar en él se guarda una copia automática. Se conservan las 10 más recientes.",
     "openFolder": "Abrir la carpeta de copias automáticas",
     "schedule": {
       "label": "Copias programadas",
@@ -578,6 +578,39 @@
     },
     "saved_one": "Exportado: «{{fileName}}» (1 elemento).",
     "saved_other": "Exportado: «{{fileName}}» ({{count}} elementos)."
+  },
+  "imports": {
+    "title": "Importar",
+    "hint": "Añade a este perfil una biblioteca exportada en JSON, de este perfil o de otro. Solo se añade lo que falta: lo que ya existe no se modifica.",
+    "open": "Importar desde JSON…",
+    "fileType": "Archivo JSON",
+    "nothingNew": "«{{fileName}}» no tiene nada nuevo para este perfil.",
+    "invalidItem": "No se ha importado nada: el elemento n.º {{position}} de «{{fileName}}» ({{title}}) no es válido. {{reason}}",
+    "untitled": "sin título",
+    "counts": {
+      "items": "Elementos nuevos",
+      "existingItems": "Elementos que ya existen (se omiten)",
+      "catalogValues": "Valores de catálogo nuevos",
+      "collections": "Colecciones nuevas",
+      "updatedCollections": "Colecciones que reciben elementos"
+    },
+    "confirm": {
+      "title": "Importar biblioteca",
+      "question": "¿Importar «{{fileName}}» en el perfil «{{name}}»?",
+      "profile": "Exportado del perfil",
+      "exportedAt": "Fecha de exportación",
+      "inTrash_one": "1 de los elementos nuevos estaba en la papelera y se añadirá a la papelera.",
+      "inTrash_other": "{{count}} de los elementos nuevos estaban en la papelera y se añadirán a la papelera.",
+      "renamed_one": "Ya existe una colección con el nombre de 1 de las nuevas, así que se le añadirá un número, como «(1)».",
+      "renamed_other": "Ya existen colecciones con el nombre de {{count}} de las nuevas, así que se les añadirá un número, como «(1)».",
+      "widened_one": "1 género de este perfil limitado a películas o a series pasará a «Películas y series», porque lo usan elementos del otro tipo.",
+      "widened_other": "{{count}} géneros de este perfil limitados a películas o a series pasarán a «Películas y series», porque los usan elementos del otro tipo.",
+      "warning": "Antes se guardará una copia del estado actual en la carpeta de copias automáticas.",
+      "confirm": "Importar"
+    },
+    "importingTitle": "Importando la biblioteca",
+    "importing": "Guardando una copia del estado actual…",
+    "done": "Importado: «{{fileName}}»."
   },
   "background": {
     "title": "Fondo",
@@ -824,6 +857,15 @@
     },
     "export": {
       "write_failed": "No se ha podido exportar. Comprueba que hay espacio libre, que se puede escribir en esa carpeta y que el archivo no está abierto en otro programa."
+    },
+    "import": {
+      "invalid_file": "Ese archivo no es una exportación JSON de KeepToMyShelf, o se ha modificado y ya no es válido. No se ha importado nada.",
+      "too_new": "Ese archivo se exportó con una versión más nueva de KeepToMyShelf. Actualiza la aplicación para importarlo.",
+      "too_large": "El archivo es demasiado grande para importarlo: ocupa más de 100 MB.",
+      "read_failed": "No se ha podido leer el archivo elegido.",
+      "expired": "Vuelve a elegir el archivo que quieres importar.",
+      "safety_backup_failed": "No se ha podido guardar la copia del estado actual del perfil, así que no se ha importado nada.",
+      "failed": "No se ha podido importar. Tus datos no han cambiado."
     },
     "background": {
       "not_found": "Ese fondo ya no existe."

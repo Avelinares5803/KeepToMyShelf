@@ -128,6 +128,10 @@ const api: KeepToMyShelfApi = {
   exports: {
     save: invoke(IpcChannels.saveExport),
   },
+  imports: {
+    preview: invoke(IpcChannels.previewLibraryImport),
+    confirm: invoke(IpcChannels.importLibrary),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-26, con la v1.3-D (apartado 3.13).
+**Última actualización:** 2026-11-27, con la v1.3-E (apartado 3.13).
 
 ---
 
@@ -49,7 +49,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | ✅ Hecha (v1.2.0)                   |
-| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A a v1.3-D hechas)   |
+| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A a v1.3-E hechas)   |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -593,7 +593,17 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **Todo o nada:** todos los errores, por fila y columna (se muestran los 100 primeros), y no se importa nada hasta corregirlos.
     - **«Añadido el»** da la fecha de alta; las colecciones se buscan por nombre como en la app y, si no existen, se crean.
     - **Duplicados sin distinguir mayúsculas ni tildes, con una casilla por fila**, marcada por defecto: así se puede importar «Hipó» aunque exista «Hipo». Se descartó permitir colecciones (y perfiles) cuyo nombre solo cambia en mayúsculas o tildes: necesitaba migraciones y daba más problemas que ventajas.
-- **v1.3-E: estadísticas.** Acordado el 2026-11-25: una pantalla del perfil con totales, estados, valoraciones, horas, terminados por año, géneros y plataformas. Cifras y barras propias en HTML y CSS, sin librería de gráficos. No cuenta la papelera.
+- **v1.3-E: estadísticas.** ✅ Hecha (`feat/statistics`). Acordado el 2026-11-25: una pantalla del perfil con totales, estados, valoraciones, horas, terminados por año, géneros y plataformas. Cifras y barras propias en HTML y CSS, sin librería de gráficos. No cuenta la papelera.
+  - Completado el 2026-11-27, sin migración ni dependencias nuevas:
+    - **Un botón «Estadísticas»** junto a «Catálogos», bajo las tarjetas de la pantalla de modos, no una tarjeta más, porque no es un modo.
+    - **Selector «Mostrar»: Todo, Videojuegos, Películas o Series**, que empieza en «Todo». Las horas y las plataformas solo aparecen con «Todo» y con Videojuegos. Con «Todo», los géneros van en dos bloques (de videojuegos y de películas y series), porque son catálogos distintos, y los estados usan etiquetas neutras en plural («Terminados»).
+    - **Resumen:** total, cuántos de cada tipo (con «Todo»), favoritos, rejugados o revisionadas, físico y digital («Ambos» cuenta en los dos).
+    - **Estados y valoraciones**, con número y porcentaje, «Sin estado» y «Sin valorar», y la media en estrellas con un decimal. Las valoraciones van de 5 estrellas a 0,5.
+    - **Horas jugadas:** el tiempo total, los juegos con horas y la media por juego. Los juegos con 00:00 no cuentan, para no bajar la media.
+    - **Terminados por año:** solo el estado «Terminado» con fecha de fin, por su año, del más reciente al más antiguo, y solo los años con alguno. Debajo, los terminados sin fecha de fin (vacía o «Indeterminada»).
+    - **Géneros y «Mis plataformas»** (no las de lanzamiento): los 10 más usados y «Ver todos (N)».
+    - **Accesibilidad:** cada fila se lee completa («Terminados: 2 (50 %)»); la barra es decorativa. La más larga de cada bloque ocupa todo el ancho, y ninguna con algún elemento desaparece.
+    - Por dentro: el canal `stats:get`, `StatsService` y las consultas de agregación en `infrastructure/db/library-stats-reader.ts`.
 - **v1.3-F: versión 1.3.0**, como la v1.2-D.
 
 ---
@@ -631,6 +641,7 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026
 
 - **Anime** como cuarto tipo (series, películas, ONA, OVA). Requiere una migración que rehaga `item`.
 - **Libros** como tipo nuevo, junto a videojuegos, películas, series y el futuro anime (añadido el 2026-11-19). Igual que el anime, requiere rehacer `item`, porque los tipos están limitados por un `CHECK` en la migración `0001`. Conviene hacer los dos tipos en la misma migración. Quedan por decidir sus campos propios (autoría, editorial, páginas, ISBN, si se incluyen cómics y audiolibros…), sus estados («Leído», «Releído»), sus papeles en los catálogos y sus listas iniciales de géneros.
+- **Distinguir las herramientas de los tipos en la pantalla de modos** (anotada en la v1.3-E, al añadir «Estadísticas»), cuando lleguen el anime y los libros. Con seis tarjetas de tipo, Catálogos y Estadísticas (y quizá Colecciones, que hoy es una tarjeta) deberían diferenciarse más, aunque solo sea por el color. Propuesta: una segunda fila de «herramientas», con tarjetas más pequeñas y otro color de acento.
 - Visor de PDF integrado (pdf.js).
 - Integración opcional con APIs (IGDB, TMDB) e importación masiva.
 - Sincronización entre dispositivos.
@@ -649,4 +660,5 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026
 - Colecciones: orden manual y filtros por atributo al elegir un tipo.
 - Arrastrar y soltar también los fondos de Ajustes y la portada de una colección, con el mecanismo de la v1.1-E.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.
+- Estadísticas (anotadas en la v1.3-E): pulsar una barra para abrir la biblioteca con ese filtro, estadísticas por persona o empresa, y elegir un rango de fechas.
 - Barra de herramientas de la biblioteca fija arriba al desplazarse, para buscar, ordenar o cambiar el tamaño de las portadas sin volver arriba (anotada en la v1.1-D).

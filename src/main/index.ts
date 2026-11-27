@@ -24,6 +24,7 @@ import { RestoreService } from './application/restore-service';
 import { ScheduledBackupService } from './application/scheduled-backup-service';
 import { SessionManager } from './application/session-manager';
 import { SettingsService } from './application/settings-service';
+import { StatsService } from './application/stats-service';
 import { openAppDatabase } from './infrastructure/db/app-database';
 import { createDataPaths } from './infrastructure/paths';
 import { ensureWritableDir, resolveUserDataLocation } from './infrastructure/user-data-location';
@@ -168,6 +169,7 @@ function startApp(): void {
     restores,
     exports,
     imports,
+    stats: new StatsService({ sessions }),
   });
   // Every ktms-media:// request the UI makes (e.g. an <img src>) is answered here.
   protocol.handle(MEDIA_SCHEME, createMediaProtocolHandler(media, backgrounds));

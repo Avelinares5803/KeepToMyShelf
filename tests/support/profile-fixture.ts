@@ -16,6 +16,7 @@ import { ProfileService } from '../../src/main/application/profile-service';
 import { ScheduledBackupService } from '../../src/main/application/scheduled-backup-service';
 import { SessionManager } from '../../src/main/application/session-manager';
 import { SettingsService } from '../../src/main/application/settings-service';
+import { StatsService } from '../../src/main/application/stats-service';
 import { openAppDatabase } from '../../src/main/infrastructure/db/app-database';
 import type { SqliteDatabase } from '../../src/main/infrastructure/db/connection';
 import { createDataPaths, type DataPaths } from '../../src/main/infrastructure/paths';
@@ -56,6 +57,7 @@ export interface ProfileFixture {
   readonly restores: RestoreService;
   readonly exports: ExportService;
   readonly imports: ImportService;
+  readonly stats: StatsService;
   /** Not started by opening a profile, as the app does: tests call `runDue`. */
   readonly scheduledBackups: ScheduledBackupService;
   readonly scheduledFailures: ScheduledBackupFailure[];
@@ -188,6 +190,7 @@ export function createProfileFixture(): ProfileFixture {
 
   return {
     imports,
+    stats: new StatsService({ sessions }),
     backgrounds,
     backups,
     restores,

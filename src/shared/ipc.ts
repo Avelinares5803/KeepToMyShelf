@@ -22,6 +22,7 @@ import type { IpcInputSchemas } from './ipc-schemas';
 import type { ItemDetails, ItemFilterValues, ItemSummary } from './items';
 import type { ItemMedia, PickedImports } from './media';
 import type { AppSettings, BackgroundChoice } from './settings';
+import type { LibraryStats } from './stats';
 
 export const IpcChannels = {
   getAppInfo: 'app:get-info',
@@ -91,6 +92,7 @@ export const IpcChannels = {
   previewCsvImport: 'imports:preview-csv',
   chooseCsvImportRows: 'imports:choose-csv-rows',
   importLibrary: 'imports:confirm',
+  getLibraryStats: 'stats:get',
 } as const;
 
 /**
@@ -334,5 +336,9 @@ export interface KeepToMyShelfApi {
      * progress arrives through `backups.onProgress`. Resolves to what was added.
      */
     confirm(input: IpcInput<'importLibrary'>): Promise<IpcResult<ImportCounts>>;
+  };
+  stats: {
+    /** The statistics of the open profile's library, of one kind or (null) of every kind. */
+    get(input: IpcInput<'getLibraryStats'>): Promise<IpcResult<LibraryStats>>;
   };
 }

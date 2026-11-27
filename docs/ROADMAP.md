@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-27, con la v1.3-E (apartado 3.13).
+**Última actualización:** 2026-11-27, con la v1.3-F (versión 1.3.0, apartado 3.13).
 
 ---
 
@@ -49,7 +49,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
 | v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | ✅ Hecha (v1.2.0)                   |
-| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | En curso (v1.3-A a v1.3-E hechas)   |
+| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | ✅ Hecha (v1.3.0)                   |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -604,7 +604,7 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **Géneros y «Mis plataformas»** (no las de lanzamiento): los 10 más usados y «Ver todos (N)».
     - **Accesibilidad:** cada fila se lee completa («Terminados: 2 (50 %)»); la barra es decorativa. La más larga de cada bloque ocupa todo el ancho, y ninguna con algún elemento desaparece.
     - Por dentro: el canal `stats:get`, `StatsService` y las consultas de agregación en `infrastructure/db/library-stats-reader.ts`.
-- **v1.3-F: versión 1.3.0**, como la v1.2-D.
+- **v1.3-F: versión 1.3.0** (`chore/release-1.3.0`). ✅ Hecha, como la v1.2-D: `npm version 1.3.0 --no-git-tag-version`, la versión 1.3.0 en el `CHANGELOG.md` con fecha 2026-11-27 y enlaces de comparación, y la v1.3 marcada como hecha. Antes del merge se pasó la prueba de humo en local con los archivos 1.3.0. Después del merge: la etiqueta `v1.3.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md).
 
 ---
 

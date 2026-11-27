@@ -6,6 +6,8 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-27
+
 ### Español
 
 #### Añadido
@@ -14,7 +16,7 @@ Todos los cambios importantes de KeepToMyShelf, en español y en inglés. El for
 - **Exportar la biblioteca**, desde Ajustes: todos los datos en un archivo JSON (elementos, catálogos y colecciones, con la papelera) o los videojuegos, las películas o las series en un CSV para hojas de cálculo. No incluye imágenes ni documentos.
 - **Importar una biblioteca exportada en JSON**, desde Ajustes, de este perfil o de otro. Primero muestra qué se añadirá y pide confirmación, y antes de importar guarda una copia automática. Solo añade lo que falta: los elementos y las colecciones que ya existen no se modifican.
 - **Importar un CSV** de videojuegos, películas o series, desde Ajustes, con las columnas de la exportación (en español o en inglés y en cualquier orden; solo «Título» es obligatoria). Si alguna fila tiene errores, se indican por fila y columna y no se importa nada. Las filas cuyo título ya existe se muestran, y por defecto se omiten.
-- **Estadísticas**, junto a «Catálogos» en la pantalla de modos: totales, estados, valoraciones, horas jugadas, terminados por año, géneros y plataformas, de toda la biblioteca o de un tipo. No cuentan la papelera.
+- **Estadísticas**, junto a «Catálogos» en la pantalla de modos: totales, estados, valoraciones, horas jugadas, terminados por año, géneros y plataformas, de toda la biblioteca o de un tipo. No cuentan los elementos de la papelera.
 
 ### English
 
@@ -152,7 +154,8 @@ First published version.
 - The window **opens as it was closed** (size, position, maximized or full screen). **Full screen** with F11 or a button.
 - **Installer** for Windows 10 and 11, per user and with no administrator rights, and a **portable version** in a `.zip` that keeps its data next to the `.exe`.
 
-[Unreleased]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Avelinares5803/KeepToMyShelf/compare/v1.0.0...v1.1.0

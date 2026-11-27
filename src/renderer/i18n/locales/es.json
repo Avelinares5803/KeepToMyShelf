@@ -299,6 +299,54 @@
     "emptyConfirm_one": "Se eliminará definitivamente 1 elemento de «{{scope}}». Esta acción no se puede deshacer.",
     "emptyConfirm_other": "Se eliminarán definitivamente {{count}} elementos de «{{scope}}». Esta acción no se puede deshacer."
   },
+  "stats": {
+    "title": "Estadísticas",
+    "show": "Mostrar",
+    "all": "Todo",
+    "empty": "Todavía no hay nada que contar. Las estadísticas no cuentan la papelera.",
+    "sections": {
+      "summary": "Resumen",
+      "statuses": "Estados",
+      "ratings": "Valoraciones",
+      "played": "Horas jugadas",
+      "finished": "Terminados por año",
+      "genres": "Géneros",
+      "gameGenres": "Géneros de videojuegos",
+      "screenGenres": "Géneros de películas y series"
+    },
+    "summary": {
+      "total": "Total",
+      "favorites": "Favoritos",
+      "replays": {
+        "game": "Rejugados",
+        "screen": "Revisionadas",
+        "all": "Rejugados o revisionados"
+      }
+    },
+    "status": {
+      "not_started": "Por empezar",
+      "in_progress": "En curso",
+      "completed": "Terminados",
+      "abandoned": "Abandonados",
+      "none": "Sin estado"
+    },
+    "ratings": {
+      "average": "Media: {{stars}} de 5 estrellas",
+      "unrated": "Sin valorar"
+    },
+    "played": {
+      "total": "Tiempo total",
+      "games": "Juegos con horas",
+      "average": "Media por juego"
+    },
+    "finished": {
+      "none": "Todavía no hay nada terminado.",
+      "withoutDate": "Terminados sin fecha de fin: {{count}}"
+    },
+    "noValues": "Ninguno todavía.",
+    "showAll": "Ver todos ({{count}})",
+    "showFewer": "Ver menos"
+  },
   "selection": {
     "start": "Seleccionar",
     "bar": "Selección",

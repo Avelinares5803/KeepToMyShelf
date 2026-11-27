@@ -349,6 +349,8 @@ export const ipcInputSchemas = {
     skipRows: z.array(z.number().int().min(2)).max(1_000_000),
   }),
   importLibrary: z.object({ token: sessionTokenSchema, importId: z.uuid() }),
+  // `kind` null counts every kind.
+  getLibraryStats: z.object({ token: sessionTokenSchema, kind: itemKindSchema.nullable() }),
 } as const;
 
 export type IpcInputSchemas = typeof ipcInputSchemas;

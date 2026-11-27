@@ -15,6 +15,7 @@ import type { ProfileService } from '../application/profile-service';
 import type { SessionManager } from '../application/session-manager';
 import type { SettingsService } from '../application/settings-service';
 import type { RestoreService } from '../application/restore-service';
+import type { StatsService } from '../application/stats-service';
 import {
   chooseBackupDestination,
   chooseBackupToRestore,
@@ -41,6 +42,7 @@ export interface Services {
   readonly restores: RestoreService;
   readonly exports: ExportService;
   readonly imports: ImportService;
+  readonly stats: StatsService;
 }
 
 /** Tells the UI that a scheduled backup failed; a message sent without being asked. */
@@ -64,6 +66,7 @@ export function registerIpcHandlers({
   restores,
   exports,
   imports,
+  stats,
 }: Services): void {
   // The app has a single window; webContents is the page it shows, which receives the event.
   const sendBackupProgress = (progress: BackupProgress) => {
@@ -347,6 +350,9 @@ export function registerIpcHandlers({
     // Takes time: an automatic backup of the profile is written first.
     importLibrary: createAsyncHandler(ipcInputSchemas.importLibrary, ({ token, importId }) =>
       imports.confirm(token, importId, sendBackupProgress),
+    ),
+    getLibraryStats: createHandler(ipcInputSchemas.getLibraryStats, ({ token, kind }) =>
+      stats.get(token, kind),
     ),
   };
 

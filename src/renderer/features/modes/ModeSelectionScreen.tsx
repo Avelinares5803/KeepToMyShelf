@@ -1,11 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { ITEM_KINDS, type ItemKind } from '../../../shared/content';
-import { CollectionIcon, FilmIcon, GamepadIcon, ListIcon, TvIcon } from '../../components/icons';
+import {
+  ChartIcon,
+  CollectionIcon,
+  FilmIcon,
+  GamepadIcon,
+  ListIcon,
+  TvIcon,
+} from '../../components/icons';
 
 interface ModeSelectionScreenProps {
   onSelect: (kind: ItemKind) => void;
   onOpenCollections: () => void;
   onOpenCatalogs: () => void;
+  onOpenStats: () => void;
 }
 
 const ICONS: Record<ItemKind, () => React.JSX.Element> = {
@@ -18,6 +26,7 @@ export function ModeSelectionScreen({
   onSelect,
   onOpenCollections,
   onOpenCatalogs,
+  onOpenStats,
 }: ModeSelectionScreenProps) {
   const { t } = useTranslation();
 
@@ -43,13 +52,14 @@ export function ModeSelectionScreen({
           </button>
         </li>
       </ul>
-      <button
-        type="button"
-        className="button button--ghost modes__catalogs"
-        onClick={onOpenCatalogs}
-      >
-        <ListIcon /> {t('catalogs.title')}
-      </button>
+      <div className="modes__tools">
+        <button type="button" className="button button--ghost" onClick={onOpenCatalogs}>
+          <ListIcon /> {t('catalogs.title')}
+        </button>
+        <button type="button" className="button button--ghost" onClick={onOpenStats}>
+          <ChartIcon /> {t('stats.title')}
+        </button>
+      </div>
     </section>
   );
 }

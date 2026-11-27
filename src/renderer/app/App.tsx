@@ -25,6 +25,7 @@ import { libraryViewOf, type LibraryViews } from '../features/library/library-vi
 import { LibraryScreen } from '../features/library/LibraryScreen';
 import { ModeSelectionScreen } from '../features/modes/ModeSelectionScreen';
 import { ProfileSelectionScreen } from '../features/profiles/ProfileSelectionScreen';
+import { StatsScreen } from '../features/stats/StatsScreen';
 import { TrashScreen } from '../features/trash/TrashScreen';
 import { changeLanguage } from '../i18n';
 import { errorMessage, unwrap } from '../lib/ipc';
@@ -276,6 +277,8 @@ export function App({ initialSettings }: AppProps) {
         return t('collections.title');
       case 'collection':
         return screen.label;
+      case 'stats':
+        return t('stats.title');
     }
   };
 
@@ -302,6 +305,7 @@ export function App({ initialSettings }: AppProps) {
             onOpenCatalogs={() =>
               dispatch({ type: 'open', screen: { name: 'catalogs', kind: null } })
             }
+            onOpenStats={() => dispatch({ type: 'open', screen: { name: 'stats' } })}
           />
         );
       case 'library':
@@ -399,6 +403,8 @@ export function App({ initialSettings }: AppProps) {
             }
           />
         );
+      case 'stats':
+        return <StatsScreen token={token} />;
       case 'collection':
         return (
           <CollectionScreen

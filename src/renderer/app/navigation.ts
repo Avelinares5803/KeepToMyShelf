@@ -16,7 +16,8 @@ export type Screen =
   /** `kind` is the library it was opened from, or null from the mode selection. */
   | { readonly name: 'catalogs'; readonly kind: ItemKind | null }
   | { readonly name: 'collections' }
-  | { readonly name: 'collection'; readonly collectionId: number; readonly label: string };
+  | { readonly name: 'collection'; readonly collectionId: number; readonly label: string }
+  | { readonly name: 'stats' };
 
 export interface NavigationState {
   /** History of visited screens; the last one is shown. Never empty. */
@@ -47,6 +48,8 @@ function screenKey(screen: Screen): string {
       return 'catalogs';
     case 'collections':
       return 'collections';
+    case 'stats':
+      return 'stats';
     case 'collection':
       return `collection:${screen.collectionId}`;
     case 'item':

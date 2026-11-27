@@ -134,6 +134,9 @@ const api: KeepToMyShelfApi = {
     chooseCsvRows: invoke(IpcChannels.chooseCsvImportRows),
     confirm: invoke(IpcChannels.importLibrary),
   },
+  stats: {
+    get: invoke(IpcChannels.getLibraryStats),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

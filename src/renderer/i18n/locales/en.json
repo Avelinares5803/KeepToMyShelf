@@ -299,6 +299,54 @@
     "emptyConfirm_one": "1 item from “{{scope}}” will be deleted permanently. This cannot be undone.",
     "emptyConfirm_other": "{{count}} items from “{{scope}}” will be deleted permanently. This cannot be undone."
   },
+  "stats": {
+    "title": "Statistics",
+    "show": "Show",
+    "all": "All",
+    "empty": "There is nothing to count yet. Statistics do not count the trash.",
+    "sections": {
+      "summary": "Summary",
+      "statuses": "Statuses",
+      "ratings": "Ratings",
+      "played": "Hours played",
+      "finished": "Completed by year",
+      "genres": "Genres",
+      "gameGenres": "Video game genres",
+      "screenGenres": "Movie and series genres"
+    },
+    "summary": {
+      "total": "Total",
+      "favorites": "Favorites",
+      "replays": {
+        "game": "Replayed",
+        "screen": "Rewatched",
+        "all": "Replayed or rewatched"
+      }
+    },
+    "status": {
+      "not_started": "Not started",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "abandoned": "Abandoned",
+      "none": "No status"
+    },
+    "ratings": {
+      "average": "Average: {{stars}} out of 5 stars",
+      "unrated": "Not rated"
+    },
+    "played": {
+      "total": "Total time",
+      "games": "Games with hours",
+      "average": "Average per game"
+    },
+    "finished": {
+      "none": "Nothing completed yet.",
+      "withoutDate": "Completed with no end date: {{count}}"
+    },
+    "noValues": "None yet.",
+    "showAll": "Show all ({{count}})",
+    "showFewer": "Show fewer"
+  },
   "selection": {
     "start": "Select",
     "bar": "Selection",

@@ -137,13 +137,14 @@ h1 {
    Positioned, so absolutely positioned elements (e.g. .visually-hidden) are placed inside it:
    otherwise they are placed against the page, which they lengthen, and the window scrolls. */
 .app-main {
+  --app-main-padding-top: 1rem;
   position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem 1.25rem 3rem;
+  padding: var(--app-main-padding-top) 1.25rem 3rem;
   overflow-y: auto;
   scrollbar-color: color-mix(in srgb, var(--color-text) 35%, transparent) transparent;
 }
@@ -630,10 +631,24 @@ h1 {
   gap: 0.4rem;
 }
 
+/* It stays under the top bar when scrolling down, over the cards (whose rows are moved with
+   transform, so they are layers of their own), with the same veil as the top bar. Its padding
+   and negative margins let the veil reach a bit beyond the cards, whose focus ring is outside
+   them. LibraryGrid measures it, so the rows it hides are taken into account. A sticky element
+   keeps off the padding of what scrolls: without the negative top, the cards would show in a
+   gap above it. */
 .library__toolbar {
+  position: sticky;
+  top: calc(-1 * var(--app-main-padding-top));
+  z-index: 5;
   align-items: center;
   justify-content: space-between;
-  margin-top: 1rem;
+  margin: 0.5rem -0.5rem 0;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  /* The titles of the cards passing under it would show through the veil. */
+  backdrop-filter: blur(12px);
   text-align: left;
 }
 
@@ -917,6 +932,13 @@ h1 {
   transition:
     border-color 120ms ease,
     transform 120ms ease;
+}
+
+/* In a library, a card reached with Tab is shown below the toolbar that stays at the top, not
+   under it, with some room (it also moves up a bit when focused). LibraryGrid sets the
+   toolbar's height. */
+.item-grid .item-card {
+  scroll-margin-top: calc(var(--covered-top, 0px) + 0.5rem);
 }
 
 .item-card:hover,

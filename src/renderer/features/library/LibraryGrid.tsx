@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemSummary } from '../../../shared/items';
 import { HeartIcon } from '../../components/icons';
@@ -41,6 +41,12 @@ interface LibraryGridProps {
   /** Told when the grid goes away, with the item to return to. */
   onLeave: (anchor: LibraryAnchor | null) => void;
   onOpenItem: (item: ItemSummary) => void;
+  /**
+   * The toolbar that stays at the top of the scrolling area (see LibraryToolbar). The rows under
+   * it are hidden, so the item returned to is placed below it, and the one noted is the first
+   * one below it.
+   */
+  stickyBar: RefObject<HTMLElement | null>;
   /** Shows each item's kind under its title, when items of several kinds are listed. */
   showKind?: boolean;
   /** In "Select" mode: clicking a card marks it instead of opening it. */
@@ -56,6 +62,8 @@ interface GridBox {
   readonly width: number;
   /** Distance from the top of the scrolling area's content. */
   readonly top: number;
+  /** The height of the toolbar that stays at the top, which hides what is under it. */
+  readonly covered: number;
   readonly rem: number;
 }
 
@@ -77,6 +85,7 @@ export function LibraryGrid({
   restoreTo,
   onLeave,
   onOpenItem,
+  stickyBar,
   showKind = false,
   selection,
 }: LibraryGridProps) {
@@ -88,15 +97,20 @@ export function LibraryGrid({
     const element = container.current;
     const area = scrollArea();
     if (element === null || area === null) return;
+    const bar = stickyBar.current;
     const update = () => {
       const rect = element.getBoundingClientRect();
       const next: GridBox = {
         width: rect.width,
         top: rect.top - area.getBoundingClientRect().top + area.scrollTop,
+        covered: bar?.offsetHeight ?? 0,
         rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
       };
       setBox((current) =>
-        current?.width === next.width && current.top === next.top && current.rem === next.rem
+        current?.width === next.width &&
+        current.top === next.top &&
+        current.covered === next.covered &&
+        current.rem === next.rem
           ? current
           : next,
       );
@@ -105,9 +119,12 @@ export function LibraryGrid({
     observer.observe(element);
     // What is above the grid can change height too, moving the grid down the page.
     if (element.parentElement !== null) observer.observe(element.parentElement);
+    // The toolbar takes two lines in a narrow window.
+    if (bar !== null) observer.observe(bar);
     return () => observer.disconnect();
-  }, []);
+  }, [stickyBar]);
 
+  const covered = box?.covered ?? 0;
   const rem = box?.rem ?? 16;
   const columns =
     box === null
@@ -140,12 +157,22 @@ export function LibraryGrid({
     getItemKey,
     overscan: OVERSCAN_ROWS,
     scrollMargin: box?.top ?? 0,
+    // The row returned to is placed below the toolbar, not under it.
+    scrollPaddingStart: covered,
   });
 
   // After every render: return to the item when the grid appears or its columns change, or
   // else note which item is the first visible one.
   const anchor = useRef<LibraryAnchor | null>(null);
   const laidOutColumns = useRef(0);
+  const noteAnchor = () => {
+    // The first row seen is the one just below the toolbar.
+    const offset = (virtualizer.scrollOffset ?? 0) + covered;
+    const row = offset > (box?.top ?? 0) ? virtualizer.getVirtualItemForOffset(offset) : undefined;
+    const index = row === undefined ? -1 : row.index * columns;
+    const item = items[index];
+    anchor.current = item === undefined ? null : { itemId: item.id, index };
+  };
   useLayoutEffect(() => {
     if (columns === 0) return;
     if (columns !== laidOutColumns.current) {
@@ -160,18 +187,19 @@ export function LibraryGrid({
       }
       return;
     }
-    const offset = virtualizer.scrollOffset ?? 0;
-    const row = offset > (box?.top ?? 0) ? virtualizer.getVirtualItemForOffset(offset) : undefined;
-    const index = row === undefined ? -1 : row.index * columns;
-    const item = items[index];
-    anchor.current = item === undefined ? null : { itemId: item.id, index };
+    noteAnchor();
   });
 
-  const leave = useRef(onLeave);
+  // A small scroll does not render the grid again until it ends, so the item is noted once more
+  // when leaving: opening an item right after scrolling returns to what was seen.
+  const leave = useRef(() => onLeave(anchor.current));
   useLayoutEffect(() => {
-    leave.current = onLeave;
+    leave.current = () => {
+      if (columns !== 0 && columns === laidOutColumns.current) noteAnchor();
+      onLeave(anchor.current);
+    };
   });
-  useEffect(() => () => leave.current(anchor.current), []);
+  useEffect(() => () => leave.current(), []);
 
   return (
     <div
@@ -179,7 +207,13 @@ export function LibraryGrid({
       className="item-grid"
       role="list"
       aria-label={label}
-      style={{ height: virtualizer.getTotalSize() }}
+      style={{
+        height: virtualizer.getTotalSize(),
+        // A card reached with Tab is scrolled into view by the browser below the toolbar (see the
+        // styles). Only the cards: on the whole scrolling area, the toolbar's own controls would
+        // count as hidden, and focusing them would scroll the page.
+        ['--covered-top' as string]: `${covered}px`,
+      }}
     >
       {virtualizer.getVirtualItems().map((row) => (
         <div

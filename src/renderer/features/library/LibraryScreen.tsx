@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ITEM_SORT_FIELDS } from '../../../core/filters/item-sort';
 import type { ItemKind } from '../../../shared/content';
@@ -6,7 +6,7 @@ import type { ItemSummary } from '../../../shared/items';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { CheckSquareIcon, ListIcon, PlusIcon, TrashIcon } from '../../components/icons';
 import { errorMessage, unwrap } from '../../lib/ipc';
-import { scrollToTop } from '../../lib/scroll-area';
+import { revealBelow, scrollToTop } from '../../lib/scroll-area';
 import { useDebounced } from '../../lib/use-debounced';
 import { useLoad } from '../../lib/use-load';
 import { useItemTitle } from '../items/use-item-title';
@@ -115,6 +115,23 @@ export function LibraryScreen({
     scrollToTop();
   }, [shownResults]);
 
+  // The filters open in their place, above the toolbar when it stays at the top after scrolling
+  // down: they are brought into view, or opening them would seem to do nothing.
+  const toolbar = useRef<HTMLDivElement>(null);
+  const filtersPanel = useRef<HTMLDivElement>(null);
+  const revealFilters = useRef(false);
+  useLayoutEffect(() => {
+    if (!revealFilters.current) return;
+    revealFilters.current = false;
+    if (filtersPanel.current !== null && toolbar.current !== null) {
+      revealBelow(filtersPanel.current, toolbar.current);
+    }
+  });
+  const toggleFilters = () => {
+    revealFilters.current = !view.filtersOpen;
+    onViewChange({ filtersOpen: !view.filtersOpen });
+  };
+
   return (
     <section className={`library${selection.active ? ' library--selecting' : ''}`}>
       <header className="library__header">
@@ -141,6 +158,7 @@ export function LibraryScreen({
       </header>
 
       <LibraryToolbar
+        ref={toolbar}
         kind={kind}
         search={view.search}
         sortFields={ITEM_SORT_FIELDS}
@@ -148,7 +166,7 @@ export function LibraryScreen({
         filters={{
           marks: activeFilterCount(kind, view),
           open: view.filtersOpen,
-          onToggle: () => onViewChange({ filtersOpen: !view.filtersOpen }),
+          onToggle: toggleFilters,
         }}
         columns={columns}
         onSearch={(search) => changeResults({ search })}
@@ -156,7 +174,13 @@ export function LibraryScreen({
         onColumnsChange={onColumnsChange}
       />
       {view.filtersOpen && (
-        <FiltersPanel kind={kind} view={view} values={filterValues.data} onChange={changeResults} />
+        <FiltersPanel
+          ref={filtersPanel}
+          kind={kind}
+          view={view}
+          values={filterValues.data}
+          onChange={changeResults}
+        />
       )}
 
       {error !== null && (
@@ -201,6 +225,7 @@ export function LibraryScreen({
           restoreTo={restoreTo}
           onLeave={(anchor) => onViewChange({ anchor })}
           onOpenItem={onOpenItem}
+          stickyBar={toolbar}
           selection={
             selection.active
               ? { selected: selection.selected, onToggle: selection.toggle }

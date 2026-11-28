@@ -108,6 +108,7 @@ export function CollectionScreen({
   }, [shownResults]);
 
   const isEmpty = details.data?.itemCount === 0;
+  const toolbar = useRef<HTMLDivElement>(null);
 
   return (
     // "library" shares the layout of the libraries, scrollbar space included.
@@ -156,6 +157,7 @@ export function CollectionScreen({
 
       {!isEmpty && (
         <LibraryToolbar
+          ref={toolbar}
           kind={kind}
           search={view.search}
           sortFields={COLLECTION_SORT_FIELDS}
@@ -239,6 +241,7 @@ export function CollectionScreen({
           showKind={kind === null}
           onLeave={(anchor) => onViewChange({ anchor })}
           onOpenItem={onOpenItem}
+          stickyBar={toolbar}
           selection={
             selection.active
               ? { selected: selection.selected, onToggle: selection.toggle }

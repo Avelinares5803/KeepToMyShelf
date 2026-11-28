@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-28, con la fecha de publicación de la 1.3.0 (v1.3-F, apartado 3.13) y la revisión de las mejoras anotadas (apartados 5 y 6).
+**Última actualización:** 2026-11-28, con el plan de la v1.4 (apartado 3.14).
 
 ---
 
@@ -32,24 +32,25 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 
 ## 2. Estado de las fases
 
-| Fase                         | Contenido                                                                                                                                        | Estado                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| F0 Fundaciones               | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»            | ✅ Hecha                            |
-| F1 Núcleo                    | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                       | ✅ Hecha                            |
-| F2 Perfiles                  | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                          | ✅ Hecha                            |
-| F3 Estructura de la UI       | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                            | ✅ Hecha                            |
-| F4 Elementos                 | Los tres tipos: alta, ficha, edición, papelera                                                                                                   | ✅ Hecha                            |
-| F5 Catálogos                 | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                          | ✅ Hecha (PR #12 a #19 y #23)       |
-| F6 Multimedia                | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                             | ✅ Hecha (PR #25 a #28 y la F6-C)   |
-| F7 Búsqueda y filtros        | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                    | ✅ Hecha (PR #33 a #36 y la F7-E)   |
-| F8 Películas y series        | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada | ✅ Hecha (sin entregas propias)     |
-| F9 Colecciones               | Colecciones mixtas con portada                                                                                                                   | ✅ Hecha (PR #38, #39 y la F9-C)    |
-| F10 Personalización          | Fondos predeterminados e importados, desenfoque y atenuación                                                                                     | ✅ Hecha (PR #45 a #48 y la F10-C2) |
-| F11 Copias de seguridad      | Copia y restauración manual, copia antes de borrar un perfil                                                                                     | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
-| F12 Distribución v1.0        | Workflow de release, instalador y portable, documentación final                                                                                  | ✅ Hecha (v1.0.0)                   |
-| v1.1 Uso diario              | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                              | ✅ Hecha (v1.1.1)                   |
-| v1.2 Catálogos y formularios | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                  | ✅ Hecha (v1.2.0)                   |
-| v1.3 Tus datos               | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                | ✅ Hecha (v1.3.0)                   |
+| Fase                           | Contenido                                                                                                                                             | Estado                              |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| F0 Fundaciones                 | Proyecto base, calidad (ESLint, Prettier, TypeScript estricto, Vitest), CI en Windows y Linux, empaquetado validado con rutas con «á»                 | ✅ Hecha                            |
+| F1 Núcleo                      | Fechas parciales, normalización de texto, nombres provisionales, conexión SQLite, migrador                                                            | ✅ Hecha                            |
+| F2 Perfiles                    | `app.db`, crear, abrir, renombrar y eliminar perfiles, sesión con token                                                                               | ✅ Hecha                            |
+| F3 Estructura de la UI         | Navegación, barra superior, i18n en tiempo real, tema claro/oscuro, pantalla de modos                                                                 | ✅ Hecha                            |
+| F4 Elementos                   | Los tres tipos: alta, ficha, edición, papelera                                                                                                        | ✅ Hecha                            |
+| F5 Catálogos                   | Catálogos, relaciones, fechas de lanzamiento, pantalla «Catálogos», autocompletado, países de origen y listas iniciales                               | ✅ Hecha (PR #12 a #19 y #23)       |
+| F6 Multimedia                  | Portadas, galería, PDF, miniaturas, protocolo seguro                                                                                                  | ✅ Hecha (PR #25 a #28 y la F6-C)   |
+| F7 Búsqueda y filtros          | Buscador, filtros AND/OR, ordenación, cuadrícula virtualizada                                                                                         | ✅ Hecha (PR #33 a #36 y la F7-E)   |
+| F8 Películas y series          | Absorbida por completo: la F4 hizo los tres tipos y la F5 sus papeles (dirección, reparto, productoras). Revisada el 2026-11-07: no quedaba nada      | ✅ Hecha (sin entregas propias)     |
+| F9 Colecciones                 | Colecciones mixtas con portada                                                                                                                        | ✅ Hecha (PR #38, #39 y la F9-C)    |
+| F10 Personalización            | Fondos predeterminados e importados, desenfoque y atenuación                                                                                          | ✅ Hecha (PR #45 a #48 y la F10-C2) |
+| F11 Copias de seguridad        | Copia y restauración manual, copia antes de borrar un perfil                                                                                          | ✅ Hecha (F11-A, PR #52 y F11-B2)   |
+| F12 Distribución v1.0          | Workflow de release, instalador y portable, documentación final                                                                                       | ✅ Hecha (v1.0.0)                   |
+| v1.1 Uso diario                | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                                   | ✅ Hecha (v1.1.1)                   |
+| v1.2 Catálogos y formularios   | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                       | ✅ Hecha (v1.2.0)                   |
+| v1.3 Tus datos                 | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                     | ✅ Hecha (v1.3.0)                   |
+| v1.4 Moverse por la biblioteca | Desplegable con buscador en los filtros avanzados, barra de herramientas fija, filtros nuevos, estadísticas que llevan a la biblioteca, versión 1.4.0 | Planificada                         |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -606,6 +607,38 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - Por dentro: el canal `stats:get`, `StatsService` y las consultas de agregación en `infrastructure/db/library-stats-reader.ts`.
 - **v1.3-F: versión 1.3.0** (`chore/release-1.3.0`). ✅ Hecha, como la v1.2-D: `npm version 1.3.0 --no-git-tag-version`, la versión 1.3.0 en el `CHANGELOG.md` con fecha 2026-11-27 y enlaces de comparación, y la v1.3 marcada como hecha. Antes del merge se pasó la prueba de humo en local con los archivos 1.3.0. Después del merge: la etiqueta `v1.3.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md). **La v1.3.0 se publicó el 2026-11-27.**
 
+### 3.14 Versión 1.4: moverse por la biblioteca (planificada el 2026-11-28)
+
+**Objetivo:** encontrar y recorrer los elementos con menos pasos. Reúne tres mejoras anotadas en el apartado 6: los filtros avanzados con un desplegable en el que se puede escribir, la barra de herramientas fija y pulsar las estadísticas para abrir la biblioteca filtrada. Se siguen las mismas reglas que en la v1.3: sin dependencias nuevas, y las migraciones (si alguna hiciera falta, aunque no se prevé ninguna) solo hacia delante y con su prueba. Cada entrega tiene su rama y su PR, y se trabaja un chat por entrega. Antes de implementar cada una, se acuerda su detalle y se anota aquí.
+
+**Orden:** las dos entregas de filtros van seguidas para no pisarse. Los filtros nuevos (v1.4-C) van antes que las estadísticas (v1.4-D), porque sin ellos algunas filas no tendrían un filtro que diera exactamente sus elementos.
+
+**Entregas, en este orden:**
+
+- **v1.4-A: desplegable con buscador en los filtros avanzados** (`feat/filter-combobox`). Acordado el 2026-11-28:
+  - **En todos los campos de catálogo** (plataformas, géneros, sagas, empresas, personas en cualquier papel, etiquetas, países…) **y en «Colecciones».** Los campos con pocas opciones (estado, formato, valoración, favorito, rejugado) siguen con el desplegable normal.
+  - **Al pulsarlo se abre la lista completa, y al escribir se filtra** por nombre o alias, sin distinguir mayúsculas ni tildes, como el selector del formulario del elemento (`EntryPicker`), cuya lógica de búsqueda se reutiliza. Las colecciones no tienen alias.
+  - **Un solo valor por condición y sin «Crear»:** solo se ofrecen los valores que ya usa la biblioteca, como hasta ahora.
+  - **Ratón y teclado** (flechas, Intro y Esc), con los roles ARIA de un _combobox_.
+  - Riesgo: las E2E que eligen valores con `selectOption` hay que adaptarlas.
+- **v1.4-B: barra de herramientas fija arriba** (`feat/sticky-toolbar`). Acordado el 2026-11-28:
+  - **El buscador, «Filtros (N)», el orden y el tamaño de las portadas se quedan bajo la barra superior** al desplazarse (`position: sticky`), con un fondo semitransparente como el de la barra superior.
+  - **También en la pantalla de una colección**, que usa la misma barra.
+  - **El panel de filtros abierto no se queda fijo**, porque puede ser muy alto.
+  - Riesgo: al volver a la biblioteca, la fila guardada se coloca arriba de la ventana y quedaría tapada por la barra. Hay que descontar su altura y comprobarlo con una E2E.
+- **v1.4-C: tres filtros nuevos** (`feat/more-filters`). Acordado el 2026-11-28:
+  - **«Sin estado»:** una casilla en los filtros simples y el operador «sin valor» en los avanzados.
+  - **«Como mucho» en la valoración** de los filtros simples, junto a «Al menos». Las dos juntas permiten una valoración exacta.
+  - **«Año de fin»:** un filtro numérico, como el año de lanzamiento, con el año de la fecha de fin. Una fecha de fin vacía o «Indeterminada» cuenta como sin fecha.
+- **v1.4-D: pulsar las estadísticas para filtrar** (`feat/stats-to-library`). Acordado el 2026-11-28:
+  - **Se pueden pulsar** las filas de estados (también «Sin estado»), valoraciones (también «Sin valorar»), terminados por año, géneros y plataformas, y las cifras de favoritos, rejugados, físico y digital. **No se pueden pulsar** el total, los totales por tipo ni las horas jugadas.
+  - **La biblioteca muestra exactamente los elementos que cuenta la fila.** Por ejemplo, «Terminados en 2025» es el estado «Terminado» y el año de fin 2025.
+  - **Solo con un tipo elegido en «Mostrar».** Con «Todo» no se sabe qué biblioteca abrir, porque los estados mezclan los tres tipos y los géneros de películas y series son de dos bibliotecas.
+  - **Se sustituyen los filtros simples sin preguntar:** la biblioteca se abre con ese único filtro, la búsqueda vacía y el panel de filtros abierto, para que se vea qué se ha aplicado. Los filtros avanzados no se tocan.
+  - **Al volver, Estadísticas conserva el tipo elegido**, que hoy se reiniciaría a «Todo».
+  - Por dentro: las estadísticas de géneros y plataformas devuelven también el id de cada valor, porque los filtros trabajan con ids.
+- **v1.4-E: versión 1.4.0** (`chore/release-1.4.0`), como la v1.3-F: `npm version 1.4.0 --no-git-tag-version`, la versión 1.4.0 en el `CHANGELOG.md` y la v1.4 marcada como hecha. Antes del merge, la prueba de humo en local; después, la etiqueta `v1.4.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md).
+
 ---
 
 ## 4. Disposición de los datos en disco
@@ -636,7 +669,7 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 
 ## 6. Mejoras anotadas (fuera del alcance actual)
 
-Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026-11-23, al planificar la v1.2, y el 2026-11-25, al planificar la v1.3. Lo que entra en la v1.1 está en el apartado 3.11; lo de la v1.2 (fusionar duplicados, copiar catálogos de otro perfil y errores por campo), en el 3.12; y lo de la v1.3 (copias programadas, exportar, importar y estadísticas), en el 3.13.
+Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026-11-23, al planificar la v1.2, el 2026-11-25, al planificar la v1.3, y el 2026-11-28, al planificar la v1.4. Lo que entra en la v1.1 está en el apartado 3.11; lo de la v1.2 (fusionar duplicados, copiar catálogos de otro perfil y errores por campo), en el 3.12; lo de la v1.3 (copias programadas, exportar, importar y estadísticas), en el 3.13; y lo de la v1.4 (desplegable con buscador en los filtros avanzados, barra de herramientas fija y pulsar las estadísticas), en el 3.14.
 
 **Calidad, cuando encaje** (cambia los workflows, así que necesita permiso):
 
@@ -657,9 +690,7 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026
 
 **Sin versión asignada:**
 
-- **Filtros avanzados con un desplegable en el que se puede escribir** (combobox) en todos los campos de catálogo (plataformas, géneros, sagas, empresas, personas en cualquier papel, etiquetas, países…) y en «Colecciones». Al pulsarlo se abre la lista completa, y al escribir se filtra, también por alias, como el selector del formulario del elemento (`EntryPicker`). Los campos con pocas opciones (estado, formato, valoración…) siguen con el desplegable normal. Los filtros simples no lo necesitan: cada sección tiene su buscador a partir de 10 valores. Ampliada el 2026-11-28.
 - Colecciones: orden manual y filtros por atributo al elegir un tipo.
 - Arrastrar y soltar también los fondos de Ajustes y la portada de una colección, con el mecanismo de la v1.1-E.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.
-- Estadísticas (anotadas en la v1.3-E): pulsar una barra para abrir la biblioteca con ese filtro, estadísticas por persona o empresa, y elegir un rango de fechas.
-- Barra de herramientas de la biblioteca fija arriba al desplazarse, para buscar, ordenar o cambiar el tamaño de las portadas sin volver arriba (anotada en la v1.1-D).
+- Estadísticas (anotadas en la v1.3-E): estadísticas por persona o empresa, y elegir un rango de fechas. Pulsar una barra para abrir la biblioteca filtrada pasó a la v1.4-D.

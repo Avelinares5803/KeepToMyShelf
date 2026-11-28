@@ -45,10 +45,41 @@ export type SearchMatch =
  * How a value matches a search key (already normalized with normalizeForSearch): by its
  * name, by one of its other names, or not at all (null). An empty key matches every value.
  */
-export function matchEntry(entry: CatalogEntrySummary, key: string): SearchMatch | null {
+export function matchEntry(entry: SearchableValue, key: string): SearchMatch | null {
   if (normalizeForSearch(entry.name).includes(key)) return { by: 'name' };
   const alias = entry.aliases.find((name) => normalizeForSearch(name).includes(key));
   return alias === undefined ? null : { by: 'alias', alias };
+}
+
+/** Anything found by its name or by one of its other names. */
+export interface SearchableValue {
+  readonly name: string;
+  readonly aliases: readonly string[];
+}
+
+export interface ValueMatch<T extends SearchableValue> {
+  readonly value: T;
+  readonly match: SearchMatch;
+}
+
+/**
+ * The values that match the typed text, by name or by other name, ignoring case and accents.
+ * Values whose name starts with the text come first; the rest keep their order. An empty text
+ * matches every value.
+ */
+export function searchValues<T extends SearchableValue>(
+  values: readonly T[],
+  text: string,
+): ValueMatch<T>[] {
+  const key = normalizeForSearch(text);
+  const found: ValueMatch<T>[] = [];
+  for (const value of values) {
+    const match = matchEntry(value, key);
+    if (match) found.push({ value, match });
+  }
+  const startsWithKey = ({ value }: ValueMatch<T>) =>
+    normalizeForSearch(value.name).startsWith(key) ? 0 : 1;
+  return found.sort((a, b) => startsWithKey(a) - startsWithKey(b));
 }
 
 /**

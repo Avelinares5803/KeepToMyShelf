@@ -732,6 +732,30 @@ h1 {
   flex: 1;
 }
 
+.value-combobox {
+  position: relative;
+  display: grid;
+  min-width: 10rem;
+}
+
+.value-combobox input {
+  padding-right: 1.6rem;
+}
+
+.value-combobox__arrow {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  transform: translateY(-50%);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.value-combobox .value-combobox__empty {
+  padding: 0.45rem 0.6rem;
+  color: var(--color-muted);
+}
+
 .advanced-filters__group {
   padding: 0.6rem;
   border: 1px solid var(--color-border);

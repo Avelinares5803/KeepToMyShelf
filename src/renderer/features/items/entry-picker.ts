@@ -1,9 +1,8 @@
 import { isScopeCompatible } from '../../../core/catalogs/catalogs';
 import { cleanSingleLine } from '../../../core/text/clean-text';
-import { normalizeForSearch } from '../../../core/text/normalize';
 import type { CatalogEntrySummary } from '../../../shared/catalogs';
 import type { ItemKind } from '../../../shared/content';
-import { matchEntry, type SearchMatch } from '../catalogs/catalog-view';
+import { searchValues, type SearchMatch } from '../catalogs/catalog-view';
 
 /** A value chosen in the form: an existing one (with its name, to show it) or a new name. */
 export type EntryChoice =
@@ -38,16 +37,12 @@ export function suggestionsFor(
   kind: ItemKind,
   text: string,
 ): Suggestion[] {
-  const key = normalizeForSearch(text);
-  const suggestions: Suggestion[] = [];
-  for (const entry of entries) {
-    if (isChosen(chosen, entry) || !isScopeCompatible(entry.scope, kind)) continue;
-    const match = matchEntry(entry, key);
-    if (match) suggestions.push({ entry, match });
-  }
-  const startsWithKey = (s: Suggestion) =>
-    normalizeForSearch(s.entry.name).startsWith(key) ? 0 : 1;
-  return suggestions.sort((a, b) => startsWithKey(a) - startsWithKey(b)).slice(0, MAX_SUGGESTIONS);
+  const available = entries.filter(
+    (entry) => !isChosen(chosen, entry) && isScopeCompatible(entry.scope, kind),
+  );
+  return searchValues(available, text)
+    .slice(0, MAX_SUGGESTIONS)
+    .map(({ value, match }) => ({ entry: value, match }));
 }
 
 /**

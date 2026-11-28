@@ -101,6 +101,7 @@
       "value": "Value",
       "chooseField": "Choose a field",
       "chooseValue": "Choose a value",
+      "noMatches": "No matches",
       "addCondition": "Add condition",
       "addGroup": "Add group",
       "removeGroup": "Remove group",

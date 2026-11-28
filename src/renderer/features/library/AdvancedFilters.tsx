@@ -39,6 +39,7 @@ import {
   type AdvancedGroup,
 } from './advanced-filters';
 import { FORMAT_OPTIONS } from './simple-filters';
+import { ValueCombobox } from './ValueCombobox';
 
 const RATINGS = Array.from({ length: RATING_MAX - RATING_MIN + 1 }, (_, i) => RATING_MAX - i);
 
@@ -183,18 +184,10 @@ function Condition({
     }
   };
 
-  const valueOptions = (from: Exclude<FilterSource, { type: 'number' }>): ValueOption[] => {
+  const valueOptions = (
+    from: Exclude<FilterSource, { type: 'number' | 'role' | 'collection' }>,
+  ): ValueOption[] => {
     switch (from.type) {
-      case 'role':
-        return (values?.roles[from.role] ?? []).map(({ id, name }) => ({
-          value: String(id),
-          label: name,
-        }));
-      case 'collection':
-        return (values?.collections ?? []).map(({ id, name }) => ({
-          value: String(id),
-          label: name,
-        }));
       case 'choice':
         return from.values.map((value) => ({
           value,
@@ -285,23 +278,41 @@ function Condition({
         />
       )}
 
-      {source && source.type !== 'number' && condition.operator !== 'isEmpty' && (
-        <select
-          className="advanced-filters__value"
-          aria-label={t('library.advanced.value')}
-          value={condition.value === null ? '' : String(condition.value)}
-          onChange={(event) =>
-            onChange(setValue(root, condition.id, parseValue(source, event.target.value)))
-          }
-        >
-          <option value="">{t('library.advanced.chooseValue')}</option>
-          {valueOptions(source).map(({ value, label }) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      )}
+      {(source?.type === 'role' || source?.type === 'collection') &&
+        condition.operator !== 'isEmpty' && (
+          <ValueCombobox
+            label={t('library.advanced.value')}
+            values={
+              source.type === 'role'
+                ? (values?.roles[source.role] ?? [])
+                : (values?.collections ?? [])
+            }
+            value={typeof condition.value === 'number' ? condition.value : null}
+            onChange={(chosen) => onChange(setValue(root, condition.id, chosen))}
+          />
+        )}
+
+      {source &&
+        source.type !== 'number' &&
+        source.type !== 'role' &&
+        source.type !== 'collection' &&
+        condition.operator !== 'isEmpty' && (
+          <select
+            className="advanced-filters__value"
+            aria-label={t('library.advanced.value')}
+            value={condition.value === null ? '' : String(condition.value)}
+            onChange={(event) =>
+              onChange(setValue(root, condition.id, parseValue(source, event.target.value)))
+            }
+          >
+            <option value="">{t('library.advanced.chooseValue')}</option>
+            {valueOptions(source).map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        )}
 
       <button
         type="button"

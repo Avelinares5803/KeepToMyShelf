@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOGS, type Catalog } from '../../../core/catalogs/catalogs';
 import type { CatalogEntrySummary } from '../../../shared/catalogs';
-import { CATALOG_ORDER, initialCatalog, usageCount, visibleEntries } from './catalog-view';
+import {
+  CATALOG_ORDER,
+  initialCatalog,
+  searchValues,
+  usageCount,
+  visibleEntries,
+} from './catalog-view';
 
 const entry = (
   name: string,
@@ -54,6 +60,43 @@ describe('catalog view', () => {
 
     it('finds values by their other names', () => {
       expect(names(visibleEntries(platforms, 'platform', null, 'genesis'))).toEqual(['Mega Drive']);
+    });
+  });
+
+  describe('searchValues', () => {
+    const values = [
+      { id: 1, name: 'Aventura de acción', aliases: [] },
+      { id: 2, name: 'Rol', aliases: ['RPG'] },
+      { id: 3, name: 'Acción', aliases: [] },
+      { id: 4, name: 'Puzle', aliases: [] },
+    ];
+    const found = (text: string) =>
+      searchValues(values, text).map(({ value, match }) => [value.id, match.by]);
+
+    it('returns every value, in its order, with an empty text', () => {
+      expect(found('')).toEqual([
+        [1, 'name'],
+        [2, 'name'],
+        [3, 'name'],
+        [4, 'name'],
+      ]);
+    });
+
+    it('ignores case and accents, and puts first the names that start with the text', () => {
+      expect(found('ACCION')).toEqual([
+        [3, 'name'],
+        [1, 'name'],
+      ]);
+    });
+
+    it('finds values by their other names, saying which one matched', () => {
+      expect(searchValues(values, 'rpg')).toEqual([
+        { value: values[1], match: { by: 'alias', alias: 'RPG' } },
+      ]);
+    });
+
+    it('finds nothing when no name matches', () => {
+      expect(found('estrategia')).toEqual([]);
     });
   });
 

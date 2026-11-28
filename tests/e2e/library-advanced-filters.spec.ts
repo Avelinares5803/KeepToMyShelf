@@ -55,9 +55,26 @@ async function addRow(
     await row.getByLabel('Operador', { exact: true }).selectOption({ label: operator });
   }
   if (value !== null) {
-    await row.getByLabel('Valor', { exact: true }).selectOption({ label: value });
+    const control = row.getByLabel('Valor', { exact: true });
+    // Catalog values and collections are chosen in a list that can be searched.
+    if (await control.evaluate((element) => element.tagName === 'INPUT')) {
+      await control.click();
+      await page.getByRole('option', { name: value, exact: true }).click();
+      await expect(control).toHaveValue(value);
+    } else {
+      await control.selectOption({ label: value });
+    }
   }
 }
+
+/** The searchable value of the last row, and its list. */
+const lastValue = () =>
+  builder()
+    .locator('.advanced-filters__condition')
+    .last()
+    .getByRole('combobox', { name: 'Valor', exact: true });
+const valueList = () => page.getByRole('listbox', { name: 'Valor', exact: true });
+const optionNames = () => valueList().getByRole('option');
 
 test.beforeEach(async () => {
   dataDir = mkdtempSync(join(tmpdir(), 'ktms-e2e-ñáü-'));
@@ -91,6 +108,92 @@ test('finds items with both values, which the simple filters cannot do', async (
     .getByLabel('Cumple', { exact: true })
     .selectOption({ label: 'alguna de estas condiciones' });
   await expectTitles(['Las dos', 'Solo acción', 'Solo RPG']);
+});
+
+test('opens the whole list of values, and narrows it down by name or other name', async () => {
+  await openBuilder([
+    { title: 'Rol', entries: [{ ...genre('Rol'), aliases: ['RPG'] }] },
+    { title: 'Acción', entries: [genre('Acción')] },
+    { title: 'Aventura', entries: [genre('Aventura de acción')] },
+  ]);
+  await addRow('Géneros', null);
+  const value = lastValue();
+  await expect(value).toHaveAttribute('placeholder', 'Elige un valor');
+  await value.click();
+  await expect(value).toHaveAttribute('aria-expanded', 'true');
+  await expect(optionNames()).toHaveText(['Acción', 'Aventura de acción', 'Rol']);
+
+  // Without accents or capitals, the names that start with the text first.
+  await value.fill('ACCION');
+  await expect(optionNames()).toHaveText(['Acción', 'Aventura de acción']);
+  await value.fill('rpg');
+  await expect(optionNames()).toHaveText(['Rol (RPG)']);
+  await value.fill('estrategia');
+  await expect(valueList()).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveText('Sin resultados');
+
+  await value.fill('rpg');
+  await page.getByRole('option', { name: 'Rol (RPG)', exact: true }).click();
+  await expect(value).toHaveValue('Rol');
+  await expect(valueList()).toHaveCount(0);
+  await expectTitles(['Rol']);
+});
+
+test('chooses a value with the keyboard alone, and Esc closes the list', async () => {
+  await openBuilder([
+    { title: 'Con Acción', entries: [genre('Acción')] },
+    { title: 'Con Rol', entries: [genre('Rol')] },
+  ]);
+  await addRow('Géneros', null);
+  const value = lastValue();
+  await value.focus();
+  await expect(optionNames()).toHaveCount(2);
+
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('option', { name: 'Rol', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.keyboard.press('Enter');
+  await expect(value).toHaveValue('Rol');
+  await expectTitles(['Con Rol']);
+
+  // Esc closes the list and leaves the chosen value as it was.
+  await page.keyboard.press('ArrowDown');
+  await expect(valueList()).toBeVisible();
+  await page.keyboard.type('Acc');
+  await page.keyboard.press('Escape');
+  await expect(valueList()).toHaveCount(0);
+  await expect(value).toHaveValue('Rol');
+
+  // Enter alone chooses only a value with exactly the typed name.
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type('acción');
+  await page.keyboard.press('Enter');
+  await expect(value).toHaveValue('Acción');
+  await expectTitles(['Con Acción']);
+});
+
+test('keeps the value when leaving with half a name, and drops it when leaving it empty', async () => {
+  await openBuilder([{ title: 'Con Rol', entries: [genre('Rol')] }, { title: 'Otro' }]);
+  await addRow('Géneros', 'Rol');
+  await expectTitles(['Con Rol']);
+  const value = lastValue();
+
+  // Clicking the field selects the name, so typing replaces it.
+  await value.click();
+  await page.keyboard.type('Ro');
+  await expect(value).toHaveValue('Ro');
+  await builder().getByLabel('Cumple', { exact: true }).focus();
+  await expect(value).toHaveValue('Rol');
+  await expectTitles(['Con Rol']);
+
+  await value.fill('');
+  await builder().getByLabel('Cumple', { exact: true }).focus();
+  await expect(value).toHaveValue('');
+  await expectTitles(['Con Rol', 'Otro']);
+  await expect(button('Filtros')).toBeVisible();
 });
 
 test('compares numbers, and finds the items without them', async () => {

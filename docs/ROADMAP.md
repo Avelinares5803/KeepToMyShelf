@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-28, con el plan de la v1.4 (apartado 3.14).
+**Última actualización:** 2026-11-28, con la v1.4-A hecha (apartado 3.14).
 
 ---
 
@@ -50,7 +50,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | v1.1 Uso diario                | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                                   | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios   | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                       | ✅ Hecha (v1.2.0)                   |
 | v1.3 Tus datos                 | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                     | ✅ Hecha (v1.3.0)                   |
-| v1.4 Moverse por la biblioteca | Desplegable con buscador en los filtros avanzados, barra de herramientas fija, filtros nuevos, estadísticas que llevan a la biblioteca, versión 1.4.0 | Planificada                         |
+| v1.4 Moverse por la biblioteca | Desplegable con buscador en los filtros avanzados, barra de herramientas fija, filtros nuevos, estadísticas que llevan a la biblioteca, versión 1.4.0 | En curso (A hecha)                  |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -615,12 +615,14 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
 
 **Entregas, en este orden:**
 
-- **v1.4-A: desplegable con buscador en los filtros avanzados** (`feat/filter-combobox`). Acordado el 2026-11-28:
+- **v1.4-A: desplegable con buscador en los filtros avanzados** (`feat/filter-combobox`). ✅ Hecha. Acordado el 2026-11-28:
   - **En todos los campos de catálogo** (plataformas, géneros, sagas, empresas, personas en cualquier papel, etiquetas, países…) **y en «Colecciones».** Los campos con pocas opciones (estado, formato, valoración, favorito, rejugado) siguen con el desplegable normal.
   - **Al pulsarlo se abre la lista completa, y al escribir se filtra** por nombre o alias, sin distinguir mayúsculas ni tildes, como el selector del formulario del elemento (`EntryPicker`), cuya lógica de búsqueda se reutiliza. Las colecciones no tienen alias.
   - **Un solo valor por condición y sin «Crear»:** solo se ofrecen los valores que ya usa la biblioteca, como hasta ahora.
   - **Ratón y teclado** (flechas, Intro y Esc), con los roles ARIA de un _combobox_.
   - Riesgo: las E2E que eligen valores con `selectOption` hay que adaptarlas.
+  - **Detalles acordados al implementarla:** el campo cerrado muestra el nombre del valor elegido; al entrar en él se selecciona el texto, para que lo escrito lo sustituya. Salir con el texto a medias conserva el valor; salir con el texto vacío deja la condición sin valor (y no se aplica). Intro sin opción resaltada solo elige un valor con exactamente ese nombre. La lista no tiene límite, y sin coincidencias muestra «Sin resultados».
+  - Por dentro: `ValueCombobox` y la búsqueda compartida `searchValues` (en `catalog-view.ts`), que también usa `EntryPicker`.
 - **v1.4-B: barra de herramientas fija arriba** (`feat/sticky-toolbar`). Acordado el 2026-11-28:
   - **El buscador, «Filtros (N)», el orden y el tamaño de las portadas se quedan bajo la barra superior** al desplazarse (`position: sticky`), con un fondo semitransparente como el de la barra superior.
   - **También en la pantalla de una colección**, que usa la misma barra.

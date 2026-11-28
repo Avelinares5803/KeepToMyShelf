@@ -106,6 +106,7 @@ function conditionExpression(
     }
     case 'choice': {
       const column = `item.${source.column}` as const;
+      if (operator === 'isEmpty') return eb(column, 'is', null);
       // An item without a value "is not" any of them, but != alone would leave it out.
       return operator === 'is'
         ? eb(column, '=', value as string)
@@ -170,6 +171,11 @@ function measureExpression(measure: NumberMeasure): Expression<number | null> {
       // The earliest release, as the sort by release date. Dates start with their 4-digit year.
       return sql`(SELECT CAST(substr(MIN(item_release.date), 1, 4) AS INTEGER)
         FROM item_release WHERE item_release.item_id = item.id)`;
+    case 'finishedYear':
+      // As "Finished by year" in the statistics: only dates that start with a 4-digit year,
+      // so an unknown end date ('unknown') has no year, like an empty one.
+      return sql`(CASE WHEN item.finished_on GLOB '[0-9][0-9][0-9][0-9]*'
+        THEN CAST(substr(item.finished_on, 1, 4) AS INTEGER) END)`;
     case 'hoursPlayed':
       return sql.ref('item.minutes_played');
     case 'seasons':

@@ -199,6 +199,19 @@ describe('editing the builder', () => {
       value: null,
     });
   });
+
+  it('asks for items without a status, dropping the status chosen', () => {
+    const root = withRow(NO_ADVANCED_FILTERS, 0, 'status', 'completed');
+    const { id } = lastChild(root);
+    const noStatus = setOperator(root, id, 'isEmpty');
+
+    expect(lastChild(noStatus)).toMatchObject({ operator: 'isEmpty', value: null });
+    expect(toAdvancedTree('game', noStatus)).toEqual({
+      type: 'group',
+      op: 'and',
+      children: [{ type: 'condition', field: 'status', operator: 'isEmpty', value: null }],
+    });
+  });
 });
 
 describe('countConditions', () => {
@@ -259,7 +272,15 @@ describe('withoutMissingAdvancedValues', () => {
 });
 
 describe('fieldsToOffer', () => {
-  const ITEM_FIELDS = ['favorite', 'replay', 'status', 'rating', 'format', 'releaseYear'];
+  const ITEM_FIELDS = [
+    'favorite',
+    'replay',
+    'status',
+    'rating',
+    'format',
+    'releaseYear',
+    'finishedYear',
+  ];
 
   it('always offers the fields of the item, and catalogs only with values', () => {
     const genreValue = [{ id: 1, name: 'RPG', aliases: [] }];

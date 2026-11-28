@@ -158,6 +158,56 @@ test('filters by each kind of control', async () => {
   await expectTitles(['Ambos', 'Digital', 'Físico']);
 });
 
+test('filters by no status, an exact rating and the end year', async () => {
+  await openFilters([
+    { title: 'Terminado', status: 'completed', rating: 6, finishedOn: '2024-03-14' },
+    { title: 'Terminado antes', status: 'completed', rating: 8, finishedOn: '2021' },
+    { title: 'Sin estado', rating: 6, finishedOn: 'unknown' },
+    { title: 'Nada' },
+  ]);
+
+  // "No status" is one more option of the status.
+  await section('Estado').click();
+  await box('Sin estado').check();
+  await expectTitles(['Nada', 'Sin estado']);
+  await box('Terminado').check();
+  await expect(button('Filtros (2)')).toBeVisible();
+  await expectTitles(['Nada', 'Sin estado', 'Terminado', 'Terminado antes']);
+  await button('Quitar filtros').first().click();
+
+  // The same "at least" and "at most" give an exact rating.
+  await section('Valoración').click();
+  const atLeast = page.getByLabel('Al menos', { exact: true });
+  const atMost = page.getByLabel('Como mucho', { exact: true });
+  await atMost.selectOption('6');
+  await expectTitles(['Sin estado', 'Terminado']);
+  await atLeast.selectOption('6');
+  await expect(button('Filtros (2)')).toBeVisible();
+  await expectTitles(['Sin estado', 'Terminado']);
+  await box('Sin valorar').check();
+  await expectTitles(['Nada', 'Sin estado', 'Terminado']);
+  await box('Sin valorar').uncheck();
+
+  // "At least" above "at most" finds nothing, and says why.
+  const warning = page.getByText('«Al menos» es mayor que «Como mucho».', { exact: true });
+  await expect(warning).toHaveCount(0);
+  await atLeast.selectOption('8');
+  await expect(warning).toBeVisible();
+  await expect(atLeast).toHaveAttribute('aria-invalid', 'true');
+  await expect(atMost).toHaveAttribute('aria-invalid', 'true');
+  await expect(heading('Videojuegos (0)')).toBeVisible();
+  await button('Quitar filtros').first().click();
+  await expect(warning).toHaveCount(0);
+
+  // The year of the end date; an unknown one has no year.
+  const number = (name: string) => panel().getByRole('spinbutton', { name, exact: true });
+  await section('Año de fin').click();
+  await expect(number('Año de fin, desde')).toHaveAttribute('placeholder', '2021');
+  await expect(number('Año de fin, hasta')).toHaveAttribute('placeholder', '2024');
+  await number('Año de fin, desde').fill('2022');
+  await expectTitles(['Terminado']);
+});
+
 test('filters by collection, and unmarks a collection that is deleted', async () => {
   const goToModes = () =>
     page

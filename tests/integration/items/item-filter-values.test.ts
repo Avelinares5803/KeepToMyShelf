@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog } from '../../../src/core/catalogs/catalogs';
+import { knownUsageDate, UNKNOWN_USAGE_DATE } from '../../../src/core/dates/usage-period';
 import { EMPTY_ITEM_DRAFT } from '../../../src/core/items/item-draft';
 import type { ItemRelationsDraft } from '../../../src/core/items/item-relations';
 import type { ItemKind } from '../../../src/shared/content';
@@ -190,6 +191,14 @@ describe('ItemService.filterValues', () => {
       game('Largo', { minutesPlayed: 10 * 60 + 30 });
 
       expect(ranges('game').hoursPlayed).toEqual({ min: 1, max: 11 });
+    });
+
+    it('offers the years of the end dates, without the unknown ones', () => {
+      game('Fin 2019', { finishedOn: knownUsageDate({ year: 2019, month: 5 }) });
+      game('Fin 2024', { finishedOn: knownUsageDate({ year: 2024, month: 1, day: 2 }) });
+      game('Indeterminado', { finishedOn: UNKNOWN_USAGE_DATE });
+
+      expect(ranges('game').finishedYear).toEqual({ min: 2019, max: 2024 });
     });
 
     it('offers seasons to series only', () => {

@@ -220,9 +220,9 @@ function Condition({
   };
 
   const operators = source ? operatorsFor(source) : [];
-  // "Not rated" for the rating; numbers are "not set".
+  // "Not rated" for the rating; numbers and the status are "not set".
   const operatorLabel = (operator: FilterOperator) =>
-    source?.type === 'number' && operator === 'isEmpty'
+    (source?.type === 'number' || source?.type === 'choice') && operator === 'isEmpty'
       ? t('library.advanced.operators.notSet')
       : t(`library.advanced.operators.${operator}`);
   const range = source?.type === 'number' ? values?.ranges[source.measure] : undefined;

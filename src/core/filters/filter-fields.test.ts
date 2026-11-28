@@ -10,7 +10,16 @@ import {
   type FilterSource,
 } from './filter-fields';
 
-const COMMON = ['status', 'replay', 'format', 'rating', 'favorite', 'releaseYear', 'collection'];
+const COMMON = [
+  'status',
+  'replay',
+  'format',
+  'rating',
+  'favorite',
+  'releaseYear',
+  'finishedYear',
+  'collection',
+];
 const statusSource = filterFieldFor('game', 'status')!.source;
 const formatSource = filterFieldFor('game', 'format')!.source;
 const ratingSource: FilterSource = { type: 'rating' };
@@ -89,6 +98,12 @@ describe('filter values', () => {
     expect(isValidFilterValue(statusSource, 'is', null)).toBe(false);
   });
 
+  it('allow asking for items without a status, with no value', () => {
+    expect(operatorsFor(statusSource)).toEqual(['is', 'isNot', 'isEmpty']);
+    expect(isValidFilterValue(statusSource, 'isEmpty', null)).toBe(true);
+    expect(isValidFilterValue(statusSource, 'isEmpty', 'completed')).toBe(false);
+  });
+
   it('accept only booleans for flags', () => {
     const source = filterFieldFor('game', 'favorite')!.source;
     expect(isValidFilterValue(source, 'is', true)).toBe(true);
@@ -126,6 +141,10 @@ describe('filter values', () => {
     expect(isValidFilterValue(seasons, 'gte', 0)).toBe(true);
     expect(isValidFilterValue(seasons, 'isEmpty', null)).toBe(true);
     expect(isValidFilterValue(seasons, 'isEmpty', 3)).toBe(false);
+    const finished: FilterSource = { type: 'number', measure: 'finishedYear' };
+    expect(isValidFilterValue(finished, 'gte', 2025)).toBe(true);
+    expect(isValidFilterValue(finished, 'lte', 0)).toBe(false);
+    expect(isValidFilterValue(finished, 'isEmpty', null)).toBe(true);
   });
 
   it('allow comparing numbers and asking for those not set', () => {

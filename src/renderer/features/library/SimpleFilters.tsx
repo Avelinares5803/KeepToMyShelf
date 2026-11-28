@@ -12,11 +12,13 @@ import { RATING_MAX, RATING_MIN, ratingToStars } from '../../../core/items/ratin
 import { normalizeForSearch } from '../../../core/text/normalize';
 import type { ItemKind } from '../../../shared/content';
 import type { ItemFilterRange, ItemFilterValue, ItemFilterValues } from '../../../shared/items';
+import { FieldErrorMessage, invalidProps } from '../../components/FieldErrorMessage';
 import { measureLabel, replayPluralLabel, roleLabel, statusLabel } from '../items/labels';
 import { useStarsText } from '../items/StarRating';
 import {
   FORMAT_OPTIONS,
   isInvalidBound,
+  isInvalidRatingRange,
   parseBound,
   toggled,
   type NumberRangeText,
@@ -47,7 +49,36 @@ export function SimpleFilters({ kind, filters, values, onChange }: SimpleFilters
   const change = (next: Partial<Filters>) => onChange({ ...filters, ...next });
   const changeRole = (role: ItemRole, ids: readonly number[]) =>
     change({ roles: { ...filters.roles, [role]: ids } });
-  const ratingMarks = Number(filters.minRating !== null) + Number(filters.unrated);
+  const ratingMarks =
+    Number(filters.minRating !== null) +
+    Number(filters.maxRating !== null) +
+    Number(filters.unrated);
+  const ratingError = isInvalidRatingRange(filters)
+    ? t('library.filters.ratingRangeInvalid')
+    : undefined;
+  const ratingSelect = (bound: 'minRating' | 'maxRating', label: string) => (
+    <div className="inline-field">
+      <label htmlFor={`${id}-${bound}`}>{label}</label>
+      <select
+        id={`${id}-${bound}`}
+        value={filters[bound] ?? ''}
+        {...invalidProps(`${id}-rating-error`, ratingError)}
+        onChange={(event) =>
+          change({ [bound]: event.target.value === '' ? null : Number(event.target.value) })
+        }
+      >
+        <option value="">{t('library.filters.anyRating')}</option>
+        {RATINGS.map((rating) => {
+          const stars = ratingToStars(rating);
+          return (
+            <option key={rating} value={rating}>
+              {t('items.rating.set', { count: stars, stars: formatStars(stars) })}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  );
 
   return (
     <section className="simple-filters" aria-label={t('library.filters.panel')}>
@@ -65,7 +96,10 @@ export function SimpleFilters({ kind, filters, values, onChange }: SimpleFilters
       </div>
 
       <div className="simple-filters__sections">
-        <Section label={t('items.fields.status')} marks={filters.status.length}>
+        <Section
+          label={t('items.fields.status')}
+          marks={filters.status.length + Number(filters.noStatus)}
+        >
           {ITEM_STATUSES.map((status) => (
             <Checkbox
               key={status}
@@ -74,31 +108,19 @@ export function SimpleFilters({ kind, filters, values, onChange }: SimpleFilters
               onChange={() => change({ status: toggled(filters.status, status) })}
             />
           ))}
+          <Checkbox
+            label={t('library.filters.noStatus')}
+            checked={filters.noStatus}
+            onChange={() => change({ noStatus: !filters.noStatus })}
+          />
         </Section>
 
         <Section label={t('items.rating.label')} marks={ratingMarks}>
-          <div className="inline-field">
-            <label htmlFor={`${id}-rating`}>{t('library.filters.atLeast')}</label>
-            <select
-              id={`${id}-rating`}
-              value={filters.minRating ?? ''}
-              onChange={(event) =>
-                change({
-                  minRating: event.target.value === '' ? null : Number(event.target.value),
-                })
-              }
-            >
-              <option value="">{t('library.filters.anyRating')}</option>
-              {RATINGS.map((rating) => {
-                const stars = ratingToStars(rating);
-                return (
-                  <option key={rating} value={rating}>
-                    {t('items.rating.set', { count: stars, stars: formatStars(stars) })}
-                  </option>
-                );
-              })}
-            </select>
+          <div className="simple-filters__rating">
+            {ratingSelect('minRating', t('library.filters.atLeast'))}
+            {ratingSelect('maxRating', t('library.filters.atMost'))}
           </div>
+          <FieldErrorMessage id={`${id}-rating-error`} message={ratingError} />
           <Checkbox
             label={t('library.filters.unrated')}
             checked={filters.unrated}

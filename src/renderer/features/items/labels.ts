@@ -29,9 +29,14 @@ export const releasesLabel = (t: TFunction, kind: ItemKind) => t(`items.releases
 
 /** Name of a number the filters offer: "Release year" for games, "Premiere year" for the rest. */
 export function measureLabel(t: TFunction, kind: ItemKind, measure: NumberMeasure): string {
-  return measure === 'releaseYear'
-    ? t(`library.filters.releaseYear.${grammar(kind)}`)
-    : t(`items.fields.${measure}`);
+  switch (measure) {
+    case 'releaseYear':
+      return t(`library.filters.releaseYear.${grammar(kind)}`);
+    case 'finishedYear':
+      return t('library.filters.finishedYear');
+    default:
+      return t(`items.fields.${measure}`);
+  }
 }
 
 /** Name of a role in the form and the detail view ("Developers", "Cast"...). */

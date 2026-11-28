@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react';
+import { useId, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemSort, ItemSortField } from '../../../core/filters/item-sort';
 import type { ItemKind } from '../../../shared/content';
@@ -7,6 +7,8 @@ import { LargeCoversIcon, SmallCoversIcon } from '../../components/icons';
 import { reversedSort, sortByField } from './library-view';
 
 interface LibraryToolbarProps<F extends ItemSortField> {
+  /** For measuring it: it stays at the top of the scrolling area and hides what is under it. */
+  ref?: Ref<HTMLDivElement>;
   /** The kind listed; null when every kind is (e.g. in a collection). */
   kind: ItemKind | null;
   search: string;
@@ -41,8 +43,12 @@ function releaseDateKey(kind: ItemKind | null): string {
   return kind === 'game' ? 'library.sort.releaseDate' : 'library.sort.premiereDate';
 }
 
-/** The search box, the button of the filters and the sort controls of a library. */
+/**
+ * The search box, the button of the filters and the sort controls of a library. It stays at
+ * the top of the scrolling area when scrolling down.
+ */
 export function LibraryToolbar<F extends ItemSortField>({
+  ref,
   kind,
   search,
   sortFields,
@@ -61,7 +67,7 @@ export function LibraryToolbar<F extends ItemSortField>({
     field === 'releaseDate' ? t(releaseDateKey(kind)) : t(`library.sort.${field}`);
 
   return (
-    <div className="library__toolbar inline-field">
+    <div ref={ref} className="library__toolbar inline-field">
       <input
         type="search"
         className="library__search"

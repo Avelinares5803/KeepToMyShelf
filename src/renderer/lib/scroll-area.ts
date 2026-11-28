@@ -15,3 +15,12 @@ export function scrollArea(): HTMLElement | null {
 export function scrollToTop(): void {
   scrollArea()?.scrollTo(0, 0);
 }
+
+/**
+ * Scrolls up just enough for an element hidden under a bar that stays at the top (see
+ * LibraryToolbar) to show right below the bar. Nothing moves if it already shows.
+ */
+export function revealBelow(element: HTMLElement, bar: HTMLElement): void {
+  const hidden = bar.getBoundingClientRect().bottom - element.getBoundingClientRect().top;
+  if (hidden > 0) scrollArea()?.scrollBy(0, -hidden);
+}

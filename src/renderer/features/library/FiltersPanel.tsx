@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import type { ItemKind } from '../../../shared/content';
@@ -17,6 +17,8 @@ import { SimpleFilters } from './SimpleFilters';
 const MODES: readonly FilterMode[] = ['simple', 'advanced'];
 
 interface FiltersPanelProps {
+  /** For showing it when it opens under the toolbar that stays at the top. */
+  ref?: Ref<HTMLDivElement>;
   kind: ItemKind;
   view: LibraryView;
   /** Null until they have loaded. */
@@ -28,7 +30,7 @@ interface FiltersPanelProps {
  * The two ways to filter. Only one applies: the other one looks switched off and is ignored,
  * but keeps what it holds, ready for coming back to it.
  */
-export function FiltersPanel({ kind, view, values, onChange }: FiltersPanelProps) {
+export function FiltersPanel({ ref, kind, view, values, onChange }: FiltersPanelProps) {
   const { t } = useTranslation();
   const [askingFor, setAskingFor] = useState<FilterMode | null>(null);
 
@@ -46,7 +48,7 @@ export function FiltersPanel({ kind, view, values, onChange }: FiltersPanelProps
   };
 
   return (
-    <div className="filters-panel">
+    <div ref={ref} className="filters-panel">
       <div className="filters-panel__top">
         {MODES.map((mode) => (
           <button

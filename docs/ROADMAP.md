@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-27, con la v1.3-F (versión 1.3.0, apartado 3.13).
+**Última actualización:** 2026-11-28, con la fecha de publicación de la 1.3.0 (v1.3-F, apartado 3.13).
 
 ---
 
@@ -604,7 +604,7 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - **Géneros y «Mis plataformas»** (no las de lanzamiento): los 10 más usados y «Ver todos (N)».
     - **Accesibilidad:** cada fila se lee completa («Terminados: 2 (50 %)»); la barra es decorativa. La más larga de cada bloque ocupa todo el ancho, y ninguna con algún elemento desaparece.
     - Por dentro: el canal `stats:get`, `StatsService` y las consultas de agregación en `infrastructure/db/library-stats-reader.ts`.
-- **v1.3-F: versión 1.3.0** (`chore/release-1.3.0`). ✅ Hecha, como la v1.2-D: `npm version 1.3.0 --no-git-tag-version`, la versión 1.3.0 en el `CHANGELOG.md` con fecha 2026-11-27 y enlaces de comparación, y la v1.3 marcada como hecha. Antes del merge se pasó la prueba de humo en local con los archivos 1.3.0. Después del merge: la etiqueta `v1.3.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md).
+- **v1.3-F: versión 1.3.0** (`chore/release-1.3.0`). ✅ Hecha, como la v1.2-D: `npm version 1.3.0 --no-git-tag-version`, la versión 1.3.0 en el `CHANGELOG.md` con fecha 2026-11-27 y enlaces de comparación, y la v1.3 marcada como hecha. Antes del merge se pasó la prueba de humo en local con los archivos 1.3.0. Después del merge: la etiqueta `v1.3.0`, el borrador del workflow y su publicación, según [RELEASING.es.md](RELEASING.es.md). **La v1.3.0 se publicó el 2026-11-27.**
 
 ---
 

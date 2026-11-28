@@ -63,13 +63,17 @@
         "game": "Rejugados",
         "screen": "Revisionadas"
       },
+      "noStatus": "Sin estado",
       "atLeast": "Al menos",
+      "atMost": "Como mucho",
       "anyRating": "Cualquiera",
+      "ratingRangeInvalid": "«Al menos» es mayor que «Como mucho».",
       "unrated": "Sin valorar",
       "releaseYear": {
         "game": "Año de lanzamiento",
         "screen": "Año de estreno"
       },
+      "finishedYear": "Año de fin",
       "from": "Desde",
       "to": "Hasta",
       "fromField": "{{field}}, desde",

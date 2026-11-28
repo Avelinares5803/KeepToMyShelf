@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-28, con la v1.4-B hecha (apartado 3.14).
+**Última actualización:** 2026-11-28, con la v1.4-C hecha (apartado 3.14).
 
 ---
 
@@ -50,7 +50,7 @@ Aplicación de escritorio **local, sin servidor y sin conexión obligatoria** pa
 | v1.1 Uso diario                | Orden natural, filtros numéricos, mejoras de colecciones, tamaño de las portadas, arrastrar y soltar, versión 1.1.0                                   | ✅ Hecha (v1.1.1)                   |
 | v1.2 Catálogos y formularios   | Errores por campo en el formulario, fusionar valores duplicados, copiar catálogos de otro perfil, versión 1.2.0                                       | ✅ Hecha (v1.2.0)                   |
 | v1.3 Tus datos                 | Copias programadas, exportar e importar (JSON y CSV), estadísticas, versión 1.3.0                                                                     | ✅ Hecha (v1.3.0)                   |
-| v1.4 Moverse por la biblioteca | Desplegable con buscador en los filtros avanzados, barra de herramientas fija, filtros nuevos, estadísticas que llevan a la biblioteca, versión 1.4.0 | En curso (A y B hechas)             |
+| v1.4 Moverse por la biblioteca | Desplegable con buscador en los filtros avanzados, barra de herramientas fija, filtros nuevos, estadísticas que llevan a la biblioteca, versión 1.4.0 | En curso (A, B y C hechas)          |
 
 Cada fase se divide en entregas pequeñas (F5-A, F5-B…), cada una con su rama y su PR. Desde la v1.0, las entregas se nombran por versión (v1.1-A, v1.1-B…).
 
@@ -635,10 +635,15 @@ El detalle técnico está en el [ADR 0010](adr/0010-distribution.md).
     - `LibraryGrid` mide la barra y la pasa a TanStack Virtual como `scrollPaddingStart`. La fila que se guarda al salir es la que corta el borde inferior de la barra, y se vuelve a calcular justo al salir: antes solo se anotaba al redibujar la cuadrícula, y abrir un elemento justo después de un desplazamiento pequeño volvía a una fila anterior.
     - Las tarjetas que reciben el foco con Tab quedan bajo la barra gracias a `scroll-margin-top`, que se aplica solo a las tarjetas. Con `scroll-padding-top` en toda la zona que se desplaza, la propia barra contaría como tapada, y enfocar uno de sus controles desplazaría la página.
     - Un elemento `sticky` respeta el relleno superior de la zona que se desplaza: la barra usa un `top` negativo igual a ese relleno (`--app-main-padding-top`).
-- **v1.4-C: tres filtros nuevos** (`feat/more-filters`). Acordado el 2026-11-28:
+- **v1.4-C: tres filtros nuevos** (`feat/more-filters`). ✅ Hecha. Acordado el 2026-11-28:
   - **«Sin estado»:** una casilla en los filtros simples y el operador «sin valor» en los avanzados.
   - **«Como mucho» en la valoración** de los filtros simples, junto a «Al menos». Las dos juntas permiten una valoración exacta.
   - **«Año de fin»:** un filtro numérico, como el año de lanzamiento, con el año de la fecha de fin. Una fecha de fin vacía o «Indeterminada» cuenta como sin fecha.
+  - **Detalles acordados al implementarla:**
+    - «Sin estado» es una opción más de «Estado» y se combina con las demás con «o». En los avanzados, el operador se llama «sin indicar», como en los números.
+    - La valoración es `(al menos Y como mucho) O sin valorar`. Cada desplegable elegido cuenta 1 en «Filtros (N)». Si «Al menos» es mayor que «Como mucho», los dos se marcan como no válidos y aparece un aviso; no sale ningún elemento. Cada nombre va encima de su desplegable, para que quepa «4,5 estrellas» en el ancho de la sección.
+    - «Año de fin» existe en los tres tipos y se ofrece, como los demás números, cuando algún elemento lo tiene.
+  - **Por dentro:** la medida `finishedYear` y el operador `isEmpty` en las opciones (`choice`). Las dos usan la misma regla que las estadísticas: el estado `NULL` es «Sin estado», y el año solo se toma de una fecha que empieza por cuatro cifras. Una prueba de integración comprueba que el filtro y las estadísticas cuentan lo mismo, lo que necesita la v1.4-D.
 - **v1.4-D: pulsar las estadísticas para filtrar** (`feat/stats-to-library`). Acordado el 2026-11-28:
   - **Se pueden pulsar** las filas de estados (también «Sin estado»), valoraciones (también «Sin valorar»), terminados por año, géneros y plataformas, y las cifras de favoritos, rejugados, físico y digital. **No se pueden pulsar** el total, los totales por tipo ni las horas jugadas.
   - **La biblioteca muestra exactamente los elementos que cuenta la fila.** Por ejemplo, «Terminados en 2025» es el estado «Terminado» y el año de fin 2025.

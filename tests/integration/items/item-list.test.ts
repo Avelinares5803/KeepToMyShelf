@@ -22,6 +22,12 @@ const isNot = (field: string, value: FilterCondition['value']): FilterCondition 
   operator: 'isNot',
   value,
 });
+const isEmpty = (field: string): FilterCondition => ({
+  type: 'condition',
+  field,
+  operator: 'isEmpty',
+  value: null,
+});
 const and = (...children: FilterNode[]): FilterNode => ({ type: 'group', op: 'and', children });
 const or = (...children: FilterNode[]): FilterNode => ({ type: 'group', op: 'or', children });
 const rating = (operator: 'gte' | 'lte' | 'isEmpty', value: number | null): FilterNode => ({
@@ -32,7 +38,7 @@ const rating = (operator: 'gte' | 'lte' | 'isEmpty', value: number | null): Filt
 });
 
 const number = (
-  field: 'releaseYear' | 'hoursPlayed' | 'seasons',
+  field: 'releaseYear' | 'finishedYear' | 'hoursPlayed' | 'seasons',
   operator: 'gte' | 'lte' | 'isEmpty',
   value: number | null,
 ): FilterNode => ({ type: 'condition', field, operator, value });
@@ -266,6 +272,21 @@ describe('ItemService.list', () => {
       expect(filtered(isNot('status', 'completed'))).toEqual(['En curso', 'Sin estado']);
     });
 
+    it('finds the items without a status, the same that the statistics count', () => {
+      game('Terminado', { status: 'completed' });
+      game('Sin estado');
+      game('Tampoco');
+
+      expect(filtered(isEmpty('status'))).toEqual(['Sin estado', 'Tampoco']);
+      expect(filtered(or(is('status', 'completed'), isEmpty('status')))).toEqual([
+        'Sin estado',
+        'Tampoco',
+        'Terminado',
+      ]);
+      expect(fx.stats.get(token, 'game').statuses.none).toBe(2);
+      expect(() => filtered({ ...isEmpty('status'), value: 'completed' })).toThrow(ValidationError);
+    });
+
     it('filters by yes/no fields', () => {
       game('Favorito', { isFavorite: true });
       game('Rejugado', { isReplay: true });
@@ -313,6 +334,47 @@ describe('ItemService.list', () => {
         filtered(and(number('releaseYear', 'gte', 2003), number('releaseYear', 'lte', 2010))),
       ).toEqual([]);
       expect(filtered(number('releaseYear', 'isEmpty', null))).toEqual(['Sin fecha']);
+    });
+
+    it('filters by the year of the end date, without the empty or unknown ones', () => {
+      const finished = (title: string, finishedOn: ItemDraft['finishedOn']) =>
+        game(title, { status: 'completed', finishedOn });
+      finished('Fin 2023', knownUsageDate({ year: 2023 }));
+      finished('Fin marzo 2024', knownUsageDate({ year: 2024, month: 3 }));
+      finished('Fin 14-12-2024', knownUsageDate({ year: 2024, month: 12, day: 14 }));
+      finished('Fin indeterminado', UNKNOWN_USAGE_DATE);
+      finished('Sin fin', null);
+      game('En curso 2024', {
+        status: 'in_progress',
+        finishedOn: knownUsageDate({ year: 2024 }),
+      });
+
+      expect(filtered(number('finishedYear', 'gte', 2024))).toEqual([
+        'En curso 2024',
+        'Fin 14-12-2024',
+        'Fin marzo 2024',
+      ]);
+      expect(filtered(number('finishedYear', 'lte', 2023))).toEqual(['Fin 2023']);
+      expect(filtered(number('finishedYear', 'isEmpty', null))).toEqual([
+        'Fin indeterminado',
+        'Sin fin',
+      ]);
+
+      // "Finished in 2024" in the statistics is the status "Completed" and the end year 2024.
+      const finishedIn2024 = and(
+        is('status', 'completed'),
+        number('finishedYear', 'gte', 2024),
+        number('finishedYear', 'lte', 2024),
+      );
+      expect(filtered(finishedIn2024)).toEqual(['Fin 14-12-2024', 'Fin marzo 2024']);
+      const stats = fx.stats.get(token, 'game');
+      expect(stats.finishedByYear).toEqual([
+        { year: 2024, count: 2 },
+        { year: 2023, count: 1 },
+      ]);
+      expect(
+        filtered(and(is('status', 'completed'), number('finishedYear', 'isEmpty', null))),
+      ).toHaveLength(stats.finishedWithoutDate);
     });
 
     it('filters by whole hours played, compared with the minutes', () => {

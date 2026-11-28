@@ -310,6 +310,35 @@ test('says what the simple filters cannot: "not favorite", "not replayed" and "i
   await expectTitles(['Ninguno']);
 });
 
+test('finds the items without a status, and by the year they were finished', async () => {
+  await openBuilder([
+    { title: 'Terminado', status: 'completed', finishedOn: '2023-06' },
+    { title: 'Sin estado', finishedOn: 'unknown' },
+    { title: 'Otro sin estado' },
+  ]);
+  await addRow('Estado', null, 'sin indicar');
+  const row = builder().locator('.advanced-filters__condition').last();
+  await expect(row.getByLabel('Valor', { exact: true })).toHaveCount(0);
+  await expectTitles(['Otro sin estado', 'Sin estado']);
+  await expect(button('Filtros (1)')).toBeVisible();
+
+  await builder().getByRole('button', { name: 'Quitar condición', exact: true }).click();
+  await addRow('Año de fin', null, 'al menos');
+  await builder()
+    .locator('.advanced-filters__condition')
+    .last()
+    .getByRole('spinbutton', { name: 'Valor', exact: true })
+    .fill('2023');
+  await expectTitles(['Terminado']);
+  await builder()
+    .locator('.advanced-filters__condition')
+    .last()
+    .getByLabel('Operador', { exact: true })
+    .selectOption({ label: 'sin indicar' });
+  // An unknown end date has no year, like an empty one.
+  await expectTitles(['Otro sin estado', 'Sin estado']);
+});
+
 test('filters by rating with every operator', async () => {
   await openBuilder([
     { title: 'Alta', rating: 9 },

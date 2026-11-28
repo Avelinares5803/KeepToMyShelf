@@ -841,6 +841,21 @@ h1 {
   min-width: 3.5rem;
 }
 
+/* "At least" and "At most", each name above its list, so that the list has the whole width. */
+.simple-filters__rating {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.simple-filters__options .simple-filters__rating .inline-field {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.simple-filters__rating select[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
 .simple-filters__number,
 .advanced-filters__number {
   width: 8rem;

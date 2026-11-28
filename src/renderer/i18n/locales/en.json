@@ -63,13 +63,17 @@
         "game": "Replayed",
         "screen": "Rewatched"
       },
+      "noStatus": "No status",
       "atLeast": "At least",
+      "atMost": "At most",
       "anyRating": "Any",
+      "ratingRangeInvalid": "“At least” is higher than “At most”.",
       "unrated": "Not rated",
       "releaseYear": {
         "game": "Release year",
         "screen": "Premiere year"
       },
+      "finishedYear": "End year",
       "from": "From",
       "to": "To",
       "fromField": "{{field}}, from",

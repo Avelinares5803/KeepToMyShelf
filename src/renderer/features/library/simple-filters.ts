@@ -12,9 +12,13 @@ export interface SimpleFilters {
   readonly favorite: boolean;
   readonly replay: boolean;
   readonly status: readonly ItemStatus[];
+  /** "No status", one more option of the status. */
+  readonly noStatus: boolean;
   readonly format: readonly FormatOption[];
   /** "At least" this stored rating (1..10). */
   readonly minRating: number | null;
+  /** "At most" this stored rating (1..10). With the same as "at least", an exact rating. */
+  readonly maxRating: number | null;
   readonly unrated: boolean;
   /** Ids of the catalog values marked in each role. */
   readonly roles: Readonly<Partial<Record<ItemRole, readonly number[]>>>;
@@ -33,8 +37,10 @@ export const NO_SIMPLE_FILTERS: SimpleFilters = {
   favorite: false,
   replay: false,
   status: [],
+  noStatus: false,
   format: [],
   minRating: null,
+  maxRating: null,
   unrated: false,
   roles: {},
   ranges: {},
@@ -71,6 +77,30 @@ const is = (field: string, value: FilterCondition['value']): FilterCondition => 
   value,
 });
 
+const isEmpty = (field: string): FilterCondition => ({
+  type: 'condition',
+  field,
+  operator: 'isEmpty',
+  value: null,
+});
+
+/** Whether "at least" is above "at most", which no rating can be. */
+export const isInvalidRatingRange = (filters: SimpleFilters) =>
+  filters.minRating !== null && filters.maxRating !== null && filters.minRating > filters.maxRating;
+
+/** "At least" and "at most" the rating, which an item must keep both of (AND). */
+function ratingRange(filters: SimpleFilters): FilterNode[] {
+  const bounds = [
+    ['gte', filters.minRating],
+    ['lte', filters.maxRating],
+  ] as const;
+  const conditions = bounds.flatMap(([operator, value]) =>
+    value === null ? [] : [{ type: 'condition', field: 'rating', operator, value } as const],
+  );
+  if (conditions.length < 2) return conditions;
+  return [{ type: 'group', op: 'and', children: conditions }];
+}
+
 /**
  * The tree the simple filters mean: any of the marks of an attribute (OR), and all the
  * attributes with marks (AND). A range must keep both its bounds (AND). Undefined when nothing
@@ -80,23 +110,12 @@ export function toFilterTree(filters: SimpleFilters): FilterNode | undefined {
   const anyOf: FilterNode[][] = [
     filters.favorite ? [is('favorite', true)] : [],
     filters.replay ? [is('replay', true)] : [],
-    filters.status.map((status) => is('status', status)),
-    filters.format.map((format) => is('format', format)),
     [
-      ...(filters.minRating === null
-        ? []
-        : [
-            {
-              type: 'condition',
-              field: 'rating',
-              operator: 'gte',
-              value: filters.minRating,
-            } as const,
-          ]),
-      ...(filters.unrated
-        ? [{ type: 'condition', field: 'rating', operator: 'isEmpty', value: null } as const]
-        : []),
+      ...filters.status.map((status) => is('status', status)),
+      ...(filters.noStatus ? [isEmpty('status')] : []),
     ],
+    filters.format.map((format) => is('format', format)),
+    [...ratingRange(filters), ...(filters.unrated ? [isEmpty('rating')] : [])],
     ...Object.entries(filters.roles).map(([role, ids]) => ids.map((id) => is(role, id))),
     filters.collections.map((id) => is('collection', id)),
   ];
@@ -121,8 +140,10 @@ export function countMarks(filters: SimpleFilters): number {
     Number(filters.favorite) +
     Number(filters.replay) +
     filters.status.length +
+    Number(filters.noStatus) +
     filters.format.length +
     Number(filters.minRating !== null) +
+    Number(filters.maxRating !== null) +
     Number(filters.unrated) +
     Object.values(filters.roles).reduce((total, ids) => total + ids.length, 0) +
     filters.collections.length +

@@ -13,15 +13,17 @@ export type ItemFlagColumn = 'is_favorite' | 'is_replay' | 'owns_physical' | 'ow
 /**
  * A whole number about an item, which may be missing:
  * - `releaseYear`: the year of its earliest release, the same date that sorts by release;
+ * - `finishedYear`: the year of its end date; an empty or unknown one has no year;
  * - `hoursPlayed`: whole hours, compared with the minutes stored, so 10:30 is "at most 11";
  * - `seasons`: the seasons of a series.
  */
-export const NUMBER_MEASURES = ['releaseYear', 'hoursPlayed', 'seasons'] as const;
+export const NUMBER_MEASURES = ['releaseYear', 'finishedYear', 'hoursPlayed', 'seasons'] as const;
 export type NumberMeasure = (typeof NUMBER_MEASURES)[number];
 
 /** The values each measure can have, the same that items can store. */
 export const NUMBER_LIMITS: Readonly<Record<NumberMeasure, { min: number; max: number }>> = {
   releaseYear: { min: 1, max: 9999 },
+  finishedYear: { min: 1, max: 9999 },
   hoursPlayed: { min: 0, max: MAX_HOURS_PLAYED },
   seasons: { min: 0, max: ITEM_LIMITS.count },
 };
@@ -33,7 +35,7 @@ export const NUMBER_LIMITS: Readonly<Record<NumberMeasure, { min: number; max: n
 export type FilterSource =
   /** A catalog value related to the item in this role. The value is the entry's id. */
   | { readonly type: 'role'; readonly role: ItemRole }
-  /** A text column with a closed list of values. */
+  /** A text column with a closed list of values, which may be missing. */
   | { readonly type: 'choice'; readonly column: 'status'; readonly values: readonly string[] }
   /** A yes/no column. */
   | { readonly type: 'flag'; readonly column: ItemFlagColumn }
@@ -54,7 +56,7 @@ export interface FilterField {
 
 const SOURCE_OPERATORS: Record<FilterSource['type'], readonly FilterOperator[]> = {
   role: ['is', 'isNot'],
-  choice: ['is', 'isNot'],
+  choice: ['is', 'isNot', 'isEmpty'],
   flag: ['is'],
   flags: ['is', 'isNot'],
   rating: ['gte', 'lte', 'isEmpty'],
@@ -87,6 +89,7 @@ export const FILTER_FIELDS: readonly FilterField[] = [
   { id: 'rating', kinds: ITEM_KINDS, source: { type: 'rating' } },
   { id: 'favorite', kinds: ITEM_KINDS, source: { type: 'flag', column: 'is_favorite' } },
   { id: 'releaseYear', kinds: ITEM_KINDS, source: { type: 'number', measure: 'releaseYear' } },
+  { id: 'finishedYear', kinds: ITEM_KINDS, source: { type: 'number', measure: 'finishedYear' } },
   { id: 'hoursPlayed', kinds: ['game'], source: { type: 'number', measure: 'hoursPlayed' } },
   { id: 'seasons', kinds: ['series'], source: { type: 'number', measure: 'seasons' } },
   ...ITEM_ROLES.map(roleField),
@@ -117,7 +120,9 @@ export function isValidFilterValue(
     case 'collection':
       return typeof value === 'number' && Number.isInteger(value) && value > 0;
     case 'choice':
-      return typeof value === 'string' && source.values.includes(value);
+      return operator === 'isEmpty'
+        ? value === null
+        : typeof value === 'string' && source.values.includes(value);
     case 'flag':
       return typeof value === 'boolean';
     case 'flags':

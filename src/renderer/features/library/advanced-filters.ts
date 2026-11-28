@@ -97,7 +97,7 @@ export function setField(
   }));
 }
 
-/** "Not rated" takes no value, so going to or from it leaves the value empty. */
+/** "Not rated" or "not set" take no value, so going to or from them leaves the value empty. */
 export const setOperator = (root: AdvancedGroup, id: number, operator: FilterOperator) =>
   changeNode(root, id, (node) => {
     const condition = node as AdvancedCondition;

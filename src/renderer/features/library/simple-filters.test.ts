@@ -4,6 +4,7 @@ import type { ItemFilterValues } from '../../../shared/items';
 import {
   countMarks,
   isInvalidBound,
+  isInvalidRatingRange,
   NO_SIMPLE_FILTERS,
   parseBound,
   toFilterTree,
@@ -64,6 +65,38 @@ describe('toFilterTree', () => {
     );
   });
 
+  it('keeps "at least" and "at most" together (AND), and "not rated" as their alternative', () => {
+    const rating = (operator: 'gte' | 'lte', value: number) => ({
+      type: 'condition',
+      field: 'rating',
+      operator,
+      value,
+    });
+    expect(toFilterTree(filters({ maxRating: 4 }))).toEqual(and(or(rating('lte', 4))));
+    // The same in both: exactly that rating.
+    expect(toFilterTree(filters({ minRating: 6, maxRating: 6 }))).toEqual(
+      and(or(and(rating('gte', 6), rating('lte', 6)))),
+    );
+    expect(toFilterTree(filters({ minRating: 4, maxRating: 8, unrated: true }))).toEqual(
+      and(
+        or(and(rating('gte', 4), rating('lte', 8)), {
+          type: 'condition',
+          field: 'rating',
+          operator: 'isEmpty',
+          value: null,
+        }),
+      ),
+    );
+  });
+
+  it('keeps "no status" as one more option of the status (OR)', () => {
+    const noStatus = { type: 'condition', field: 'status', operator: 'isEmpty', value: null };
+    expect(toFilterTree(filters({ noStatus: true }))).toEqual(and(or(noStatus)));
+    expect(toFilterTree(filters({ status: ['in_progress'], noStatus: true }))).toEqual(
+      and(or(is('status', 'in_progress'), noStatus)),
+    );
+  });
+
   it('turns the yes/no marks into rules only when marked', () => {
     expect(toFilterTree(filters({ favorite: true, replay: true }))).toEqual(
       and(or(is('favorite', true)), or(is('replay', true))),
@@ -102,14 +135,29 @@ describe('toFilterTree', () => {
       favorite: true,
       replay: true,
       status: ['completed', 'abandoned'],
+      noStatus: true,
       format: ['physical', 'digital'],
       minRating: 8,
+      maxRating: 10,
       unrated: true,
       roles: { genre: [1], owned_on: [2] },
-      ranges: { releaseYear: { from: '1990', to: '2000' }, hoursPlayed: { from: '0', to: '' } },
+      ranges: {
+        releaseYear: { from: '1990', to: '2000' },
+        finishedYear: { from: '2020', to: '2025' },
+        hoursPlayed: { from: '0', to: '' },
+      },
       collections: [3],
     });
     expect(validateFilter('game', tree!)).not.toBeNull();
+  });
+});
+
+describe('isInvalidRatingRange', () => {
+  it('is true only when "at least" is above "at most"', () => {
+    expect(isInvalidRatingRange(filters({ minRating: 8, maxRating: 4 }))).toBe(true);
+    expect(isInvalidRatingRange(filters({ minRating: 6, maxRating: 6 }))).toBe(false);
+    expect(isInvalidRatingRange(filters({ minRating: 8 }))).toBe(false);
+    expect(isInvalidRatingRange(filters({ maxRating: 2 }))).toBe(false);
   });
 });
 
@@ -132,14 +180,16 @@ describe('countMarks', () => {
         favorite: true,
         replay: false,
         status: ['completed', 'abandoned'],
+        noStatus: true,
         format: ['digital'],
         minRating: 8,
+        maxRating: 10,
         unrated: true,
         roles: { genre: [1, 2], tag: [3] },
         ranges: { releaseYear: { from: '1990', to: '1999' }, hoursPlayed: { from: 'x', to: '' } },
         collections: [4, 5],
       }),
-    ).toBe(13);
+    ).toBe(15);
   });
 });
 

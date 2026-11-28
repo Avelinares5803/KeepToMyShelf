@@ -8,7 +8,7 @@ Este documento reúne **qué se quiere construir, qué está hecho y todo lo aco
 - La arquitectura, el desarrollo y las pruebas se explican en [ARCHITECTURE.es.md](ARCHITECTURE.es.md), [DEVELOPMENT.es.md](DEVELOPMENT.es.md) y [TESTING.es.md](TESTING.es.md).
 - La forma de trabajar con Claude Code está en [CLAUDE.md](../CLAUDE.md).
 
-**Última actualización:** 2026-11-28, con la fecha de publicación de la 1.3.0 (v1.3-F, apartado 3.13).
+**Última actualización:** 2026-11-28, con la fecha de publicación de la 1.3.0 (v1.3-F, apartado 3.13) y la revisión de las mejoras anotadas (apartados 5 y 6).
 
 ---
 
@@ -626,6 +626,11 @@ Cambios ya decididos respecto a la planificación del 2026-10-20, para no volver
 - **Portada:** primero era la primera imagen de la lista (F6-B); desde la F6-B3 es un campo propio, independiente de la galería, porque la regla implícita resultaba poco intuitiva.
 - **Selector por tipo en los filtros:** previsto en el ADR 0004 y descartado en la F7, porque cada biblioteca es de un solo tipo.
 - **F8 sin entregas propias:** su contenido se hizo en la F4 y la F5.
+- **Mejoras anotadas descartadas el 2026-11-28:**
+  - **Importar cualquier CSV** asignando sus columnas: solo se importan los CSV con las columnas de la exportación (v1.3-D). Los de otras aplicaciones traen formatos de fecha, escalas de valoración y estados que habría que adivinar.
+  - **Descartar una sugerencia de duplicado** para que no vuelva a aparecer: las sugerencias se quedan como están, porque solo avisan y la app ya distingue «Hipo» de «Hipó».
+  - **Agrupar las plataformas por fabricante:** era solo una sugerencia, sin un sitio concreto donde hiciera falta.
+  - **Optimizar PDF escaneados:** es cosa del usuario. Además, necesitaría una herramienta externa (Ghostscript, con licencia AGPL).
 
 ---
 
@@ -652,11 +657,7 @@ Ordenadas por versión el 2026-11-19, al planificar la v1.1, y revisadas el 2026
 
 **Sin versión asignada:**
 
-- Importar cualquier CSV, asignando sus columnas a los campos de la app (anotada al planificar la v1.3).
-- Descartar una sugerencia de duplicado («Hipo» e «Hipó» son distintos) para que no vuelva a aparecer (anotada en la v1.2-B). Hay que guardarlo en el perfil.
-- Agrupar las plataformas por fabricante en pantalla (necesita un campo nuevo).
-- Optimizar PDF escaneados (opcional). Necesita una herramienta externa: sharp no trabaja con PDF, Ghostscript (la que de verdad los reduce) tiene licencia AGPL, y qpdf o pdf-lib apenas reducen. Recomprimir puede degradar escaneos o romper formularios y firmas.
-- Elegir los valores de los filtros avanzados con autocompletado (también por alias), en lugar de un desplegable, si las listas se hacen muy largas.
+- **Filtros avanzados con un desplegable en el que se puede escribir** (combobox) en todos los campos de catálogo (plataformas, géneros, sagas, empresas, personas en cualquier papel, etiquetas, países…) y en «Colecciones». Al pulsarlo se abre la lista completa, y al escribir se filtra, también por alias, como el selector del formulario del elemento (`EntryPicker`). Los campos con pocas opciones (estado, formato, valoración…) siguen con el desplegable normal. Los filtros simples no lo necesitan: cada sección tiene su buscador a partir de 10 valores. Ampliada el 2026-11-28.
 - Colecciones: orden manual y filtros por atributo al elegir un tipo.
 - Arrastrar y soltar también los fondos de Ajustes y la portada de una colección, con el mecanismo de la v1.1-E.
 - Seguimiento por temporada o episodio; varias sesiones de juego o visionado.
